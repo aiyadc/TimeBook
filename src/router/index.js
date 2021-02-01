@@ -12,6 +12,11 @@ const routes = [{
         component: () =>
             import ("../views/test.vue"),
     },
+    {
+        path: '/wechatbg',
+        component: () =>
+            import ("../views/wechat_bg.vue")
+    }
     // {
     //   path: '/about',
     //   name: 'About',
