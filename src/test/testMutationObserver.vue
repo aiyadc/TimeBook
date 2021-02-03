@@ -32,20 +32,20 @@ export default {
   data() {
     return {
       elementList: [],
-      cxt: null,
+      ctx: null,
       cover: null,
       body: null,
       moveFlag: false,
       divobj: null,
       mwidth: 0,
-      mheight: 0,
+      mheight: 0
     };
   },
   watch: {},
   computed: {},
   created() {},
   mounted() {
-    this.cxt = document.getElementById("cvs").getContext("2d");
+    this.ctx = document.getElementById("cvs").getContext("2d");
     this.cover = document.getElementById("cover");
     this.divobj = document.getElementById("divobj");
     // 防止弹出菜单，并监听鼠标点击行为，左键，中键，右键依次是0，1，2
@@ -56,6 +56,19 @@ export default {
       console.log(e);
       console.log(e.button);
     };
+
+    // 监听coverdiv中的变动
+    let target = document.getElementById("cover");
+    // 创建观察者对象
+    var observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        console.log("mutation:", mutations, "type:", mutation.type);
+      });
+    });
+    // 配置观察选项:
+    var config = { attributes: true, childList: true, characterData: true };
+    // 传入目标节点和观察选项
+    observer.observe(target, config);
   },
   methods: {
     // 拖动其他地方的图像到canvas
@@ -65,23 +78,20 @@ export default {
       this.moveFlag = true;
       this.sourceOffsetX = e.offsetX;
       this.sourceOffsetY = e.offsetY;
-      console.log("offsetXY", this.sourceOffsetX, this.sourceOffsetY);
+      // console.log("offsetXY", this.sourceOffsetX, this.sourceOffsetY);
       e.dataTransfer.setData("startE", e.target.id);
     },
     drop(e) {
-      //   console.log("drop:", e);
-      //   e.target = this.cover;
       e.preventDefault();
-      console.log(e);
       let data = e.dataTransfer.getData("startE");
       let img = document.getElementById(data);
       let offsetX = e.clientX;
       let offsetY = e.clientY;
-      let offsetCVX = offsetX - this.sourceOffsetX-2.5;
-      let offsetCVY = offsetY - this.sourceOffsetY-352.3;
+      let offsetCVX = offsetX - this.sourceOffsetX;
+      let offsetCVY = offsetY - this.sourceOffsetY - 349;
       img.style.left = offsetCVX + "px";
       img.style.top = offsetCVY + "px";
-      console.log('XY',offsetCVX,offsetCVY)
+      // console.log("XY", offsetCVX, offsetCVY);
       let div = document.createElement("div");
       div.appendChild(img);
       div.ondrag = this.dragstart(e);
@@ -98,7 +108,7 @@ export default {
       this.elementList.push(ele);
       img.style.zIndex = this.elementList.indexOf(ele);
       console.log(this.elementList);
-      //   this.cxt.drawImage(img, offsetCVX, offsetCVY, 50, 50);
+      //   this.ctx.drawImage(img, offsetCVX, offsetCVY, 50, 50);
     },
     allowCovered(e) {
       e.preventDefault();
@@ -122,14 +132,16 @@ export default {
           this.moveFlag = false;
         };
       }
-    },
-  },
+    }
+  }
 };
 </script>
 
 <style scoped lang="scss">
 .test2 {
   position: absolute;
+  left: 0;
+  top: 0;
   .img-container {
     position: absolute;
     width: 1000px;
