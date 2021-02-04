@@ -53,8 +53,8 @@ export default {
       return false;
     };
     this.cover.onmousedown = function(e) {
-      console.log(e);
-      console.log(e.button);
+    //   console.log(e);
+    //   console.log(e.button);
     };
 
     // 监听coverdiv中的变动
@@ -85,18 +85,18 @@ export default {
       e.preventDefault();
       let data = e.dataTransfer.getData("startE");
       let img = document.getElementById(data);
-      let offsetX = e.clientX;
-      let offsetY = e.clientY;
-      let offsetCVX = offsetX - this.sourceOffsetX;
-      let offsetCVY = offsetY - this.sourceOffsetY - 349;
+      let pageX = e.pageX;
+      let pageY = e.pageY;
+      let offsetCVX = pageX - this.sourceOffsetX + 1;
+      let offsetCVY = pageY - this.sourceOffsetY - 349;
       img.style.left = offsetCVX + "px";
       img.style.top = offsetCVY + "px";
       // console.log("XY", offsetCVX, offsetCVY);
-      let div = document.createElement("div");
-      div.appendChild(img);
-      div.ondrag = this.dragstart(e);
-      div.ondragover = this.allowCovered(e);
-      this.cover.appendChild(div);
+      let container = document.createElement("div");
+      container.appendChild(img);
+      container.ondrag = this.dragstart(e);
+      container.ondragover = this.allowCovered(e);
+      this.cover.appendChild(container);
       let ele = {};
       ele.ele = div;
       ele.type = "image";
@@ -107,7 +107,7 @@ export default {
       ele.name = "vue";
       this.elementList.push(ele);
       img.style.zIndex = this.elementList.indexOf(ele);
-      console.log(this.elementList);
+    //   console.log(this.elementList);
       //   this.ctx.drawImage(img, offsetCVX, offsetCVY, 50, 50);
     },
     allowCovered(e) {
@@ -123,7 +123,7 @@ export default {
       this.divobj.mousemove = this.handleMousemove(e);
     },
     handleMousemove(e) {
-      console.log("moving");
+    //   console.log("moving");
       var moveEvent = window.event || e;
       if (this.moveFlag) {
         this.divobj.style.left = moveEvent.clientX - this.mwidth + "px";
@@ -132,6 +132,18 @@ export default {
           this.moveFlag = false;
         };
       }
+    },
+    setEditModel(node){
+        let width = node.width
+        let height = node.height
+        console.log(width,height)
+        let div1 = document.createElement('div')
+        div.style.position = 'absolute'
+        div.style.width = '8px'
+        div.style.height = '8px'
+        div.style.left = '-4px'
+        div.style.top  = '0'
+
     }
   }
 };
