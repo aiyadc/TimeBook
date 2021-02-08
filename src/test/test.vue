@@ -11,7 +11,9 @@
         @dragstart="dragstart($event)"
       />
     </div>
-    <canvas id="cvs" @drop="drop($event)" @dragover="allowCovered($event)"></canvas>
+    <div id="cover" @drop="drop($event)" @dragover="allowCovered($event)">
+      <canvas id="cvs"></canvas>
+    </div>
   </div>
 </template>
 
@@ -34,11 +36,9 @@ export default {
   mounted() {
     this.divobj = document.getElementById("divobj");
     this.canvas = new fabric.Canvas("cvs", {
-      left: 400,
-      top: 400,
       width: 800,
       height: 300,
-      backgroundColor:'#eee'
+      backgroundColor: "#eee"
     });
   },
   methods: {
@@ -68,13 +68,14 @@ export default {
           width = img.width;
           height = +img.height * (296 / width);
         }
-        let rect = new fabric.Rect({
-          left: offsetCVX,
-          top: offsetCVY,
-          width: width,
-          height: height
+        let image = new fabric.Image(img, {
+          left: 100,
+          top: 100,
+          width: 200,
         });
-        this.canvas.add(rect);
+        console.log(width, height);
+        this.canvas.add(image);
+        this.canvas.renderAll();
       });
     },
     allowCovered(e) {
@@ -154,6 +155,11 @@ export default {
     height: 50px;
     position: absolute;
     border: 2px solid black;
+  }
+  #cover {
+    position: absolute;
+    left: 0;
+    top: 400px;
   }
 }
 </style>
