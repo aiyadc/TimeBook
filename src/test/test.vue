@@ -10,95 +10,72 @@
         @dragover="allowCovered($event)"
         @dragstart="dragstart($event)"
       />
-      <img
-        id="img2"
-        style="position: absolute;"
-        src="../assets/logo.png"
-        width="50"
-        draggable="true"
-        @dragover="allowCovered($event)"
-        @dragstart="dragstart($event)"
-      />
     </div>
-    <div id="cover" @drop="drop($event)" @dragover="allowCovered($event)"></div>
-    <canvas id="cvs" width="1000" height="300"></canvas>
+    <canvas id="cvs" @drop="drop($event)" @dragover="allowCovered($event)"></canvas>
   </div>
 </template>
 
 <script>
+import { fabric } from "fabric";
 export default {
   components: {},
   props: {},
   data() {
     return {
-      elementList: [],
-      ctx: null,
-      cover: null,
-      body: null,
-      moveFlag: false,
+      canvas: null,
       divobj: null,
       mwidth: 0,
-      mheight: 0,
+      mheight: 0
     };
   },
   watch: {},
   computed: {},
   created() {},
   mounted() {
-    this.ctx = document.getElementById("cvs").getContext("2d");
-    this.cover = document.getElementById("cover");
     this.divobj = document.getElementById("divobj");
-    // 防止弹出菜单，并监听鼠标点击行为，左键，中键，右键依次是0，1，2
-    document.oncontextmenu = function() {
-      return false;
-    };
-    this.cover.onmousedown = function(e) {
-      console.log(e);
-      console.log(e.button);
-    };
+    this.canvas = new fabric.Canvas("cvs", {
+      left: 400,
+      top: 400,
+      width: 800,
+      height: 300,
+      backgroundColor:'#eee'
+    });
   },
   methods: {
     // 拖动其他地方的图像到canvas
     dragstart(e) {
-      // console.log(e);
-      //   e.preventDefault()
       this.moveFlag = true;
       this.sourceOffsetX = e.offsetX;
       this.sourceOffsetY = e.offsetY;
-      console.log("offsetXY", this.sourceOffsetX, this.sourceOffsetY);
       e.dataTransfer.setData("startE", e.target.id);
     },
     drop(e) {
-      //   console.log("drop:", e);
-      //   e.target = this.cover;
       e.preventDefault();
-      console.log(e);
       let data = e.dataTransfer.getData("startE");
       let img = document.getElementById(data);
-      let offsetX = e.clientX;
-      let offsetY = e.clientY;
-      let offsetCVX = offsetX - this.sourceOffsetX;
-      let offsetCVY = offsetY - this.sourceOffsetY-349;
+      let pageX = e.pageX;
+      let pageY = e.pageY;
+      let offsetCVX = pageX - this.sourceOffsetX + 1;
+      let offsetCVY = pageY - this.sourceOffsetY - 349;
       img.style.left = offsetCVX + "px";
       img.style.top = offsetCVY + "px";
-      console.log('XY',offsetCVX,offsetCVY)
-      let div = document.createElement("div");
-      div.appendChild(img);
-      div.ondrag = this.dragstart(e);
-      div.ondragover = this.allowCovered(e);
-      this.cover.appendChild(div);
-      let ele = {};
-      ele.ele = div;
-      ele.type = "image";
-      ele.width = "50px";
-      ele.height = "50px";
-      ele.offsetX = offsetCVX;
-      ele.offsetY = offsetCVY;
-      ele.name = "vue";
-      this.elementList.push(ele);
-      img.style.zIndex = this.elementList.indexOf(ele);
-      // console.log(this.elementList);
-      //   this.ctx.drawImage(img, offsetCVX, offsetCVY, 50, 50);
+      let width, height;
+      this.$nextTick(async () => {
+        if (window.naturalWidth) {
+          width = img.naturalWidth;
+          height = img.naturalHeight;
+        } else {
+          width = img.width;
+          height = +img.height * (296 / width);
+        }
+        let rect = new fabric.Rect({
+          left: offsetCVX,
+          top: offsetCVY,
+          width: width,
+          height: height
+        });
+        this.canvas.add(rect);
+      });
     },
     allowCovered(e) {
       e.preventDefault();
@@ -113,7 +90,7 @@ export default {
       this.divobj.mousemove = this.handleMousemove(e);
     },
     handleMousemove(e) {
-      console.log("moving");
+      //   console.log("moving");
       var moveEvent = window.event || e;
       if (this.moveFlag) {
         this.divobj.style.left = moveEvent.clientX - this.mwidth + "px";
@@ -123,7 +100,18 @@ export default {
         };
       }
     },
-  },
+    setEditModel(node) {
+      let width = node.width;
+      let height = node.height;
+      console.log(width, height);
+      let div1 = document.createElement("div");
+      div.style.position = "absolute";
+      div.style.width = "8px";
+      div.style.height = "8px";
+      div.style.left = "-4px";
+      div.style.top = "0";
+    }
+  }
 };
 </script>
 
@@ -160,13 +148,6 @@ export default {
     z-index: 99;
 
     background-color: transparent;
-  }
-  #cvs {
-    position: absolute;
-    left: 0;
-    top: 350px;
-    border: solid 1px rgb(34, 157, 233);
-    background-color: lightskyblue;
   }
   #divobj {
     width: 50px;
