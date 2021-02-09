@@ -7,9 +7,13 @@ export default new Router({
             path: "/",
             name: "Home",
             component: () =>
-                import ("../test/test.vue"),
+                import ("@/views/home"),
         },
         {
+            path: '/diy',
+            component: () =>
+                import ('@/views/DIY/index')
+        }, {
             path: '/wechatbg',
             component: () =>
                 import ("../test/wechat_bg.vue")
@@ -19,6 +23,19 @@ export default new Router({
             component: () =>
                 import ("../test/testMutationObserver.vue")
 
+        }, {
+            path: '/login',
+            component: () =>
+                import ('@/views/Login')
+        }, {
+            path: '/test',
+            component: () =>
+                import ('@/test/test.vue')
+
+        }, {
+            path: '/worker',
+            component: () =>
+                import ('@/test/worker.vue')
         }
     ]
 })
