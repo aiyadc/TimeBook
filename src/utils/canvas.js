@@ -1,10 +1,6 @@
-import {
-    fabric
-} from 'fabric'
-const canvas = (function() {
-    var _canvasObject = new fabric.Canvas("canvas", {
-        backgroundColor: "#f5deb3"
-    });
+import { fabric } from "fabric";
+
+function canvas(_canvasObject) {
     var _config = {
         canvasState: [],
         currentStateIndex: -1,
@@ -24,24 +20,12 @@ const canvas = (function() {
         updateCanvasState();
     });
 
-    var addObject = function() {
-        var rect = new fabric.Rect({
-            left: 100,
-            top: 100,
-            fill: "red",
-            width: 200,
-            height: 200
-        });
-        _canvasObject.add(rect);
-        _canvasObject.setActiveObject(rect);
-        _canvasObject.renderAll();
-    };
-
     var updateCanvasState = function() {
         if (_config.undoStatus == false && _config.redoStatus == false) {
             var jsonData = _canvasObject.toJSON();
             var canvasAsJson = JSON.stringify(jsonData);
             if (_config.currentStateIndex < _config.canvasState.length - 1) {
+                // 在撤销过程中，如果有进行更改，那么撤销所在的那一步之后的将会被清空
                 var indexToBeInserted = _config.currentStateIndex + 1;
                 _config.canvasState[indexToBeInserted] = canvasAsJson;
                 var numberOfElementsToRetain = indexToBeInserted + 1;
@@ -50,8 +34,10 @@ const canvas = (function() {
                     numberOfElementsToRetain
                 );
             } else {
+                //如果没在撤销给过程中则直接push进去即可
                 _config.canvasState.push(canvasAsJson);
             }
+            // 无论什么情况，只要做了改变，那么当前指针就会跑到最前面
             _config.currentStateIndex = _config.canvasState.length - 1;
             if (
                 _config.currentStateIndex == _config.canvasState.length - 1 &&
@@ -81,6 +67,7 @@ const canvas = (function() {
                                 _config.undoStatus = false;
                                 _config.currentStateIndex -= 1;
                                 _config.undoButton.removeAttribute("disabled");
+                                // 只要不是最前面的步骤，undo之后，redo就是解封的
                                 if (
                                     _config.currentStateIndex !==
                                     _config.canvasState.length - 1
@@ -130,8 +117,7 @@ const canvas = (function() {
                             }
                             _config.redoFinishedStatus = 1;
                             if (
-                                _config.currentStateIndex ==
-                                _config.canvasState.length - 1 &&
+                                _config.currentStateIndex == _config.canvasState.length - 1 &&
                                 _config.currentStateIndex != -1
                             ) {
                                 _config.redoButton.disabled = "disabled";
@@ -142,14 +128,12 @@ const canvas = (function() {
             }
         }
     };
-
     return {
-        addObject: addObject,
         undoButton: _config.undoButton,
         redoButton: _config.redoButton,
         undo: undo,
         redo: redo
     };
-})();
+};
 // console.log(canvas)
-// export default canvas
+export default canvas

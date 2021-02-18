@@ -89,23 +89,15 @@
               </el-color-picker
             ></el-tooltip>
             <el-tooltip content="撤销" effect="dark" placement="left"
-              ><i
-                id="undo"
-                class="el-icon-back"
-                @click="rollback"
-              ></i></el-tooltip
+              ><i id="undo" class="el-icon-back" @click="undo"></i></el-tooltip
             ><br />
 
             <el-tooltip content="恢复" effect="dark" placement="left"
-              ><i
-                id="redo"
-                class="el-icon-right"
-                @click="forward"
-              ></i></el-tooltip
+              ><i id="redo" class="el-icon-right" @click="redo"></i></el-tooltip
             ><br />
 
-            <el-tooltip content="重置页面" effect="dark" placement="left"
-              ><i class="el-icon-refresh"></i
+            <el-tooltip content="清空画布" effect="dark" placement="left"
+              ><i class="el-icon-refresh" @click="clear"></i
             ></el-tooltip>
             <div class="image-tool">
               <el-tooltip content="裁切" effect="dark" placement="left"
@@ -198,13 +190,14 @@
 <script>
 import Fastclick from "fastclick";
 import { fabric } from "fabric";
-import "@/utils/canvas.js";
+import canvas from "@/utils/canvas.js";
 export default {
   data() {
     return {
       canvas: null,
       canvasInfo: {},
       cover: null,
+      features: {},
       moveFlag: false,
       // 被拖拽的元素
       draged: {
@@ -220,7 +213,8 @@ export default {
       // 取色器
       bgcolor: "rgba(199, 21, 133, 1)",
       color: "rgba(1, 1, 1, 1)",
-      predefineColors: []
+      predefineColors: [],
+      _config: {}
     };
   },
 
@@ -254,7 +248,6 @@ export default {
       canvasH = height * scale;
       canvasW = height * 0.7 * scale;
     }
-    console.log("height:", toolContainer, toolContainer.style);
     toolContainer.style.height = canvasH + "px";
     this.canvasInfo.width = canvasW;
     this.canvasInfo.height = canvasH;
@@ -274,7 +267,26 @@ export default {
       uniformScaling: false,
       uniScaleKey: "ctrlKey"
     });
+    this._config = {
+      canvasState: [],
+      currentStateIndex: -1,
+      undoStatus: false,
+      redoStatus: false,
+      undoFinishedStatus: 1,
+      redoFinishedStatus: 1,
+      undoButton: document.getElementById("undo"),
+      redoButton: document.getElementById("redo")
+    };
+    this.canvas.on("object:modified", () => {
+      this.updateCanvasState();
+    });
 
+    this.canvas.on("object:added", () => {
+      this.updateCanvasState();
+    });
+    this.canvas.on("object:removed", () => {
+      this.updateCanvasState();
+    });
     this.predefineColors = [
       "#ff4500",
       "#ff8c00",
@@ -425,19 +437,130 @@ export default {
 
     // 改变画板背景色
     setBGColor(color) {
-      console.log("颜色改变了，", color);
-      // TODO
+      requestAnimationFrame(() => {
+        this.canvas.setBackgroundColor(
+          color,
+          this.canvas.renderAll.bind(this.canvas)
+        );
+      });
+    },
+    // updateCanvasState
+    updateCanvasState() {
+      if (
+        this._config.undoStatus == false &&
+        this._config.redoStatus == false
+      ) {
+        var jsonData = this.canvas.toJSON();
+        var canvasAsJson = JSON.stringify(jsonData);
+        if (
+          this._config.currentStateIndex <
+          this._config.canvasState.length - 1
+        ) {
+          // 在撤销过程中，如果有进行更改，那么撤销所在的那一步之后的将会被清空
+          var indexToBeInserted = this._config.currentStateIndex + 1;
+          this._config.canvasState[indexToBeInserted] = canvasAsJson;
+          var numberOfElementsToRetain = indexToBeInserted + 1;
+          this._config.canvasState = this._config.canvasState.splice(
+            0,
+            numberOfElementsToRetain
+          );
+        } else {
+          //如果没在撤销给过程中则直接push进去即可
+          this._config.canvasState.push(canvasAsJson);
+        }
+        // 无论什么情况，只要做了改变，那么当前指针就会跑到最前面
+        this._config.currentStateIndex = this._config.canvasState.length - 1;
+        if (
+          this._config.currentStateIndex ==
+            this._config.canvasState.length - 1 &&
+          this._config.currentStateIndex != -1
+        ) {
+          this._config.redoButton.disabled = "disabled";
+        }
+      }
     },
     // 撤销
-    rollback() {
-      // todo
-      canvas.undo;
+    undo() {
+      if (this._config.undoFinishedStatus) {
+        if (this._config.currentStateIndex == -1) {
+          this._config.undoStatus = false;
+        } else {
+          if (this._config.canvasState.length >= 1) {
+            this._config.undoFinishedStatus = 0;
+            if (this._config.currentStateIndex != 0) {
+              this._config.undoStatus = true;
+              this.canvas.loadFromJSON(
+                this._config.canvasState[this._config.currentStateIndex - 1],
+                () => {
+                  var jsonData = JSON.parse(
+                    this._config.canvasState[this._config.currentStateIndex - 1]
+                  );
+                  this.canvas.renderAll();
+                  this._config.undoStatus = false;
+                  this._config.currentStateIndex -= 1;
+                  this._config.undoButton.removeAttribute("disabled");
+                  // 只要不是最前面的步骤，undo之后，redo就是解封的
+                  if (
+                    this._config.currentStateIndex !==
+                    this._config.canvasState.length - 1
+                  ) {
+                    this._config.redoButton.removeAttribute("disabled");
+                  }
+                  this._config.undoFinishedStatus = 1;
+                }
+              );
+            } else if (this._config.currentStateIndex == 0) {
+              this.canvas.clear();
+              this._config.undoFinishedStatus = 1;
+              this._config.undoButton.disabled = "disabled";
+              this._config.redoButton.removeAttribute("disabled");
+              this._config.currentStateIndex -= 1;
+            }
+          }
+        }
+      }
     },
     // 恢复
-    forward() {
-      // todo
-      console.log(canvas)
-      canvas.redo;
+    redo() {
+      if (this._config.redoFinishedStatus) {
+        if (
+          this._config.currentStateIndex ==
+            this._config.canvasState.length - 1 &&
+          this._config.currentStateIndex != -1
+        ) {
+          this._config.redoButton.disabled = "disabled";
+        } else {
+          if (
+            this._config.canvasState.length > this._config.currentStateIndex &&
+            this._config.canvasState.length != 0
+          ) {
+            this._config.redoFinishedStatus = 0;
+            this._config.redoStatus = true;
+            this.canvas.loadFromJSON(
+              this._config.canvasState[this._config.currentStateIndex + 1],
+              () => {
+                var jsonData = JSON.parse(
+                  this._config.canvasState[this._config.currentStateIndex + 1]
+                );
+                this.canvas.renderAll();
+                this._config.redoStatus = false;
+                this._config.currentStateIndex += 1;
+                if (this._config.currentStateIndex != -1) {
+                  this._config.undoButton.removeAttribute("disabled");
+                }
+                this._config.redoFinishedStatus = 1;
+                if (
+                  this._config.currentStateIndex ==
+                    this._config.canvasState.length - 1 &&
+                  this._config.currentStateIndex != -1
+                ) {
+                  this._config.redoButton.disabled = "disabled";
+                }
+              }
+            );
+          }
+        }
+      }
     },
     // 删除选中
     deleteSelected() {
@@ -463,6 +586,10 @@ export default {
     // 改变文字对齐方式
     reline() {
       // todo
+    },
+    // 清空画布
+    clear() {
+      this.canvas.clear();
     }
   }
 };
