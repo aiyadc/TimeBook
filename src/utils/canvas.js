@@ -151,5 +151,5 @@ const canvas = (function() {
         redo: redo
     };
 })();
-
-export default canvas
+// console.log(canvas)
+// export default canvas

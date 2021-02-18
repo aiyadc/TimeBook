@@ -89,11 +89,19 @@
               </el-color-picker
             ></el-tooltip>
             <el-tooltip content="撤销" effect="dark" placement="left"
-              ><i class="el-icon-back"></i></el-tooltip
+              ><i
+                id="undo"
+                class="el-icon-back"
+                @click="rollback"
+              ></i></el-tooltip
             ><br />
 
             <el-tooltip content="恢复" effect="dark" placement="left"
-              ><i class="el-icon-right"></i></el-tooltip
+              ><i
+                id="redo"
+                class="el-icon-right"
+                @click="forward"
+              ></i></el-tooltip
             ><br />
 
             <el-tooltip content="重置页面" effect="dark" placement="left"
@@ -120,7 +128,10 @@
                 ><i class="el-icon-document-copy"></i></el-tooltip
               ><br />
               <el-tooltip content="删除" effect="dark" placement="left"
-                ><i class="el-icon-delete-solid"></i></el-tooltip
+                ><i
+                  class="el-icon-delete-solid"
+                  @click="deleteSelected"
+                ></i></el-tooltip
               ><br />
             </div>
             <div class="text-tool">
@@ -187,7 +198,7 @@
 <script>
 import Fastclick from "fastclick";
 import { fabric } from "fabric";
-
+import "@/utils/canvas.js";
 export default {
   data() {
     return {
@@ -230,6 +241,7 @@ export default {
   },
   mounted() {
     let draw = document.getElementsByClassName("draw")[0];
+    let toolContainer = document.getElementsByClassName("tool")[0];
     let height = draw.clientHeight;
     let width = draw.clientWidth;
     let canvasW, canvasH;
@@ -242,6 +254,8 @@ export default {
       canvasH = height * scale;
       canvasW = height * 0.7 * scale;
     }
+    console.log("height:", toolContainer, toolContainer.style);
+    toolContainer.style.height = canvasH + "px";
     this.canvasInfo.width = canvasW;
     this.canvasInfo.height = canvasH;
     this.canvas = new fabric.Canvas("canvas", {
@@ -253,15 +267,13 @@ export default {
       preserveObjectStacking: true,
       // selectionBorderColor: "#c71585",
       selection: true,
-      snapAngle:45,
-      snapThreshold:15,
+      snapAngle: 45,
+      snapThreshold: 15,
       stateful: true,
       stopContextMenu: true,
       uniformScaling: false,
-      uniScaleKey:'ctrlKey'
+      uniScaleKey: "ctrlKey"
     });
-    let c = document.getElementsByClassName("canvas-container")[0];
-    console.dir(c);
 
     this.predefineColors = [
       "#ff4500",
@@ -379,8 +391,7 @@ export default {
         let scaleY = CH08 / height;
         var scale = scaleX > scaleY ? scaleY : scaleX;
       }
-      console.dir(img);
-      console.log(img.naturalWidth, width, height);
+
       let image = new fabric.Image(img, {
         left: 20,
         top: 20,
@@ -392,7 +403,17 @@ export default {
       });
       this.canvas.add(image);
       this.canvas.renderAll();
+      console.log(
+        "elements:",
+        this.canvas.getElement(),
+        "objects:",
+        this.canvas.getObjects()
+      );
     },
+    // // 监听点击处的坐标
+    //     showClick('click'){
+
+    //     },
     setSize(val) {
       this.size = val;
     },
@@ -410,14 +431,18 @@ export default {
     // 撤销
     rollback() {
       // todo
+      canvas.undo;
     },
     // 恢复
     forward() {
       // todo
+      console.log(canvas)
+      canvas.redo;
     },
     // 删除选中
-    deleteSelected(ele) {
-      // todo
+    deleteSelected() {
+      console.log("执行了删除操作", this.canvas.getActiveObject());
+      this.canvas.remove(this.canvas.getActiveObject());
     },
     // 复制选中
     copySelected(ele) {
