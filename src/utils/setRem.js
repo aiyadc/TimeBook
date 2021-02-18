@@ -1,3 +1,4 @@
+import store from "../store";
 export function setRem(designWidth, maxWidth) {
     var doc = document,
         win = window,
@@ -8,8 +9,15 @@ export function setRem(designWidth, maxWidth) {
     function refreshRem() {
         var width = docEl.getBoundingClientRect().width;
         maxWidth = maxWidth || 540;
-        width > maxWidth && (width = maxWidth);
-        var rem = width * 100 / designWidth;
+        // width > maxWidth && (width = maxWidth);
+        // var rem = width * 10 / designWidth;
+        if (width > 700) {
+            store.commit('SET_PLATEFORM', 'pc')
+            var rem = width * 9 / designWidth;
+        } else {
+            store.commit('SET_PLATEFORM', 'h5')
+            var rem = width * 20 / designWidth
+        }
         remStyle.innerHTML = 'html{font-size:' + rem + 'px;}';
     }
 

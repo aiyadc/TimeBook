@@ -62,40 +62,43 @@ export default {
   methods: {
     // 拖动其他地方的图像到canvas
     dragstart(e) {
+      console.log(e)
       this.moveFlag = true;
       this.sourceOffsetX = e.offsetX;
       this.sourceOffsetY = e.offsetY;
       e.dataTransfer.setData("startE", e.target.id);
     },
     drop(e) {
-      e.preventDefault();
-      let data = e.dataTransfer.getData("startE");
-      let img = document.getElementById(data);
-      let pageX = e.pageX;
-      let pageY = e.pageY;
-      let offsetCVX = pageX - this.sourceOffsetX + 1;
-      let offsetCVY = pageY - this.sourceOffsetY - 349;
-      img.style.left = offsetCVX + "px";
-      img.style.top = offsetCVY + "px";
-      let width, height;
-      this.$nextTick(async () => {
-        if (window.naturalWidth) {
-          width = img.naturalWidth;
-          height = img.naturalHeight;
-        } else {
-          width = img.width;
-          height = +img.height * (296 / width);
-        }
-        let image = new fabric.Image(img, {
-          left: 100,
-          top: 100
-          // height: height
-        });
-        this.canvas.add(image);
-        this.canvas.renderAll();
-      });
+      console.log(e)
+      // e.preventDefault();
+      // let data = e.dataTransfer.getData("startE");
+      // let img = document.getElementById(data);
+      // let pageX = e.pageX;
+      // let pageY = e.pageY;
+      // let offsetCVX = pageX - this.sourceOffsetX + 1;
+      // let offsetCVY = pageY - this.sourceOffsetY - 349;
+      // img.style.left = offsetCVX + "px";
+      // img.style.top = offsetCVY + "px";
+      // let width, height;
+      // this.$nextTick(async () => {
+      //   if (window.naturalWidth) {
+      //     width = img.naturalWidth;
+      //     height = img.naturalHeight;
+      //   } else {
+      //     width = img.width;
+      //     height = +img.height * (296 / width);
+      //   }
+      //   let image = new fabric.Image(img, {
+      //     left: 100,
+      //     top: 100
+      //     // height: height
+      //   });
+      //   this.canvas.add(image);
+      //   this.canvas.renderAll();
+      // });
     },
     allowCovered(e) {
+      console.log(e)
       e.preventDefault();
     },
     // canvas内部移动
