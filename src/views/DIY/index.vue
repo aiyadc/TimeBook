@@ -39,14 +39,19 @@
                     :width="service === 'pc' ? 94 : 76"
                     :height="service === 'pc' ? 90 : 70"
                     draggable="true"
-                    @dragover="allowCovered($event)"
                     @dragstart="dragstart($event)"
-                    @dragend="drop($event, m)"
                   />
                 </div>
               </div>
             </el-tab-pane>
-            <el-tab-pane name="text" label="文本">文本 </el-tab-pane>
+            <el-tab-pane name="text" label="文本">
+              <a
+                href="javascript:void(0)"
+                :draggable="true"
+                @dragstart="dragstart"
+                >H1</a
+              >
+            </el-tab-pane>
             <el-tab-pane name="decoration" label="装饰">
               <div class="d-child">
                 <div v-for="(d, i) in decorationOptions" :key="i">
@@ -64,19 +69,16 @@
             </el-tab-pane>
           </el-tabs>
         </div>
-
-        <!-- <el-button type="default" plain size="mini">素材</el-button>
-          <el-button type="default" plain size="mini">文本</el-button>
-          <el-button type="default" plain size="mini">装饰</el-button>
-          <el-button type="default" plain size="mini">相册</el-button>
-        </div> -->
       </div>
       <div class="draw">
         <div class="canvas-container">
           <div class="tool">
             <el-tooltip content="图层" effect="dark" placement="left"
-              ><i class="el-icon-s-order"></i
+              ><el-popover placement="left">
+                这是图层
+                <i slot="reference" class="el-icon-s-order"></i></el-popover
             ></el-tooltip>
+
             <el-tooltip content="背景色" effect="dark" placement="left"
               ><el-color-picker
                 class="color"
@@ -117,7 +119,27 @@
                   ></path></svg></el-tooltip
               ><br />
               <el-tooltip content="复制" effect="dark" placement="left"
-                ><i class="el-icon-document-copy"></i></el-tooltip
+                ><i
+                  class="el-icon-document-copy"
+                  @click="copySelected"
+                ></i></el-tooltip
+              ><br />
+              <el-tooltip content="粘贴" effect="dark" placement="left"
+                ><svg
+                  t="1613707083249"
+                  class="icon"
+                  viewBox="0 0 1025 1024"
+                  version="1.1"
+                  xmlns="http://www.w3.org/2000/svg"
+                  p-id="1898"
+                  width="16"
+                  height="16"
+                  @click="pasteSelected"
+                >
+                  <path
+                    d="M704 128l-128 0 0-64c0-35.20512-28.79488-64-64-64l-128 0c-35.20512 0-64 28.79488-64 64l0 64-128 0 0 128 512 0 0-128zM512 128l-128 0 0-63.87712c0.04096-0.04096 0.08192-0.08192 0.12288-0.12288l127.77472 0c0.04096 0.04096 0.08192 0.08192 0.12288 0.12288l0 63.87712zM832 320l0-160.01024c0-17.59232-14.39744-32.01024-32.01024-32.01024l-64 0 0 64 32.01024 0 0 128-192 0-192 192 0 256-256 0 0-576 32.01024 0 0-64-64 0c-17.59232 0-32.01024 14.39744-32.01024 32.01024l0 640c0 17.59232 14.39744 32.01024 32.01024 32.01024l288.01024 0 0 192 640 0 0-704-192 0zM576 410.50112l0 101.49888-101.49888 0 101.49888-101.49888zM960 960l-512 0 0-384 192 0 0-192 320 0 0 576z"
+                    p-id="1899"
+                  ></path></svg></el-tooltip
               ><br />
               <el-tooltip content="删除" effect="dark" placement="left"
                 ><i
@@ -127,34 +149,39 @@
               ><br />
             </div>
             <div class="text-tool">
-              <el-tooltip content="背景色" effect="dark" placement="left"
+              <el-tooltip content="颜色" effect="dark" placement="left"
                 ><el-color-picker
                   class="color"
-                  v-model="color"
+                  v-model="textColor"
                   show-alpha
                   :predefine="predefineColors"
-                  @change="setBGColor"
-                  @active-change="setBGColor"
+                  @change="setTextColor"
+                  @active-change="setTextColor"
                 >
                 </el-color-picker
               ></el-tooltip>
               <el-tooltip content="文字样式" effect="dark" placement="left">
-                <el-popover
-                  placement="right"
-                  title="标题"
-                  width="200"
-                  trigger="click"
-                  content="这是一段内容,这是一段内容,这是一段内容,这是一段内容。"
+                <el-select
+                  class="size"
+                  v-model="fontFamily"
+                  placeholder="文"
+                  @change="setFontFamily"
                 >
-                  <span class="icon" slot="reference">文</span>
-                </el-popover> </el-tooltip
+                  <el-option
+                    v-for="(f, i) in fontFamilyOptions"
+                    :key="i"
+                    :label="f.label"
+                    :value="f.value"
+                  ></el-option>
+                </el-select>
+                <span class="icon" slot="reference">文</span> </el-tooltip
               ><br />
               <el-tooltip content="尺寸" effect="dark" placement="left">
                 <!-- <el-popover placement="bottom" trigger="click"> -->
                 <el-select
                   class="size"
                   v-model="size"
-                  @change="setSize"
+                  @change="setTextSize"
                   placeholder=""
                 >
                   <el-option
@@ -164,13 +191,6 @@
                     :value="num"
                   ></el-option>
                 </el-select>
-                <!-- <el-input
-                    class="size"
-                    slot="reference"
-                    v-model="size"
-                    size="mini"
-                  ></el-input>
-                </el-popover> -->
               </el-tooltip>
               <br />
               <el-tooltip content="对齐" effect="dark" placement="left">
@@ -198,7 +218,7 @@ export default {
       canvasInfo: {},
       cover: null,
       features: {},
-      moveFlag: false,
+      dragObject: null,
       // 被拖拽的元素
       draged: {
         sourceOffsetX: 0,
@@ -212,7 +232,10 @@ export default {
       size: 14, // 文字尺寸
       // 取色器
       bgcolor: "rgba(199, 21, 133, 1)",
-      color: "rgba(1, 1, 1, 1)",
+      textColorFlag: "textColor", // textColor or textBGColor
+      textColor: "rgba(1, 1, 1, 1)",
+      fontFamily: "",
+      fontFamilyOptions: [],
       predefineColors: [],
       _config: {}
     };
@@ -277,6 +300,35 @@ export default {
       undoButton: document.getElementById("undo"),
       redoButton: document.getElementById("redo")
     };
+    this.canvas.on("drop", e => {
+      console.log(e);
+      let offsetX = e.e.offsetX;
+      let offsetY = e.e.offsetY;
+      console.log(this.dragObject, offsetX, offsetY);
+      if (this.dragObject && offsetX > 0 && offsetY > 0) {
+        if (this.dragObject.localName === "img") {
+          let img = new fabric.Image(this.dragObject, {
+            left: offsetX - this.draged.sourceOffsetX,
+            top: offsetY - this.draged.sourceOffsetY
+          });
+          let scale = this.getScale(img);
+          img.scale(scale); // 将图像缩小至同等比例
+          // console.log("img", img);
+          this.canvas.add(img);
+        } else if (this.dragObject.localName === "a") {
+          let text = this.dragObject.innerText;
+          let textbox = new fabric.Textbox(text, {
+            left: offsetX,
+            top: offsetY,
+            fill: "aqua"
+          });
+          console.log(textbox);
+          this.canvas.add(textbox);
+        }
+
+        this.canvas.renderAll();
+      }
+    });
     this.canvas.on("object:modified", () => {
       this.updateCanvasState();
     });
@@ -367,67 +419,49 @@ export default {
         message: "艾尼亚"
       }
     ];
+    this.fontFamilyOptions = [
+      {
+        label: "宋体",
+        value: "SimSun"
+      },
+      {
+        label: "黑体",
+        value: "SimHei"
+      },
+      {
+        label: "微软雅黑",
+        value: "Microsoft YaHei"
+      },
+      {
+        label: "微软正黑体",
+        value: "Microsoft JhengHei"
+      },
+      {
+        label: "新宋体",
+        value: "NSimSun"
+      },
+      {
+        label: "标楷体 ",
+        value: "DFKai-SB"
+      },
+      {
+        label: "仿宋",
+        value: "FangSong"
+      },
+      {
+        label: "楷体",
+        value: "KaiTi"
+      }
+    ];
   },
   methods: {
     // 拖动其他地方的图像到canvas
     dragstart(e) {
-      // console.log(e);
-      this.moveFlag = true;
+      console.log(e);
       this.draged.sourceOffsetX = e.offsetX;
       this.draged.sourceOffsetY = e.offsetY;
-    },
-    allowCovered(e) {
-      e.preventDefault();
-    },
-    drop(e, m) {
-      console.log(e, m);
-      e.preventDefault();
-      let img = e.target;
-      // let pageX = e.pageX;
-      // let pageY = e.pageY;
-      // let offsetCVX = pageX - this.draged.sourceOffsetX;
-      // let offsetCVY = pageY - this.draged.sourceOffsetY;
-      var width, height;
-
-      if (img.naturalWidth) {
-        width = img.naturalWidth;
-        height = img.naturalHeight;
-      } else {
-        width = img.width;
-        height = +img.height;
-      }
-      let CW08 = this.canvasInfo.width * 0.8;
-      let CH08 = this.canvasInfo.height * 0.8;
-      if (width > CW08 || height > CH08) {
-        let scaleX = CW08 / width;
-        let scaleY = CH08 / height;
-        var scale = scaleX > scaleY ? scaleY : scaleX;
-      }
-
-      let image = new fabric.Image(img, {
-        left: 20,
-        top: 20,
-        width: width,
-        height: height,
-        scaleX: scale,
-        scaleY: scale
-        // height: height
-      });
-      this.canvas.add(image);
-      this.canvas.renderAll();
-      console.log(
-        "elements:",
-        this.canvas.getElement(),
-        "objects:",
-        this.canvas.getObjects()
-      );
-    },
-    // // 监听点击处的坐标
-    //     showClick('click'){
-
-    //     },
-    setSize(val) {
-      this.size = val;
+      let obj = e.target;
+      this.dragObject = obj;
     },
     // 工具栏
     // 改变画板各对象的层叠顺序
@@ -568,20 +602,82 @@ export default {
       this.canvas.remove(this.canvas.getActiveObject());
     },
     // 复制选中
-    copySelected(ele) {
+    copySelected() {
       // todo
+      let selected = this.canvas.getActiveObject();
+      if (selected) {
+        let aim = selected._objects || selected;
+        this.$store.commit("Push_TStack", aim);
+        // console.log("stack:", this.$store.state.TStack);
+      }
     },
-    // 改变文字大小
-    resize() {
-      // todo
+    // 粘贴选中
+    pasteSelected() {
+      // clone again, so you can do multiple copies.
+      let _clipboards = this.$store.state.TStack;
+      let canvas = this.canvas;
+      let canvasInfo = this.canvasInfo;
+      let clonesObj = [];
+      _clipboards.forEach(_clipboard => {
+        // console.log("1", _clipboard);
+        _clipboard.clone(function(clonedObj) {
+          canvas.discardActiveObject();
+          let osleft = _clipboard.left;
+          let ostop = _clipboard.top;
+          // 这里换成clonedObj为什么会有负值  tofix
+          clonedObj.set({
+            left: osleft + 20 < canvasInfo.width ? osleft + 20 : osleft - 20,
+            top: ostop + 20 < canvasInfo.height ? ostop + 20 : ostop - 20,
+            evented: true
+          });
+          if (clonedObj.type === "activeSelection") {
+            // active selection needs a reference to the canvas.
+            clonedObj.canvas = canvas;
+            clonedObj.forEachObject(function(obj) {
+              canvas.add(obj);
+            });
+            // this should solve the unselectability
+            clonedObj.setCoords();
+          } else {
+            canvas.add(clonedObj);
+          }
+          clonesObj.push(clonedObj);
+          canvas.setActiveObject(clonedObj);
+          // canvas.requestRenderAll();
+        });
+      });
     },
-    // 改变文字颜色
-    recolor() {
-      // todo
+    // 改变文字颜色的模式：文字颜色/文字背景颜色
+    setColorFlag(val) {
+      this.textColorFlag = val;
+    },
+    setTextColor(val) {
+      requestAnimationFrame(() => {
+        let selected = this.canvas.getActiveObject();
+        // console.log('selected',selected)
+        if (selected) {
+          selected.set("fill", val);
+          this.canvas.renderAll();
+        }
+      });
     },
     // 改变文字样式
-    restyle() {
-      // todo
+    setFontFamily(val) {
+      let selected = this.canvas.getActiveObject();
+      // console.log('selected',selected)
+      if (selected) {
+        selected.set("fontFamily", val);
+        this.canvas.renderAll();
+      }
+    },
+    // 改变文字大小
+    setTextSize(val) {
+      this.size = val;
+      let selected = this.canvas.getActiveObject();
+      if (selected) {
+        selected.set("fontSize", val);
+        this.canvas.renderAll();
+      }
     },
     // 改变文字对齐方式
     reline() {
@@ -590,6 +686,18 @@ export default {
     // 清空画布
     clear() {
       this.canvas.clear();
+    },
+    // 获取图像缩放比例,img的类型为fabric.Image()
+    getScale(img) {
+      let IH = img.getOriginalSize().height;
+      let IW = img.getOriginalSize().width;
+      let CH = this.canvas.getHeight();
+      let CW = this.canvas.getWidth();
+      // 长宽不得规定在画布的0.5倍之内，并优先长宽的较小比例
+      let scaleX = IW / (0.5 * CW) > 1 ? (0.5 * CW) / IW : 1;
+      let scaleY = IH / (0.5 * CH) > 1 ? (0.5 * CH) / IH : 1;
+      let scale = scaleX > scaleY ? scaleY : scaleX;
+      return scale;
     }
   }
 };
