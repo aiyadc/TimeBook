@@ -1,0 +1,20 @@
+.mr10 {
+    margin: 10px;
+}
+
+.mr10-x {
+    margin: 0 10px;
+}
+
+// flex
+// flex-space-between
+.flex-sb {
+    display: flex;
+    justify-content: space-between;
+}
+
+// flex-space-around
+.flex-sa {
+    display: flex;
+    justify-content: space-around;
+}

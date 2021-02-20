@@ -40,6 +40,7 @@
                     :height="service === 'pc' ? 90 : 70"
                     draggable="true"
                     @dragstart="dragstart($event)"
+                    @touchstart="setOnCanvas($event)"
                   />
                 </div>
               </div>
@@ -49,6 +50,7 @@
                 href="javascript:void(0)"
                 :draggable="true"
                 @dragstart="dragstart"
+                @touchstart="setOnCanvas($event)"
                 >H1</a
               >
             </el-tab-pane>
@@ -73,11 +75,63 @@
       <div class="draw">
         <div class="canvas-container">
           <div class="tool">
-            <el-tooltip content="图层" effect="dark" placement="left"
-              ><el-popover placement="left">
-                这是图层
-                <i slot="reference" class="el-icon-s-order"></i></el-popover
-            ></el-tooltip>
+            <el-tooltip content="图层" effect="dark" placement="left">
+              <el-popover placement="bottom">
+                <i slot="reference" class="el-icon-s-order"></i>
+                <div>
+                  <div class="layer" v-for="(el, i) in layer" :key="i">
+                    <i
+                      class="el-icon-view icon"
+                      v-show="el.show"
+                      @click="updateLayer(el)"
+                    ></i>
+                    <svg
+                      t="1613811395982"
+                      class="icon"
+                      v-show="!el.show"
+                      @click="updateLayer(el)"
+                      viewBox="0 0 1024 1024"
+                      version="1.1"
+                      xmlns="http://www.w3.org/2000/svg"
+                      p-id="1808"
+                      width="14"
+                      height="14"
+                    >
+                      <path
+                        d="M512 800c-66.112 0-128.32-24.896-182.656-60.096l94.976-94.976A156.256 156.256 0 0 0 512 672c88.224 0 160-71.776 160-160a156.256 156.256 0 0 0-27.072-87.68l101.536-101.536C837.28 398.624 896 493.344 896 512c0 32-171.936 288-384 288m96-288a96 96 0 0 1-96 96c-14.784 0-28.64-3.616-41.088-9.664l127.424-127.424C604.384 483.36 608 497.216 608 512m-480 0c0-32 171.936-288 384-288 66.112 0 128.32 24.896 182.656 60.096l-417.12 417.12C186.72 625.376 128 530.656 128 512m664.064-234.816l91.328-91.328-45.248-45.248-97.632 97.632C673.472 192.704 595.456 160 512 160 265.248 160 64 443.008 64 512c0 39.392 65.728 148.416 167.936 234.816l-91.328 91.328 45.248 45.248 97.632-97.632C350.528 831.296 428.544 864 512 864c246.752 0 448-283.008 448-352 0-39.392-65.728-148.416-167.936-234.816"
+                        p-id="1809"
+                      ></path>
+                      <path
+                        d="M512 352c-88.224 0-160 71.776-160 160 0 15.328 2.848 29.856 6.88 43.872l58.592-58.592a95.616 95.616 0 0 1 79.808-79.808l58.592-58.592A157.76 157.76 0 0 0 512 352"
+                        p-id="1810"
+                      ></path>
+                    </svg>
+                    <img
+                      class="mr10-x"
+                      :src="el.src"
+                      width="60px"
+                      height="30px"
+                      :key="i"
+                    />
+                    <el-tooltip content="上移图层" placement="top"
+                      ><i
+                        class="el-icon-top icon"
+                        @click="setLayerforward(el)"
+                      ></i
+                    ></el-tooltip>
+                    <el-tooltip content="下移图层" placement="top"
+                      ><i
+                        class="el-icon-bottom icon mr10-x"
+                        @click="setLayerbottom(el)"
+                      ></i
+                    ></el-tooltip>
+                    <el-tooltip content="删除" placement="top"
+                      ><i class="el-icon-delete icon"></i
+                    ></el-tooltip>
+                  </div>
+                </div>
+              </el-popover>
+            </el-tooltip>
 
             <el-tooltip content="背景色" effect="dark" placement="left"
               ><el-color-picker
@@ -110,8 +164,9 @@
                   version="1.1"
                   xmlns="http://www.w3.org/2000/svg"
                   p-id="853"
-                  width="16"
-                  height="16"
+                  width="14"
+                  height="14"
+                  @click="startCroping"
                 >
                   <path
                     d="M928 768h-64V224c0-17.67-14.33-32-32-32H224v-64c0-17.67-14.33-32-32-32s-32 14.33-32 32v64H96c-17.67 0-32 14.33-32 32s14.33 32 32 32h64v544c0 17.67 14.33 32 32 32h608v64c0 17.67 14.33 32 32 32s32-14.33 32-32v-64h64c17.67 0 32-14.33 32-32s-14.33-32-32-32z m-160 0H224V256h576v512h-32z"
@@ -132,8 +187,8 @@
                   version="1.1"
                   xmlns="http://www.w3.org/2000/svg"
                   p-id="1898"
-                  width="16"
-                  height="16"
+                  width="14"
+                  height="14"
                   @click="pasteSelected"
                 >
                   <path
@@ -194,7 +249,76 @@
               </el-tooltip>
               <br />
               <el-tooltip content="对齐" effect="dark" placement="left">
-                <i class="el-icon-s-operation"></i> </el-tooltip
+                <el-popover class="pop-mw100" placement="bottom">
+                  <div class="flex-sb">
+                    <svg
+                      t="1613813262557"
+                      class="icon"
+                      viewBox="0 0 1024 1024"
+                      version="1.1"
+                      xmlns="http://www.w3.org/2000/svg"
+                      p-id="2654"
+                      width="14"
+                      height="14"
+                      @click="setTextAlign('left')"
+                    >
+                      <path
+                        d="M85.333333 245.333333A32 32 0 0 1 117.333333 213.333333h661.333334a32 32 0 0 1 0 64H117.333333A32 32 0 0 1 85.333333 245.333333zM85.333333 800a32 32 0 0 1 32-32h448a32 32 0 0 1 0 64H117.333333a32 32 0 0 1-32-32zM117.333333 490.666667a32 32 0 0 0 0 64h789.333334a32 32 0 0 0 0-64H117.333333z"
+                        p-id="2655"
+                      ></path>
+                    </svg>
+                    <svg
+                      t="1613813294956"
+                      class="icon"
+                      viewBox="0 0 1024 1024"
+                      version="1.1"
+                      xmlns="http://www.w3.org/2000/svg"
+                      p-id="2784"
+                      width="14"
+                      height="14"
+                      @click="setTextAlign('center')"
+                    >
+                      <path
+                        d="M170.666667 256a42.666667 42.666667 0 0 1 42.666666-42.666667h597.333334a42.666667 42.666667 0 1 1 0 85.333334H213.333333a42.666667 42.666667 0 0 1-42.666666-42.666667zM256 768a42.666667 42.666667 0 0 1 42.666667-42.666667h426.666666a42.666667 42.666667 0 1 1 0 85.333334H298.666667a42.666667 42.666667 0 0 1-42.666667-42.666667zM128 469.333333a42.666667 42.666667 0 1 0 0 85.333334h768a42.666667 42.666667 0 1 0 0-85.333334H128z"
+                        p-id="2785"
+                      ></path>
+                    </svg>
+                    <svg
+                      t="1613813323050"
+                      class="icon"
+                      viewBox="0 0 1024 1024"
+                      version="1.1"
+                      xmlns="http://www.w3.org/2000/svg"
+                      p-id="2914"
+                      width="14"
+                      height="14"
+                      @click="setTextAlign('right')"
+                    >
+                      <path
+                        d="M213.333333 245.333333A32 32 0 0 1 245.333333 213.333333h661.333334a32 32 0 0 1 0 64H245.333333A32 32 0 0 1 213.333333 245.333333zM426.666667 800a32 32 0 0 1 32-32h448a32 32 0 0 1 0 64h-448a32 32 0 0 1-32-32zM117.333333 490.666667a32 32 0 0 0 0 64h789.333334a32 32 0 0 0 0-64H117.333333z"
+                        p-id="2915"
+                      ></path>
+                    </svg>
+                    <svg
+                      t="1613813489945"
+                      class="icon"
+                      viewBox="0 0 1024 1024"
+                      version="1.1"
+                      xmlns="http://www.w3.org/2000/svg"
+                      p-id="3044"
+                      width="14"
+                      height="14"
+                      @click="setTextAlign('justify-center')"
+                    >
+                      <path
+                        d="M85.333333 245.333333A32 32 0 0 1 117.333333 213.333333h789.333334a32 32 0 0 1 0 64H117.333333A32 32 0 0 1 85.333333 245.333333zM85.333333 800a32 32 0 0 1 32-32h789.333334a32 32 0 0 1 0 64H117.333333a32 32 0 0 1-32-32zM117.333333 490.666667a32 32 0 0 0 0 64h789.333334a32 32 0 0 0 0-64H117.333333z"
+                        p-id="3045"
+                      ></path>
+                    </svg>
+                  </div>
+
+                  <i slot="reference" class="el-icon-s-operation"></i>
+                </el-popover> </el-tooltip
               ><br />
             </div>
           </div>
@@ -216,9 +340,16 @@ export default {
     return {
       canvas: null,
       canvasInfo: {},
-      cover: null,
-      features: {},
+      canvasElements: [],
+      layer: [], // 图层
+      showLayer: true,
       dragObject: null,
+      selectedObject: null,
+      // 截取图片
+      cropInfo: {
+        source: null,
+        iscroping: false
+      },
       // 被拖拽的元素
       draged: {
         sourceOffsetX: 0,
@@ -227,6 +358,8 @@ export default {
       materialOptions: [],
       decorationOptions: [],
       sizeOptions: [],
+      fontFamilyOptions: [],
+      predefineColors: [],
       service: "",
       tab: "material",
       size: 14, // 文字尺寸
@@ -235,8 +368,6 @@ export default {
       textColorFlag: "textColor", // textColor or textBGColor
       textColor: "rgba(1, 1, 1, 1)",
       fontFamily: "",
-      fontFamilyOptions: [],
-      predefineColors: [],
       _config: {}
     };
   },
@@ -315,6 +446,12 @@ export default {
           img.scale(scale); // 将图像缩小至同等比例
           // console.log("img", img);
           this.canvas.add(img);
+          // 将图层中的对象变成照片展示到图层面板上
+          let item = {};
+          item.object = img;
+          item.src = img.toDataURL();
+          item.show = true;
+          this.layer.push(item);
         } else if (this.dragObject.localName === "a") {
           let text = this.dragObject.innerText;
           let textbox = new fabric.Textbox(text, {
@@ -324,8 +461,13 @@ export default {
           });
           console.log(textbox);
           this.canvas.add(textbox);
+          let item = {};
+          item.object = textbox;
+          item.src = textbox.toDataURL();
+          item.show = true;
+          this.layer.push(item);
         }
-
+        console.log(this.layer);
         this.canvas.renderAll();
       }
     });
@@ -338,6 +480,13 @@ export default {
     });
     this.canvas.on("object:removed", () => {
       this.updateCanvasState();
+    });
+    this.canvas.on("selection:created", e => {
+      this.selectedObject = e.target;
+      // console.log('selected:',e)
+    });
+    this.canvas.on("selection:cleared", e => {
+      this.selectedObject = null;
     });
     this.predefineColors = [
       "#ff4500",
@@ -465,8 +614,20 @@ export default {
     },
     // 工具栏
     // 改变画板各对象的层叠顺序
-    reorder() {
+    setLayerforward(el) {
+      el.object.bringForward();
+    },
+    setLayerbottom(el) {
+      el.object.sendBackwards();
+    },
+    // 隐藏或展示画布中的元素
+    updateLayer(el) {
       // todo
+      el.show = !el.show;
+      console.log(el.show);
+      if (el.show) el.object.set("visible", true);
+      else el.object.set("visible", false);
+      this.canvas.renderAll();
     },
 
     // 改变画板背景色
@@ -599,14 +760,17 @@ export default {
     // 删除选中
     deleteSelected() {
       console.log("执行了删除操作", this.canvas.getActiveObject());
+      this.layer.forEach((el, index, layer) => {
+        if (el.object === this.selectedObject) layer.splice(index, 1);
+      });
       this.canvas.remove(this.canvas.getActiveObject());
     },
     // 复制选中
     copySelected() {
       // todo
-      let selected = this.canvas.getActiveObject();
-      if (selected) {
-        let aim = selected._objects || selected;
+      // let selected = this.canvas.getActiveObject();
+      if (this.selectedObject) {
+        let aim = this.selectedObject._objects || this.selectedObject;
         this.$store.commit("Push_TStack", aim);
         // console.log("stack:", this.$store.state.TStack);
       }
@@ -647,41 +811,78 @@ export default {
         });
       });
     },
+    // 在选中元素上生成一个矩形框框
+    startCroping() {
+      let s = this.selectedObject;
+      this.cropInfo.source = s; // 存储需要裁切的元素
+      let rect = new fabric.Rect({
+        fill: "rgba(0,0,0,0)",
+        originX: "left",
+        originY: "top",
+        stroke: "#ccc",
+        strokWidth: 5,
+        left: s.left,
+        top: s.top,
+        angle: s.angle,
+        width: s.width * s.scaleX,
+        height: s.height * s.scaleY,
+        borderColor: "#cca",
+        cornerColor: "green",
+        hasRotatingPoint: false,
+        lockRotation: true,
+        objectCaching: false,
+        selectable: true
+      });
+      console.log("rect", rect);
+      this.canvas.add(rect);
+      this.canvas.setActiveObject(rect);
+      this.cropInfo.iscroping = true;
+    },
+    // 开始裁剪
+    cropSelected() {
+      // todo
+      // let source = this.cropInfo.source;
+      // let rect = this.selectedObject;
+      // let offsetLeft = rect.left - source.left < 0 ? 0 : rect.left - source.left;
+      // let offsetTop = rect.top - source.top < 0 ? 0 : rect.top - source.top;
+      //       if(this.cropInfo.iscroping){
+      // this.cropInfo.offsetLeft = Math.abs()
+      //       }
+    },
     // 改变文字颜色的模式：文字颜色/文字背景颜色
     setColorFlag(val) {
       this.textColorFlag = val;
     },
     setTextColor(val) {
       requestAnimationFrame(() => {
-        let selected = this.canvas.getActiveObject();
-        // console.log('selected',selected)
-        if (selected) {
-          selected.set("fill", val);
+        if (this.selectedObject) {
+          this.selectedObject.set("fill", val);
           this.canvas.renderAll();
         }
       });
     },
     // 改变文字样式
     setFontFamily(val) {
-      let selected = this.canvas.getActiveObject();
-      // console.log('selected',selected)
-      if (selected) {
-        selected.set("fontFamily", val);
+      if (this.selectedObject) {
+        this.selectedObject.set("fontFamily", val);
         this.canvas.renderAll();
       }
     },
     // 改变文字大小
     setTextSize(val) {
       this.size = val;
-      let selected = this.canvas.getActiveObject();
-      if (selected) {
-        selected.set("fontSize", val);
+      if (this.selectedObject) {
+        this.selectedObject.set("fontSize", val);
         this.canvas.renderAll();
       }
     },
     // 改变文字对齐方式
-    reline() {
+    setTextAlign(align) {
       // todo
+      if (this.selectedObject) {
+        this.selectedObject.set("textAlign", align);
+      }
+      this.canvas.renderAll();
     },
     // 清空画布
     clear() {
@@ -689,6 +890,7 @@ export default {
     },
     // 获取图像缩放比例,img的类型为fabric.Image()
     getScale(img) {
+      console.log(img);
       let IH = img.getOriginalSize().height;
       let IW = img.getOriginalSize().width;
       let CH = this.canvas.getHeight();
@@ -698,6 +900,38 @@ export default {
       let scaleY = IH / (0.5 * CH) > 1 ? (0.5 * CH) / IH : 1;
       let scale = scaleX > scaleY ? scaleY : scaleX;
       return scale;
+    },
+    // H5端
+    setOnCanvas(e) {
+      let target = e.target;
+      console.log(e);
+      if (target.localName === "img") {
+        let img = new fabric.Image(target);
+        let scale = this.getScale(img);
+        img.scale(scale);
+        this.canvas.add(img);
+        img.left = (this.canvas.width - img.width * img.scaleX) * 0.5;
+        img.top = (this.canvas.height - img.height * img.scaleY) * 0.5;
+        this.canvas.setActiveObject(img);
+        this.canvas.renderAll();
+        let item = {};
+        item.object = img;
+        item.src = img.toDataURL();
+        item.show = true;
+        this.layer.push(item);
+      } else if (target.localName === "a") {
+        let text = new fabric.Textbox(target.innerText);
+        text.left = (this.canvas.width - text.width) * 0.5;
+        text.top = (this.canvas.height - text.height) * 0.5;
+        this.canvas.add(text);
+        this.canvas.setActiveObject(text);
+        this.canvas.renderAll();
+        let item = {};
+        item.object = text;
+        item.src = text.toDataURL();
+        item.show = true;
+        this.layer.push(item);
+      }
     }
   }
 };
@@ -711,6 +945,7 @@ export default {
 }
 .nav {
   height: 1.7rem;
+  max-height: 54px;
   background-color: cyan;
   display: flex;
   justify-content: space-between;
@@ -788,7 +1023,6 @@ export default {
     flex: 1;
     position: relative;
     background-color: crimson;
-
     .canvas-container {
       position: absolute;
       left: 50%;
@@ -806,6 +1040,7 @@ export default {
         // height: 100%; // 为什么设置100%反而没有100%了
         background-color: cadetblue;
         text-align: center;
+        overflow: auto;
         i,
         svg {
           display: inline-block;
@@ -855,7 +1090,6 @@ export default {
             }
           }
         }
-
         .color {
           width: 40px;
           height: 50px;
@@ -864,11 +1098,6 @@ export default {
       }
       #canvas {
         background-color: darkgreen;
-      }
-      #cover {
-        position: absolute;
-        left: 40px;
-        z-index: 88;
       }
     }
   }
@@ -886,5 +1115,12 @@ export default {
   &:hover {
     outline: tomato solid 1px;
   }
+}
+.layer {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  border-bottom: solid 1px #eeeeee;
+  padding: 5px;
 }
 </style>
