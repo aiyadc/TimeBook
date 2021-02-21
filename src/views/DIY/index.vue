@@ -173,6 +173,25 @@
                     p-id="854"
                   ></path></svg></el-tooltip
               ><br />
+              <el-tooltip content="平铺" effect="dark">
+                <svg
+                  t="1613870236722"
+                  class="icon"
+                  viewBox="0 0 1024 1024"
+                  version="1.1"
+                  xmlns="http://www.w3.org/2000/svg"
+                  p-id="2125"
+                  width="14"
+                  height="14"
+                  @click="maxmize"
+                >
+                  <path
+                    d="M597.34016 554.33216q17.67424 0 30.33088 12.67712l268.32896 268.32896 0-195.66592q0-17.67424 12.4928-30.16704t30.16704-12.4928 30.16704 12.4928 12.4928 30.16704l0 298.65984q0 17.67424-12.67712 30.33088t-30.33088 12.67712l-298.65984 0q-17.67424 0-30.16704-12.4928t-12.4928-30.16704 12.4928-30.16704 30.16704-12.4928l195.66592 0-268.32896-268.32896q-12.32896-13.0048-12.32896-30.33088 0-17.67424 12.4928-30.33088t30.16704-12.67712zM85.34016 42.65984l298.65984 0q17.67424 0 30.16704 12.4928t12.4928 30.16704-12.4928 30.16704-30.16704 12.4928l-195.66592 0 268.32896 268.00128q12.67712 12.67712 12.67712 30.33088t-12.67712 30.16704-30.33088 12.4928q-16.9984 0-30.33088-12.32896l-268.00128-268.32896 0 195.66592q0 17.67424-12.4928 30.16704t-30.16704 12.4928-30.16704-12.4928-12.4928-30.16704l0-298.65984q0-17.67424 12.4928-30.16704t30.16704-12.4928z"
+                    p-id="2126"
+                  ></path>
+                </svg>
+              </el-tooltip>
+              <br />
               <el-tooltip content="复制" effect="dark" placement="left"
                 ><i
                   class="el-icon-document-copy"
@@ -350,6 +369,7 @@ export default {
         source: null,
         iscroping: false
       },
+      lastPoint: {},
       // 被拖拽的元素
       draged: {
         sourceOffsetX: 0,
@@ -408,6 +428,7 @@ export default {
     this.canvas = new fabric.Canvas("canvas", {
       width: canvasW,
       height: canvasH,
+      backgroundColor: "#fff",
       enableRetinaScaling: true,
       fireRightClick: true,
       selection: false,
@@ -431,6 +452,8 @@ export default {
       undoButton: document.getElementById("undo"),
       redoButton: document.getElementById("redo")
     };
+    // 初始化画布之后保存状态，奠定基态，此时不可撤销
+    this.updateCanvasState();
     this.canvas.on("drop", e => {
       console.log(e);
       let offsetX = e.e.offsetX;
@@ -446,6 +469,7 @@ export default {
           img.scale(scale); // 将图像缩小至同等比例
           // console.log("img", img);
           this.canvas.add(img);
+          this.canvas.setActiveObject(img);
           // 将图层中的对象变成照片展示到图层面板上
           let item = {};
           item.object = img;
@@ -459,22 +483,21 @@ export default {
             top: offsetY,
             fill: "aqua"
           });
-          console.log(textbox);
           this.canvas.add(textbox);
+          this.canvas.setActiveObject(textbox);
           let item = {};
           item.object = textbox;
           item.src = textbox.toDataURL();
           item.show = true;
           this.layer.push(item);
         }
-        console.log(this.layer);
         this.canvas.renderAll();
       }
     });
     this.canvas.on("object:modified", () => {
+      console.log("modified");
       this.updateCanvasState();
     });
-
     this.canvas.on("object:added", () => {
       this.updateCanvasState();
     });
@@ -676,6 +699,8 @@ export default {
     },
     // 撤销
     undo() {
+      console.log(this.canvas.isEmpty());
+      if (this.canvas.isEmpty()) return;
       if (this._config.undoFinishedStatus) {
         if (this._config.currentStateIndex == -1) {
           this._config.undoStatus = false;
@@ -814,40 +839,107 @@ export default {
     // 在选中元素上生成一个矩形框框
     startCroping() {
       let s = this.selectedObject;
-      this.cropInfo.source = s; // 存储需要裁切的元素
-      let rect = new fabric.Rect({
-        fill: "rgba(0,0,0,0)",
-        originX: "left",
-        originY: "top",
-        stroke: "#ccc",
-        strokWidth: 5,
-        left: s.left,
-        top: s.top,
-        angle: s.angle,
-        width: s.width * s.scaleX,
-        height: s.height * s.scaleY,
-        borderColor: "#cca",
-        cornerColor: "green",
-        hasRotatingPoint: false,
-        lockRotation: true,
-        objectCaching: false,
-        selectable: true
+      let centerPoint = s.getCenterPoint();
+      let clone;
+      console.log("centerPoint", centerPoint);
+      // s.centerScaling = true
+      // let clone = new fabric.Rect({
+      //   left: s.left,
+      //   top: s.top,
+      //   width: s.width * s.scaleX * 0.8,
+      //   height: s.height * s.scaleY * 0.8,
+      //   originY: 'center',
+      //   angle: s.angle,
+      //   fill: "rgba(0,0,0,0.2)",
+      // });
+      s.clone(clone => {
+        clone.set({
+          centeredScaling: true,
+          originX: "center",
+          originY: "center"
+          // visible: false
+        });
+        this.canvas.add(clone);
+        // this.canvas.renderAll()
+        clone.scale(clone.scaleX * 0.85);
+        clone.left = centerPoint.x;
+        clone.top = centerPoint.y;
+        this.cropInfo.source = s; // 存储需要裁切的元素
+        let rect = new fabric.Rect({
+          fill: "rgba(0,0,0,0)",
+          originX: "center",
+          originY: "center",
+          stroke: "#ccc",
+          strokWidth: 5,
+          // originX: clone.originX,
+          // originY: clone.originY,
+          left: clone.left,
+          top: clone.top,
+          angle: clone.angle,
+          width: clone.width * clone.scaleX,
+          height: clone.height * clone.scaleY,
+          borderColor: "#cca",
+          cornerColor: "green",
+          hasRotatingPoint: false,
+          objectCaching: false,
+          lockRotation: true,
+          selectable: true
+        });
+        this.canvas.add(rect);
+        this.canvas.setActiveObject(rect);
+        this.cropInfo.iscroping = true;
+        this.canvas.on("object:moving", () => {
+          // console.log("clone", clone);
+          let o = rect.oCoords;
+          // this.canvas.discardActiveObject('object:moving')
+          let tl = new fabric.Point(o.tl.x, o.tl.y);
+          if (!s.containsPoint(tl)) {
+            // rect.hasControls = false
+            rect.lockMovementX = true;
+            rect.lockMovementY = true;
+            if (this.lastPoint.left) {
+              rect.left = this.lastPoint.left;
+              rect.top = this.lastPoint.top;
+            }
+            this.canvas.renderAll();
+          } else {
+            // rect.lockMovementX = false;
+            // rect.lockMovementY = false;
+            this.lastPoint.left = clone.left;
+            this.lastPoint.top = clone.top;
+            this.canvas.renderAll();
+          }
+        });
       });
-      console.log("rect", rect);
-      this.canvas.add(rect);
-      this.canvas.setActiveObject(rect);
-      this.cropInfo.iscroping = true;
     },
     // 开始裁剪
     cropSelected() {
-      // todo
-      // let source = this.cropInfo.source;
-      // let rect = this.selectedObject;
-      // let offsetLeft = rect.left - source.left < 0 ? 0 : rect.left - source.left;
-      // let offsetTop = rect.top - source.top < 0 ? 0 : rect.top - source.top;
-      //       if(this.cropInfo.iscroping){
-      // this.cropInfo.offsetLeft = Math.abs()
-      //       }
+      todo;
+      let source = this.cropInfo.source;
+      let rect = this.selectedObject;
+      let offsetLeft =
+        rect.left - source.left < 0 ? 0 : rect.left - source.left;
+      let offsetTop = rect.top - source.top < 0 ? 0 : rect.top - source.top;
+      if (this.cropInfo.iscroping) {
+        this.cropInfo.offsetLeft = Math.abs();
+      }
+    },
+    // 将图片最大化
+    maxmize() {
+      if (this.selectedObject) {
+        let s = this.selectedObject;
+        let width = s.width;
+        let height = s.height;
+        let CWidth = this.canvas.width;
+        let CHeight = this.canvas.height;
+        let scaleX = CWidth / width;
+        let scaleY = CHeight / height;
+        s.set({ scaleX: scaleX, scaleY: scaleY });
+        s.left = (CWidth - width * s.scaleX) * 0.5;
+        s.top = (CHeight - height * s.scaleY) * 0.5;
+        this.canvas.fire("object:modified");
+        this.canvas.renderAll();
+      }
     },
     // 改变文字颜色的模式：文字颜色/文字背景颜色
     setColorFlag(val) {
@@ -1036,7 +1128,8 @@ export default {
       }
       display: flex;
       .tool {
-        width: 40px;
+        width: 45px;
+        padding: 0 5px 0 0;
         // height: 100%; // 为什么设置100%反而没有100%了
         background-color: cadetblue;
         text-align: center;
@@ -1097,7 +1190,7 @@ export default {
         }
       }
       #canvas {
-        background-color: darkgreen;
+        // background-color: #fff;
       }
     }
   }
