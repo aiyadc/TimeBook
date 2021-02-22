@@ -414,7 +414,7 @@ export default {
         currentStateIndex: 0,
         canvasState: []
       },
-      currentPage:0,
+      currentPage: 0
     };
   },
 
@@ -470,16 +470,19 @@ export default {
     });
     // 拉取用户的相册本
     if (this.myAlbum.data.length === 0) {
-      let json = this.canvas.toJSON()
-      let cvs = new fabric.Canvas('cvs')
+      let json = this.canvas.toJSON();
+      // let cvs = new fabric.Canvas('cvs')
       for (let i = 0; i < this.myAlbum.num; i++) {
         let page = {};
         page.page = i;
         page.canvas = json;
         // 图片展示
-        cvs.loadFromJSON(page.canvas,()=>{
-          page.src = cvs.toDataURL();
-        })
+        // cvs.loadFromJSON(page.canvas,()=>{
+        //   page.src = cvs.toDataURL();
+        // })
+        this.canvas.loadFromJSON(json, function() {});
+        console.log("canvas:", this.canvas);
+        page.src = this.canvas.toDataURL();
         this.myAlbum.data[i] = page;
       }
       this.currentPage = 0;
@@ -737,6 +740,31 @@ export default {
           this._config.redoButton.disabled = "disabled";
         }
       }
+      // this.canvas.renderAll();
+      // console.log('update',this.canvas)
+      // this.$set(this.myAlbum.data[this.currentPage],'src',this.canvas.toDataURL({
+      //   format: "png",
+      //   quality: 0.8
+      // }))
+      // this.myAlbum.data[this.currentPage] = Object.assign(
+      //   {},
+      //   this.myAlbum.data[this.currentPage],
+      //   {
+      //     src: this.canvas.toDataURL({
+      //       format: "png",
+      //       quality: 0.8
+      //     })
+      //   }
+      // );
+      let page = this.myAlbum.data[this.currentPage];
+      // console.log("canvas", this.canvas);
+      page.canvas = this.canvas.toJSON();
+      page.src = this.canvas.toDataURL({
+        format: "png",
+        quality: 0.8
+      });
+      // if(!page.src == src) page.src = src
+      // console.log(page.src == src)
     },
     // 撤销
     undo() {
@@ -1051,8 +1079,8 @@ export default {
     },
     // 切换页面
     togglePage(ctx) {
-      console.log(this.currentPage,ctx.page)
-      if(this.currentPage === ctx.page) return ;
+      console.log(this.currentPage, ctx.page);
+      if (this.currentPage === ctx.page) return;
       this.myAlbum.data[this.currentPage].canvas = this.canvas.toJSON();
       let canvasJSON = ctx.canvas;
       console.log("切换页面,now the canvas is:", canvasJSON);
@@ -1061,7 +1089,7 @@ export default {
         canvasJSON,
         this.canvas.renderAll.bind(this.canvas)
       );
-      this.currentPage = ctx.page
+      this.currentPage = ctx.page;
       // this.canvas.renderAll();
     },
     // H5端
