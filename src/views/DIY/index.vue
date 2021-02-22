@@ -8,7 +8,8 @@
           <i class="el-icon-share"></i><span>分享</span>
         </el-button>
         <el-button type="default" size="small" circle>
-          <i class="el-icon-view"></i><span>预览</span></el-button
+          <i class="el-icon-view" @click="cropSelected"></i
+          ><span>预览</span></el-button
         >
         <el-button type="default" size="small" circle>
           <i class="el-icon-sort"></i><span>排序</span></el-button
@@ -66,8 +67,8 @@
                 </div>
               </div>
             </el-tab-pane>
-            <el-tab-pane name="album" label="相册" v-if="service === 'h5'"
-              >我的相册
+            <el-tab-pane name="album" label="相册" v-if="service === 'h5'">
+              <div class="my-album"></div>
             </el-tab-pane>
           </el-tabs>
         </div>
@@ -76,8 +77,9 @@
         <div class="canvas-container">
           <div class="tool">
             <el-tooltip content="图层" effect="dark" placement="left">
-              <el-popover placement="bottom">
+              <el-popover placement="bottom" trigger="click">
                 <i slot="reference" class="el-icon-s-order"></i>
+                <!-- <el-button type="primary" slot='reference'>图层</el-button> -->
                 <div>
                   <div class="layer" v-for="(el, i) in layer" :key="i">
                     <i
@@ -345,7 +347,17 @@
         </div>
       </div>
 
-      <div class="my-album content-right">相册</div>
+      <div class="my-album content-right pc">
+        <div class="page" v-for="(ctx, i) in myAlbum.data" :key="i">
+          <img
+            :src="ctx.src"
+            alt=""
+            height="230"
+            width="155"
+            @click="togglePage(ctx)"
+          />
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -360,6 +372,13 @@ export default {
       canvas: null,
       canvasInfo: {},
       canvasElements: [],
+      myAlbum: {
+        id: 0,
+        num: 10,
+        name: "tony",
+        data: [],
+        account: 123456
+      }, // 用户的设计数据
       layer: [], // 图层
       showLayer: true,
       dragObject: null,
@@ -367,7 +386,8 @@ export default {
       // 截取图片
       cropInfo: {
         source: null,
-        iscroping: false
+        iscroping: false,
+        scope: null
       },
       lastPoint: {},
       // 被拖拽的元素
@@ -388,7 +408,13 @@ export default {
       textColorFlag: "textColor", // textColor or textBGColor
       textColor: "rgba(1, 1, 1, 1)",
       fontFamily: "",
-      _config: {}
+      _config: {
+        undoStatus: false,
+        redoStatus: false,
+        currentStateIndex: 0,
+        canvasState: []
+      },
+      currentPage:0,
     };
   },
 
@@ -442,6 +468,24 @@ export default {
       uniformScaling: false,
       uniScaleKey: "ctrlKey"
     });
+    // 拉取用户的相册本
+    if (this.myAlbum.data.length === 0) {
+      let json = this.canvas.toJSON()
+      let cvs = new fabric.Canvas('cvs')
+      for (let i = 0; i < this.myAlbum.num; i++) {
+        let page = {};
+        page.page = i;
+        page.canvas = json;
+        // 图片展示
+        cvs.loadFromJSON(page.canvas,()=>{
+          page.src = cvs.toDataURL();
+        })
+        this.myAlbum.data[i] = page;
+      }
+      this.currentPage = 0;
+    } else {
+      // 加载拉取的数据
+    }
     this._config = {
       canvasState: [],
       currentStateIndex: -1,
@@ -452,10 +496,9 @@ export default {
       undoButton: document.getElementById("undo"),
       redoButton: document.getElementById("redo")
     };
-    // 初始化画布之后保存状态，奠定基态，此时不可撤销
-    this.updateCanvasState();
+    // console.log("this.canvas", this.canvas.on);
     this.canvas.on("drop", e => {
-      console.log(e);
+      console.log("drop:", e);
       let offsetX = e.e.offsetX;
       let offsetY = e.e.offsetY;
       console.log(this.dragObject, offsetX, offsetY);
@@ -495,7 +538,6 @@ export default {
       }
     });
     this.canvas.on("object:modified", () => {
-      console.log("modified");
       this.updateCanvasState();
     });
     this.canvas.on("object:added", () => {
@@ -506,7 +548,7 @@ export default {
     });
     this.canvas.on("selection:created", e => {
       this.selectedObject = e.target;
-      // console.log('selected:',e)
+      console.log("selected:", e);
     });
     this.canvas.on("selection:cleared", e => {
       this.selectedObject = null;
@@ -629,7 +671,7 @@ export default {
   methods: {
     // 拖动其他地方的图像到canvas
     dragstart(e) {
-      console.log(e);
+      // console.log(e);
       this.draged.sourceOffsetX = e.offsetX;
       this.draged.sourceOffsetY = e.offsetY;
       let obj = e.target;
@@ -645,9 +687,8 @@ export default {
     },
     // 隐藏或展示画布中的元素
     updateLayer(el) {
-      // todo
       el.show = !el.show;
-      console.log(el.show);
+      // console.log(el.show);
       if (el.show) el.object.set("visible", true);
       else el.object.set("visible", false);
       this.canvas.renderAll();
@@ -839,90 +880,102 @@ export default {
     // 在选中元素上生成一个矩形框框
     startCroping() {
       let s = this.selectedObject;
-      let centerPoint = s.getCenterPoint();
-      let clone;
-      console.log("centerPoint", centerPoint);
-      // s.centerScaling = true
-      // let clone = new fabric.Rect({
-      //   left: s.left,
-      //   top: s.top,
-      //   width: s.width * s.scaleX * 0.8,
-      //   height: s.height * s.scaleY * 0.8,
-      //   originY: 'center',
-      //   angle: s.angle,
-      //   fill: "rgba(0,0,0,0.2)",
-      // });
-      s.clone(clone => {
-        clone.set({
-          centeredScaling: true,
-          originX: "center",
-          originY: "center"
-          // visible: false
-        });
-        this.canvas.add(clone);
-        // this.canvas.renderAll()
-        clone.scale(clone.scaleX * 0.85);
-        clone.left = centerPoint.x;
-        clone.top = centerPoint.y;
-        this.cropInfo.source = s; // 存储需要裁切的元素
-        let rect = new fabric.Rect({
-          fill: "rgba(0,0,0,0)",
-          originX: "center",
+      if (s) {
+        this.cropInfo.source = s;
+        let centerPoint = s.getCenterPoint();
+        // console.log("centerPoint", centerPoint);
+        s.centerScaling = true;
+        let clone = new fabric.Rect({
+          left: s.left,
+          top: s.top,
+          width: s.width * s.scaleX * 0.8,
+          height: s.height * s.scaleY * 0.8,
           originY: "center",
-          stroke: "#ccc",
-          strokWidth: 5,
-          // originX: clone.originX,
-          // originY: clone.originY,
-          left: clone.left,
-          top: clone.top,
-          angle: clone.angle,
-          width: clone.width * clone.scaleX,
-          height: clone.height * clone.scaleY,
-          borderColor: "#cca",
-          cornerColor: "green",
-          hasRotatingPoint: false,
-          objectCaching: false,
-          lockRotation: true,
-          selectable: true
+          angle: s.angle,
+          fill: "rgba(0,0,0,0.2)"
         });
-        this.canvas.add(rect);
-        this.canvas.setActiveObject(rect);
-        this.cropInfo.iscroping = true;
-        this.canvas.on("object:moving", () => {
-          // console.log("clone", clone);
-          let o = rect.oCoords;
-          // this.canvas.discardActiveObject('object:moving')
-          let tl = new fabric.Point(o.tl.x, o.tl.y);
-          if (!s.containsPoint(tl)) {
-            // rect.hasControls = false
-            rect.lockMovementX = true;
-            rect.lockMovementY = true;
-            if (this.lastPoint.left) {
-              rect.left = this.lastPoint.left;
-              rect.top = this.lastPoint.top;
+        s.clone(clone => {
+          clone.set({
+            centeredScaling: true,
+            originX: "center",
+            originY: "center",
+            visible: false
+          });
+          this.cropInfo.clone = clone;
+          this.canvas.add(clone);
+          // this.canvas.renderAll()
+          clone.scale(clone.scaleX * 0.85);
+          clone.left = centerPoint.x;
+          clone.top = centerPoint.y;
+          this.cropInfo.source = s; // 存储需要裁切的元素
+          let rect = new fabric.Rect({
+            fill: "rgba(0,0,0,0)",
+            originX: "left",
+            originY: "top",
+            stroke: "#ccc",
+            strokWidth: 5,
+            // originX: clone.originX,
+            // originY: clone.originY,
+            left: s.left,
+            top: s.top,
+            angle: s.angle,
+            width: s.width,
+            scaleX: s.scaleX,
+            scaleY: s.scaleY,
+            height: s.height,
+            borderColor: "#cca",
+            cornerColor: "green",
+            hasRotatingPoint: false,
+            objectCaching: false,
+            lockRotation: true,
+            selectable: true
+          });
+          this.canvas.add(rect);
+          this.canvas.setActiveObject(rect);
+          this.cropInfo.iscroping = true;
+          this.canvas.on("mouse:dblclick", () => {
+            this.cropSelected();
+          });
+          this.cropInfo.scope = rect;
+          this.canvas.on("object:moving", () => {
+            // console.log("clone", clone);
+            let o = rect.oCoords;
+            // this.canvas.discardActiveObject('object:moving')
+            let tl = new fabric.Point(o.tl.x, o.tl.y);
+            if (!s.containsPoint(tl)) {
+              // rect.hasControls = false
+              // rect.lockMovementX = true;
+              // rect.lockMovementY = true;
+              if (this.lastPoint.left) {
+                rect.left = this.lastPoint.left;
+                rect.top = this.lastPoint.top;
+              }
+              this.canvas.renderAll();
+            } else {
+              // rect.lockMovementX = false;
+              // rect.lockMovementY = false;
+              // this.lastPoint.left = clone.left;
+              // this.lastPoint.top = clone.top;
+              // this.canvas.renderAll();
             }
-            this.canvas.renderAll();
-          } else {
-            // rect.lockMovementX = false;
-            // rect.lockMovementY = false;
-            this.lastPoint.left = clone.left;
-            this.lastPoint.top = clone.top;
-            this.canvas.renderAll();
-          }
+          });
         });
-      });
+      }
     },
     // 开始裁剪
     cropSelected() {
-      todo;
-      let source = this.cropInfo.source;
-      let rect = this.selectedObject;
-      let offsetLeft =
-        rect.left - source.left < 0 ? 0 : rect.left - source.left;
-      let offsetTop = rect.top - source.top < 0 ? 0 : rect.top - source.top;
-      if (this.cropInfo.iscroping) {
-        this.cropInfo.offsetLeft = Math.abs();
-      }
+      // tofix;
+      // console.log("开始裁剪");
+      // console.log(this.cropInfo.source.oCoords, this.cropInfo.scope.oCoords);
+      let s = this.cropInfo.scope;
+      let so = this.cropInfo.source;
+      // s.scaleX = 1;
+      // s.scaleY = 1;
+      // so.scaleX = 1;
+      // so.scaleY = 1;
+      // console.log();
+      this.cropInfo.source.clipPath = this.cropInfo.scope;
+      this.canvas.renderAll();
     },
     // 将图片最大化
     maxmize() {
@@ -979,10 +1032,13 @@ export default {
     // 清空画布
     clear() {
       this.canvas.clear();
+      this.canvas.set("backgroundColor", "#fff");
+      this.updateCanvasState();
+      this.canvas.renderAll();
     },
     // 获取图像缩放比例,img的类型为fabric.Image()
     getScale(img) {
-      console.log(img);
+      // console.log(img);
       let IH = img.getOriginalSize().height;
       let IW = img.getOriginalSize().width;
       let CH = this.canvas.getHeight();
@@ -993,10 +1049,25 @@ export default {
       let scale = scaleX > scaleY ? scaleY : scaleX;
       return scale;
     },
+    // 切换页面
+    togglePage(ctx) {
+      console.log(this.currentPage,ctx.page)
+      if(this.currentPage === ctx.page) return ;
+      this.myAlbum.data[this.currentPage].canvas = this.canvas.toJSON();
+      let canvasJSON = ctx.canvas;
+      console.log("切换页面,now the canvas is:", canvasJSON);
+      // this.updateCanvasState();
+      this.canvas.loadFromJSON(
+        canvasJSON,
+        this.canvas.renderAll.bind(this.canvas)
+      );
+      this.currentPage = ctx.page
+      // this.canvas.renderAll();
+    },
     // H5端
     setOnCanvas(e) {
       let target = e.target;
-      console.log(e);
+      // console.log(e);
       if (target.localName === "img") {
         let img = new fabric.Image(target);
         let scale = this.getScale(img);
@@ -1052,7 +1123,8 @@ export default {
   }
 }
 .content {
-  flex: 1;
+  height: calc(100% - 1.7rem);
+  max-height: calc(100% - 54px);
   display: flex;
   @media screen and (max-width: 700px) {
     flex-direction: column-reverse;
@@ -1162,11 +1234,6 @@ export default {
             line-height: 24px;
           }
         }
-        span {
-          @media screen and (max-width: 700px) {
-            display: none;
-          }
-        }
         & >>> .el-color-picker {
           // width: fit-content!important;
           display: inline-block;
@@ -1194,12 +1261,24 @@ export default {
       }
     }
   }
-
-  .my-album {
-    width: 6rem;
+  .content-right {
+    overflow: auto;
+    width: 175px;
+    padding: 10px;
     background-color: darkgoldenrod;
-    @media screen and (max-width: 700px) {
-      display: none;
+  }
+  .my-album {
+    .page {
+      height: 250px;
+      img {
+        cursor: pointer;
+        &:hover,
+        &:active,
+        &:focus,
+        &:visited {
+          outline: cyan 1px solid;
+        }
+      }
     }
   }
 }
