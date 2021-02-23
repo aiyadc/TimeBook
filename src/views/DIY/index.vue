@@ -68,7 +68,17 @@
               </div>
             </el-tab-pane>
             <el-tab-pane name="album" label="相册" v-if="service === 'h5'">
-              <div class="my-album"></div>
+              <div class="my-album">
+                <div class="page" v-for="(ctx, i) in myAlbum.data" :key="i">
+                  <img
+                    :src="ctx.src"
+                    alt=""
+                    height="70"
+                    width="49"
+                    @click="togglePage(ctx)"
+                  />
+                </div>
+              </div>
             </el-tab-pane>
           </el-tabs>
         </div>
@@ -365,13 +375,13 @@
 <script>
 import Fastclick from "fastclick";
 import { fabric } from "fabric";
-import canvas from "@/utils/canvas.js";
 export default {
   data() {
     return {
       canvas: null,
       canvasInfo: {},
       canvasElements: [],
+      album: [],
       myAlbum: {
         id: 0,
         num: 10,
@@ -428,6 +438,12 @@ export default {
   watch: {
     plateform(val) {
       location.reload();
+    },
+    myAlbum: {
+      handler(val) {
+        console.log("myAlbum", val);
+      },
+      deep: true
     }
   },
   created() {
@@ -481,7 +497,6 @@ export default {
         //   page.src = cvs.toDataURL();
         // })
         this.canvas.loadFromJSON(json, function() {});
-        console.log("canvas:", this.canvas);
         page.src = this.canvas.toDataURL();
         this.myAlbum.data[i] = page;
       }
@@ -501,10 +516,10 @@ export default {
     };
     // console.log("this.canvas", this.canvas.on);
     this.canvas.on("drop", e => {
-      console.log("drop:", e);
+      // console.log("drop:", e);
       let offsetX = e.e.offsetX;
       let offsetY = e.e.offsetY;
-      console.log(this.dragObject, offsetX, offsetY);
+      // console.log(this.dragObject, offsetX, offsetY);
       if (this.dragObject && offsetX > 0 && offsetY > 0) {
         if (this.dragObject.localName === "img") {
           let img = new fabric.Image(this.dragObject, {
@@ -551,7 +566,7 @@ export default {
     });
     this.canvas.on("selection:created", e => {
       this.selectedObject = e.target;
-      console.log("selected:", e);
+      // console.log("selected:", e);
     });
     this.canvas.on("selection:cleared", e => {
       this.selectedObject = null;
@@ -732,6 +747,7 @@ export default {
         }
         // 无论什么情况，只要做了改变，那么当前指针就会跑到最前面
         this._config.currentStateIndex = this._config.canvasState.length - 1;
+
         if (
           this._config.currentStateIndex ==
             this._config.canvasState.length - 1 &&
@@ -740,31 +756,11 @@ export default {
           this._config.redoButton.disabled = "disabled";
         }
       }
-      // this.canvas.renderAll();
-      // console.log('update',this.canvas)
-      // this.$set(this.myAlbum.data[this.currentPage],'src',this.canvas.toDataURL({
-      //   format: "png",
-      //   quality: 0.8
-      // }))
-      // this.myAlbum.data[this.currentPage] = Object.assign(
-      //   {},
-      //   this.myAlbum.data[this.currentPage],
-      //   {
-      //     src: this.canvas.toDataURL({
-      //       format: "png",
-      //       quality: 0.8
-      //     })
-      //   }
-      // );
       let page = this.myAlbum.data[this.currentPage];
-      // console.log("canvas", this.canvas);
       page.canvas = this.canvas.toJSON();
-      page.src = this.canvas.toDataURL({
-        format: "png",
-        quality: 0.8
-      });
-      // if(!page.src == src) page.src = src
-      // console.log(page.src == src)
+      page.src = this.canvas.toDataURL();
+      page.page = this.currentPage;
+      this.myAlbum.data.splice(this.currentPage, 1, page);
     },
     // 撤销
     undo() {
@@ -1308,6 +1304,18 @@ export default {
         }
       }
     }
+    @media screen and (max-width: 700px) {
+      height: 100%;
+      width: calc(100%);
+      overflow: auto;
+      .page {
+        display: inline-block;
+        height: calc(100% - 10px);
+        width: 80px;
+        background-color: #eeeeee;
+        
+      }
+    }
   }
 }
 .icon {
@@ -1322,5 +1330,10 @@ export default {
   justify-content: space-around;
   border-bottom: solid 1px #eeeeee;
   padding: 5px;
+}
+.pc {
+  @media screen and (max-width: 700px) {
+    display: none;
+  }
 }
 </style>
