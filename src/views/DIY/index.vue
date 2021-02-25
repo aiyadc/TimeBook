@@ -393,6 +393,13 @@ export default {
       showLayer: true,
       dragObject: null,
       selectedObject: null,
+      selectedOCoods: {
+        dwX: 0,
+        dwY: 0,
+        upX: 0,
+        upY: 0
+      },
+      iscroping: 0,
       // 截取图片
       cropInfo: {
         source: null,
@@ -438,12 +445,6 @@ export default {
   watch: {
     plateform(val) {
       location.reload();
-    },
-    myAlbum: {
-      handler(val) {
-        console.log("myAlbum", val);
-      },
-      deep: true
     }
   },
   created() {
@@ -555,7 +556,8 @@ export default {
         this.canvas.renderAll();
       }
     });
-    this.canvas.on("object:modified", () => {
+    this.canvas.on("object:modified", e => {
+      console.log(e.target);
       this.updateCanvasState();
     });
     this.canvas.on("object:added", () => {
@@ -566,10 +568,46 @@ export default {
     });
     this.canvas.on("selection:created", e => {
       this.selectedObject = e.target;
-      // console.log("selected:", e);
     });
     this.canvas.on("selection:cleared", e => {
       this.selectedObject = null;
+    });
+    this.canvas.on("mouse:down", e => {
+      if (this.iscroping) {
+        let p = e.absolutePointer;
+        this.selectedOCoods.dwX = p.x;
+        this.selectedOCoods.dwY = p.y;
+      }
+    });
+    this.canvas.on("mouse:up", e => {
+      // 优化，点击裁剪时有蒙版出现，然后所有元素不可选中，鼠标up的时候生成可调节框框。
+      if (this.iscroping) {
+        let p = e.absolutePointer;
+        let oCoods = this.selectedOCoods;
+        this.selectedOCoods.upX = p.x;
+        this.selectedOCoods.upY = p.y;
+        let croped = new fabric.Image().setSrc(
+          this.canvas.toDataURL({
+            left: oCoods.dwX,
+            top: oCoods.dwY,
+            width: oCoods.upX - oCoods.dwX,
+            height: oCoods.upY - oCoods.dwY
+          })
+        );
+        this.canvas.add(croped);
+        croped.set({
+          selectable: true,
+          left: oCoods.dwX+20<this.canvasInfo.width ? oCoods.dwX+20:oCoods.dwX-20,
+          top: oCoods.dwY+20<this.canvasInfo.height ? oCoods.dwY+20:oCoods.dwY-20,
+          width: oCoods.upX - oCoods.dwX,
+          height: (oCoods.upY = oCoods.dwX)
+        });
+        console.log(oCoods, "croped:", croped);
+        this.canvas.setActiveObject(croped);
+        this.canvas.renderAll();
+        this.updateCanvasState();
+        this.iscroping = 0;
+      }
     });
     this.predefineColors = [
       "#ff4500",
@@ -901,90 +939,97 @@ export default {
         });
       });
     },
+
+    // 尝试通过监听mouse:down:up来获取canvas的选中范围，然后克隆canvas该范围内的显示，再放到原来的canvas中去。
     // 在选中元素上生成一个矩形框框
+    // startCroping() {
+    //   let s = this.selectedObject;
+    //   if (s) {
+    //     this.cropInfo.source = s;
+    //     let centerPoint = s.getCenterPoint();
+    //     // console.log("centerPoint", centerPoint);
+    //     s.centerScaling = true;
+    //     let clone = new fabric.Rect({
+    //       left: s.left,
+    //       top: s.top,
+    //       width: s.width * s.scaleX * 0.8,
+    //       height: s.height * s.scaleY * 0.8,
+    //       originY: "center",
+    //       angle: s.angle,
+    //       fill: "rgba(0,0,0,0.2)"
+    //     });
+    //     s.clone(clone => {
+    //       clone.set({
+    //         centeredScaling: true,
+    //         originX: "center",
+    //         originY: "center",
+    //         visible: false
+    //       });
+    //       this.cropInfo.clone = clone;
+    //       this.canvas.add(clone);
+    //       // this.canvas.renderAll()
+    //       clone.scale(clone.scaleX * 0.85);
+    //       clone.left = centerPoint.x;
+    //       clone.top = centerPoint.y;
+    //       this.cropInfo.source = s; // 存储需要裁切的元素
+    //       let rect = new fabric.Rect({
+    //         fill: "rgba(0,0,0,0)",
+    //         originX: "left",
+    //         originY: "top",
+    //         stroke: "#ccc",
+    //         strokWidth: 5,
+    //         // originX: clone.originX,
+    //         // originY: clone.originY,
+    //         left: s.left,
+    //         top: s.top,
+    //         angle: s.angle,
+    //         width: s.width,
+    //         scaleX: s.scaleX,
+    //         scaleY: s.scaleY,
+    //         height: s.height,
+    //         borderColor: "#cca",
+    //         cornerColor: "green",
+    //         hasRotatingPoint: false,
+    //         objectCaching: false,
+    //         lockRotation: true,
+    //         selectable: true
+    //       });
+    //       this.canvas.add(rect);
+    //       this.canvas.setActiveObject(rect);
+    //       this.cropInfo.iscroping = true;
+    //       this.canvas.on("mouse:dblclick", () => {
+    //         this.cropSelected();
+    //       });
+    //       this.cropInfo.scope = rect;
+    //       this.canvas.on("object:moving", () => {
+    //         // console.log("clone", clone);
+    //         let o = rect.oCoords;
+    //         // this.canvas.discardActiveObject('object:moving')
+    //         let tl = new fabric.Point(o.tl.x, o.tl.y);
+    //         if (!s.containsPoint(tl)) {
+    //           // rect.hasControls = false
+    //           // rect.lockMovementX = true;
+    //           // rect.lockMovementY = true;
+    //           if (this.lastPoint.left) {
+    //             rect.left = this.lastPoint.left;
+    //             rect.top = this.lastPoint.top;
+    //             this.canvas.renderAll()
+    //           }
+    //         } else {
+    //           this.canvas.renderAll();
+    //           // rect.lockMovementX = false;
+    //           // rect.lockMovementY = false;
+    //           // this.lastPoint.left = clone.left;
+    //           // this.lastPoint.top = clone.top;
+    //           // this.canvas.renderAll();
+    //         }
+    //       });
+    //     });
+    //   }
+    // },
     startCroping() {
-      let s = this.selectedObject;
-      if (s) {
-        this.cropInfo.source = s;
-        let centerPoint = s.getCenterPoint();
-        // console.log("centerPoint", centerPoint);
-        s.centerScaling = true;
-        let clone = new fabric.Rect({
-          left: s.left,
-          top: s.top,
-          width: s.width * s.scaleX * 0.8,
-          height: s.height * s.scaleY * 0.8,
-          originY: "center",
-          angle: s.angle,
-          fill: "rgba(0,0,0,0.2)"
-        });
-        s.clone(clone => {
-          clone.set({
-            centeredScaling: true,
-            originX: "center",
-            originY: "center",
-            visible: false
-          });
-          this.cropInfo.clone = clone;
-          this.canvas.add(clone);
-          // this.canvas.renderAll()
-          clone.scale(clone.scaleX * 0.85);
-          clone.left = centerPoint.x;
-          clone.top = centerPoint.y;
-          this.cropInfo.source = s; // 存储需要裁切的元素
-          let rect = new fabric.Rect({
-            fill: "rgba(0,0,0,0)",
-            originX: "left",
-            originY: "top",
-            stroke: "#ccc",
-            strokWidth: 5,
-            // originX: clone.originX,
-            // originY: clone.originY,
-            left: s.left,
-            top: s.top,
-            angle: s.angle,
-            width: s.width,
-            scaleX: s.scaleX,
-            scaleY: s.scaleY,
-            height: s.height,
-            borderColor: "#cca",
-            cornerColor: "green",
-            hasRotatingPoint: false,
-            objectCaching: false,
-            lockRotation: true,
-            selectable: true
-          });
-          this.canvas.add(rect);
-          this.canvas.setActiveObject(rect);
-          this.cropInfo.iscroping = true;
-          this.canvas.on("mouse:dblclick", () => {
-            this.cropSelected();
-          });
-          this.cropInfo.scope = rect;
-          this.canvas.on("object:moving", () => {
-            // console.log("clone", clone);
-            let o = rect.oCoords;
-            // this.canvas.discardActiveObject('object:moving')
-            let tl = new fabric.Point(o.tl.x, o.tl.y);
-            if (!s.containsPoint(tl)) {
-              // rect.hasControls = false
-              // rect.lockMovementX = true;
-              // rect.lockMovementY = true;
-              if (this.lastPoint.left) {
-                rect.left = this.lastPoint.left;
-                rect.top = this.lastPoint.top;
-              }
-              this.canvas.renderAll();
-            } else {
-              // rect.lockMovementX = false;
-              // rect.lockMovementY = false;
-              // this.lastPoint.left = clone.left;
-              // this.lastPoint.top = clone.top;
-              // this.canvas.renderAll();
-            }
-          });
-        });
-      }
+      this.iscroping = 1;
+      this.canvas.discardActiveObject();
     },
     // 开始裁剪
     cropSelected() {
@@ -993,12 +1038,8 @@ export default {
       // console.log(this.cropInfo.source.oCoords, this.cropInfo.scope.oCoords);
       let s = this.cropInfo.scope;
       let so = this.cropInfo.source;
-      // s.scaleX = 1;
-      // s.scaleY = 1;
-      // so.scaleX = 1;
-      // so.scaleY = 1;
-      // console.log();
-      this.cropInfo.source.clipPath = this.cropInfo.scope;
+      // so.clipPath = this.cropInfo.scope;
+      console.log(this.canvas.getSelectionContext());
       this.canvas.renderAll();
     },
     // 将图片最大化
@@ -1075,7 +1116,7 @@ export default {
     },
     // 切换页面
     togglePage(ctx) {
-      console.log(this.currentPage, ctx.page);
+      // console.log(this.currentPage, ctx.page);
       if (this.currentPage === ctx.page) return;
       this.myAlbum.data[this.currentPage].canvas = this.canvas.toJSON();
       let canvasJSON = ctx.canvas;
@@ -1313,7 +1354,6 @@ export default {
         height: calc(100% - 10px);
         width: 80px;
         background-color: #eeeeee;
-        
       }
     }
   }
