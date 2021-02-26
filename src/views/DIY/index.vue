@@ -399,7 +399,7 @@ export default {
         upX: 0,
         upY: 0
       },
-      iscroping: 0,
+      iscroping: 0, // 0 未处于裁剪状态，1：处于裁剪阶段1，生成框框，监听dbclick， 2：处于裁剪阶段2,等待dbclick完成裁剪内容并添加到canvas中
       // 截取图片
       cropInfo: {
         source: null,
@@ -580,33 +580,63 @@ export default {
       }
     });
     this.canvas.on("mouse:up", e => {
-      // 优化，点击裁剪时有蒙版出现，然后所有元素不可选中，鼠标up的时候生成可调节框框。
-      if (this.iscroping) {
+      // 优化，点击裁剪时有蒙版出现，解决移动端如何确定裁剪问题
+      if (this.iscroping === 0) void 0;
+      if (this.iscroping === 1) {
         let p = e.absolutePointer;
         let oCoods = this.selectedOCoods;
-        this.selectedOCoods.upX = p.x;
-        this.selectedOCoods.upY = p.y;
-        let croped = new fabric.Image().setSrc(
-          this.canvas.toDataURL({
-            left: oCoods.dwX,
-            top: oCoods.dwY,
-            width: oCoods.upX - oCoods.dwX,
-            height: oCoods.upY - oCoods.dwY
-          })
-        );
-        this.canvas.add(croped);
-        croped.set({
-          selectable: true,
-          left: oCoods.dwX+20<this.canvasInfo.width ? oCoods.dwX+20:oCoods.dwX-20,
-          top: oCoods.dwY+20<this.canvasInfo.height ? oCoods.dwY+20:oCoods.dwY-20,
+        oCoods.upX = p.x;
+        oCoods.upY = p.y;
+        let rect = new fabric.Rect({
+          left: oCoods.dwX,
+          top: oCoods.dwY,
           width: oCoods.upX - oCoods.dwX,
-          height: (oCoods.upY = oCoods.dwX)
+          height: oCoods.upY - oCoods.dwY,
+          cornerColor:"#ec7259",
+          selectable: true,
+          lockRotation: true,
+          fill: "rgba(0,0,0,0)"
         });
-        console.log(oCoods, "croped:", croped);
-        this.canvas.setActiveObject(croped);
-        this.canvas.renderAll();
-        this.updateCanvasState();
-        this.iscroping = 0;
+        this.canvas.add(rect);
+        this.canvas.setActiveObject(rect);
+        this.canvas.defaultCursor = 'auto'
+        this.iscroping = 2;
+        this.canvas.on("mouse:dblclick", () => {
+          console.log("rect.aCoords", rect.aCoords);
+          oCoods.dwX = rect.aCoords.tl.x;
+          oCoods.dwY = rect.aCoords.tl.y;
+          oCoods.upX = rect.aCoords.br.x;
+          oCoods.upY = rect.aCoords.br.y;
+          let croped = new fabric.Image().setSrc(
+            this.canvas.toDataURL({
+              left: oCoods.dwX,
+              top: oCoods.dwY,
+              width: oCoods.upX - oCoods.dwX,
+              height: oCoods.upY - oCoods.dwY
+            })
+          );
+          this.canvas.add(croped);
+          this.canvas.remove(rect);
+          croped.set({
+            selectable: true,
+            left:
+              oCoods.dwX + 20 < this.canvasInfo.width
+                ? oCoods.dwX + 20
+                : oCoods.dwX - 20,
+            top:
+              oCoods.dwY + 20 < this.canvasInfo.height
+                ? oCoods.dwY + 20
+                : oCoods.dwY - 20,
+            width: oCoods.upX - oCoods.dwX,
+            height: (oCoods.upY = oCoods.dwX)
+          });
+          console.log(oCoods, "croped:", croped);
+          this.canvas.setActiveObject(croped);
+          this.updateCanvasState();
+          this.canvas.renderAll();
+
+          this.iscroping = 0;
+        });
       }
     });
     this.predefineColors = [
@@ -1028,7 +1058,10 @@ export default {
     //   }
     // },
     startCroping() {
+      // 设置进入裁剪模式
       this.iscroping = 1;
+      // 将鼠标样式变成裁剪样式
+      this.canvas.defaultCursor = 'crosshair'
       this.canvas.discardActiveObject();
     },
     // 开始裁剪
@@ -1375,5 +1408,9 @@ export default {
   @media screen and (max-width: 700px) {
     display: none;
   }
+}
+
+.cursor-crosshair {
+  cursor: crosshair;
 }
 </style>
