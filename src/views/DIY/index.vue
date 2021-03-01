@@ -465,6 +465,12 @@ export default {
     Fastclick.attach(document.body);
   },
   mounted() {
+    this._config = {
+      canvasState: [],
+      currentStateIndex: -1,
+      isUndoing: 0,
+      isRedoing: 0
+    };
     let draw = document.getElementsByClassName("draw")[0];
     let toolContainer = document.getElementsByClassName("tool")[0];
     let height = draw.clientHeight;
@@ -518,16 +524,7 @@ export default {
     } else {
       // 加载拉取的数据
     }
-    this._config = {
-      canvasState: [],
-      currentStateIndex: -1,
-      undoStatus: false,
-      redoStatus: false,
-      undoFinishedStatus: 1,
-      redoFinishedStatus: 1,
-      undoButton: document.getElementById("undo"),
-      redoButton: document.getElementById("redo")
-    };
+    this.updateCanvasState();
     // console.log("this.canvas", this.canvas.on);
     this.canvas.on("drop", e => {
       // console.log("drop:", e);
@@ -578,14 +575,12 @@ export default {
       this.updateCanvasState();
     });
     this.canvas.on("selection:created", e => {
-      console.log(this.canvas.getActiveObject() instanceof fabric.Textbox);
       if (this.canvas.getActiveObject() instanceof fabric.Textbox)
         this.activeType = "Textbox";
       else this.activeType = "image";
       this.selectedObject = e.target;
     });
     this.canvas.on("selection:updated", e => {
-      console.log(this.canvas.getActiveObject() instanceof fabric.Textbox);
       if (this.canvas.getActiveObject() instanceof fabric.Textbox)
         this.activeType = "Textbox";
       else this.activeType = "image";
@@ -815,10 +810,7 @@ export default {
     },
     // updateCanvasState
     updateCanvasState() {
-      if (
-        this._config.undoStatus == false &&
-        this._config.redoStatus == false
-      ) {
+      if (!this._config.isUndoing && !this._config.isRedoing) {
         var jsonData = this.canvas.toJSON();
         var canvasAsJson = JSON.stringify(jsonData);
         if (
@@ -826,12 +818,11 @@ export default {
           this._config.canvasState.length - 1
         ) {
           // 在撤销过程中，如果有进行更改，那么撤销所在的那一步之后的将会被清空
-          var indexToBeInserted = this._config.currentStateIndex + 1;
-          this._config.canvasState[indexToBeInserted] = canvasAsJson;
-          var numberOfElementsToRetain = indexToBeInserted + 1;
+          var InsertedIndedx = this._config.currentStateIndex + 1;
+          this._config.canvasState[InsertedIndedx] = canvasAsJson;
           this._config.canvasState = this._config.canvasState.splice(
             0,
-            numberOfElementsToRetain
+            InsertedIndedx + 1
           );
         } else {
           //如果没在撤销给过程中则直接push进去即可
@@ -839,15 +830,9 @@ export default {
         }
         // 无论什么情况，只要做了改变，那么当前指针就会跑到最前面
         this._config.currentStateIndex = this._config.canvasState.length - 1;
-
-        if (
-          this._config.currentStateIndex ==
-            this._config.canvasState.length - 1 &&
-          this._config.currentStateIndex != -1
-        ) {
-          this._config.redoButton.disabled = "disabled";
-        }
+        console.log("after update :", this._config.currentStateIndex);
       }
+      // 更新相册视图，方法是把前一个视图删除掉，然后用限制的视图作为替换，使用splice可以让vue监听到变化，进行响应式交互
       let page = this.myAlbum.data[this.currentPage];
       page.canvas = this.canvas.toJSON();
       page.src = this.canvas.toDataURL();
@@ -856,88 +841,108 @@ export default {
     },
     // 撤销
     undo() {
-      console.log(this.canvas.isEmpty());
-      if (this.canvas.isEmpty()) return;
-      if (this._config.undoFinishedStatus) {
-        if (this._config.currentStateIndex == -1) {
-          this._config.undoStatus = false;
-        } else {
-          if (this._config.canvasState.length >= 1) {
-            this._config.undoFinishedStatus = 0;
-            if (this._config.currentStateIndex != 0) {
-              this._config.undoStatus = true;
-              this.canvas.loadFromJSON(
-                this._config.canvasState[this._config.currentStateIndex - 1],
-                () => {
-                  var jsonData = JSON.parse(
-                    this._config.canvasState[this._config.currentStateIndex - 1]
-                  );
-                  this.canvas.renderAll();
-                  this._config.undoStatus = false;
-                  this._config.currentStateIndex -= 1;
-                  this._config.undoButton.removeAttribute("disabled");
-                  // 只要不是最前面的步骤，undo之后，redo就是解封的
-                  if (
-                    this._config.currentStateIndex !==
-                    this._config.canvasState.length - 1
-                  ) {
-                    this._config.redoButton.removeAttribute("disabled");
-                  }
-                  this._config.undoFinishedStatus = 1;
-                }
-              );
-            } else if (this._config.currentStateIndex == 0) {
-              this.canvas.clear();
-              this._config.undoFinishedStatus = 1;
-              this._config.undoButton.disabled = "disabled";
-              this._config.redoButton.removeAttribute("disabled");
-              this._config.currentStateIndex -= 1;
-            }
-          }
-        }
+      // console.log(this.canvas.isEmpty());
+      // if (this.canvas.isEmpty()) return;
+      // if (this._config.undoFinishedStatus) {
+      //   if (this._config.currentStateIndex == 0) {
+      //     this._config.undoStatus = false;
+      //   } else {
+      //     if (this._config.canvasState.length >= 1) {
+      //       this._config.undoFinishedStatus = 0;
+      //       if (this._config.currentStateIndex != 0) {
+      //         this._config.undoStatus = true;
+      //         this.canvas.loadFromJSON(
+      //           this._config.canvasState[this._config.currentStateIndex - 1],
+      //           () => {
+      //             var jsonData = JSON.parse(
+      //               this._config.canvasState[this._config.currentStateIndex - 1]
+      //             );
+      //             this.canvas.renderAll();
+      //             this._config.undoStatus = false;
+      //             this._config.currentStateIndex -= 1;
+      //             this._config.undoButton.removeAttribute("disabled");
+      //             // 只要不是最前面的步骤，undo之后，redo就是解封的
+      //             if (
+      //               this._config.currentStateIndex !==
+      //               this._config.canvasState.length - 1
+      //             ) {
+      //               this._config.redoButton.removeAttribute("disabled");
+      //             }
+      //             this._config.undoFinishedStatus = 1;
+      //           }
+      //         );
+      //       } else if (this._config.currentStateIndex == 0) {
+      //         this.canvas.clear();
+      //         this._config.undoFinishedStatus = 1;
+      //         this._config.undoButton.disabled = "disabled";
+      //         this._config.redoButton.removeAttribute("disabled");
+      //         this._config.currentStateIndex -= 1;
+      //       }
+      //     }
+      //   }
+      // }
+      let cf = this._config;
+      if (cf.currentStateIndex < 1) return void 0;
+      else {
+        cf.isUndoing = 1;
+        cf.currentStateIndex -= 1;
+        this.canvas.loadFromJSON(cf.canvasState[cf.currentStateIndex], () => {
+          this.updateCanvasState()
+          this.canvas.renderAll();
+          cf.isUndoing = 0;
+        });
       }
     },
     // 恢复
-    redo() {
-      if (this._config.redoFinishedStatus) {
-        if (
-          this._config.currentStateIndex ==
-            this._config.canvasState.length - 1 &&
-          this._config.currentStateIndex != -1
-        ) {
-          this._config.redoButton.disabled = "disabled";
-        } else {
-          if (
-            this._config.canvasState.length > this._config.currentStateIndex &&
-            this._config.canvasState.length != 0
-          ) {
-            this._config.redoFinishedStatus = 0;
-            this._config.redoStatus = true;
-            this.canvas.loadFromJSON(
-              this._config.canvasState[this._config.currentStateIndex + 1],
-              () => {
-                var jsonData = JSON.parse(
-                  this._config.canvasState[this._config.currentStateIndex + 1]
-                );
-                this.canvas.renderAll();
-                this._config.redoStatus = false;
-                this._config.currentStateIndex += 1;
-                if (this._config.currentStateIndex != -1) {
-                  this._config.undoButton.removeAttribute("disabled");
-                }
-                this._config.redoFinishedStatus = 1;
-                if (
-                  this._config.currentStateIndex ==
-                    this._config.canvasState.length - 1 &&
-                  this._config.currentStateIndex != -1
-                ) {
-                  this._config.redoButton.disabled = "disabled";
-                }
-              }
-            );
-          }
-        }
+    async redo() {
+      let cf = this._config;
+      if (cf.currentStateIndex < cf.canvasState.length - 1) {
+        cf.isRedoing = 1;
+        cf.currentStateIndex += 1;
+        this.canvas.loadFromJSON(cf.canvasState[cf.currentStateIndex], () => {
+          this.canvas.renderAll();
+          cf.isRedoing = 0;
+        });
       }
+      // if (this._config.redoFinishedStatus) {
+      //   if (
+      //     this._config.currentStateIndex ==
+      //       this._config.canvasState.length - 1 &&
+      //     this._config.currentStateIndex != -1
+      //   ) {
+      //     this._config.redoButton.disabled = "disabled";
+      //   } else {
+      //     if (
+      //       this._config.canvasState.length > this._config.currentStateIndex &&
+      //       this._config.canvasState.length != 0
+      //     ) {
+      //       this._config.redoFinishedStatus = 0;
+      //       this._config.redoStatus = true;
+      //       this.canvas.loadFromJSON(
+      //         this._config.canvasState[this._config.currentStateIndex + 1],
+      //         () => {
+      //           var jsonData = JSON.parse(
+      //             this._config.canvasState[this._config.currentStateIndex + 1]
+      //           );
+      //           this.canvas.renderAll();
+      //           this._config.redoStatus = false;
+      //           this._config.currentStateIndex += 1;
+      //           if (this._config.currentStateIndex != -1) {
+      //             this._config.undoButton.removeAttribute("disabled");
+      //           }
+      //           this._config.redoFinishedStatus = 1;
+      //           if (
+      //             this._config.currentStateIndex ==
+      //               this._config.canvasState.length - 1 &&
+      //             this._config.currentStateIndex != -1
+      //           ) {
+      //             this._config.redoButton.disabled = "disabled";
+      //           }
+      //         }
+      //       );
+      //     }
+      //   }
+      // }
     },
     // 删除对象
     deleteSelected(selected) {
@@ -1374,7 +1379,7 @@ export default {
 .cursor-crosshair {
   cursor: crosshair;
 }
-.osbottom5{
+.osbottom5 {
   position: relative;
   bottom: 5px;
 }
