@@ -87,8 +87,13 @@
           <div class="tool">
             <el-tooltip content="图层" effect="dark" placement="left">
               <el-popover placement="bottom" trigger="click">
-                <i slot="reference" class="el-icon-s-order"></i>
-                <!-- <el-button type="primary" slot='reference'>图层</el-button> -->
+                <!-- <i slot="reference" class="el-icon-s-order"></i> -->
+                <img
+                  class="tool-icon"
+                  slot="reference"
+                  src="./icons/layer.svg"
+                  alt="layer"
+                />
                 <div>
                   <div class="layer" v-for="(el, i) in layer" :key="i">
                     <i
@@ -96,27 +101,13 @@
                       v-show="el.show"
                       @click="updateLayer(el)"
                     ></i>
-                    <svg
-                      t="1613811395982"
-                      class="icon"
-                      v-show="!el.show"
+                    <img
+                      class="tool-icon"
+                      src="./icons/eyeoff.svg"
+                      alt="eyeoff"
                       @click="updateLayer(el)"
-                      viewBox="0 0 1024 1024"
-                      version="1.1"
-                      xmlns="http://www.w3.org/2000/svg"
-                      p-id="1808"
-                      width="14"
-                      height="14"
-                    >
-                      <path
-                        d="M512 800c-66.112 0-128.32-24.896-182.656-60.096l94.976-94.976A156.256 156.256 0 0 0 512 672c88.224 0 160-71.776 160-160a156.256 156.256 0 0 0-27.072-87.68l101.536-101.536C837.28 398.624 896 493.344 896 512c0 32-171.936 288-384 288m96-288a96 96 0 0 1-96 96c-14.784 0-28.64-3.616-41.088-9.664l127.424-127.424C604.384 483.36 608 497.216 608 512m-480 0c0-32 171.936-288 384-288 66.112 0 128.32 24.896 182.656 60.096l-417.12 417.12C186.72 625.376 128 530.656 128 512m664.064-234.816l91.328-91.328-45.248-45.248-97.632 97.632C673.472 192.704 595.456 160 512 160 265.248 160 64 443.008 64 512c0 39.392 65.728 148.416 167.936 234.816l-91.328 91.328 45.248 45.248 97.632-97.632C350.528 831.296 428.544 864 512 864c246.752 0 448-283.008 448-352 0-39.392-65.728-148.416-167.936-234.816"
-                        p-id="1809"
-                      ></path>
-                      <path
-                        d="M512 352c-88.224 0-160 71.776-160 160 0 15.328 2.848 29.856 6.88 43.872l58.592-58.592a95.616 95.616 0 0 1 79.808-79.808l58.592-58.592A157.76 157.76 0 0 0 512 352"
-                        p-id="1810"
-                      ></path>
-                    </svg>
+                      v-show="!el.show"
+                    />
                     <img
                       class="mr10-x"
                       :src="el.src"
@@ -126,19 +117,19 @@
                     />
                     <el-tooltip content="上移图层" placement="top"
                       ><i
-                        class="el-icon-top icon"
+                        class="el-icon-top tool-icon"
                         @click="setLayerforward(el)"
                       ></i
                     ></el-tooltip>
                     <el-tooltip content="下移图层" placement="top"
                       ><i
-                        class="el-icon-bottom icon mr10-x"
+                        class="el-icon-bottom tool-icon mr10-x"
                         @click="setLayerbottom(el)"
                       ></i
                     ></el-tooltip>
                     <el-tooltip content="删除" placement="top"
                       ><i
-                        class="el-icon-delete icon"
+                        class="el-icon-delete tool-icon"
                         @click="deleteSelected(el.object)"
                       ></i
                     ></el-tooltip>
@@ -149,7 +140,7 @@
 
             <el-tooltip content="背景色" effect="dark" placement="left"
               ><el-color-picker
-                class="color"
+                class="color tool-icon"
                 v-model="bgcolor"
                 show-alpha
                 :predefine="predefineColors"
@@ -159,161 +150,109 @@
               </el-color-picker
             ></el-tooltip>
             <el-tooltip content="撤销" effect="dark" placement="left"
-              ><i id="undo" class="el-icon-back" @click="undo"></i></el-tooltip
+              ><img
+                class="tool-icon"
+                id="undo"
+                :draggable="false"
+                src="./icons/undo.svg"
+                @click="undo"/></el-tooltip
             ><br />
 
-            <el-tooltip content="恢复" effect="dark" placement="left"
-              ><i id="redo" class="el-icon-right" @click="redo"></i></el-tooltip
+            <el-tooltip content="恢复" effect="dark" placement="left">
+              <img
+                id="redo"
+                class="tool-icon"
+                src="./icons/redo.svg"
+                @click="redo"
+                alt="redo"
+              />
+              <!-- <i id="redo" class="el-icon-right" @click="redo"></i> --> </el-tooltip
             ><br />
 
-            <el-tooltip content="清空画布" effect="dark" placement="left"
-              ><i class="el-icon-refresh" @click="clear"></i
-            ></el-tooltip><br>
-            <el-tooltip content="裁切" effect="dark" placement="left"
-              ><svg
-                t="1613382090797"
-                class="icon"
-                viewBox="0 0 1024 1024"
-                version="1.1"
-                xmlns="http://www.w3.org/2000/svg"
-                p-id="853"
-                width="14"
-                height="14"
+            <el-tooltip content="清空画布" effect="dark" placement="left">
+              <img
+                class="tool-icon"
+                src="./icons/clear.svg"
+                @click="clear"
+                alt="clear"
+              /> </el-tooltip
+            ><br />
+            <el-tooltip content="裁切" effect="dark" placement="left">
+              <img
+                class="tool-icon"
+                src="./icons/crop.svg"
                 @click="startCroping"
-              >
-                <path
-                  d="M928 768h-64V224c0-17.67-14.33-32-32-32H224v-64c0-17.67-14.33-32-32-32s-32 14.33-32 32v64H96c-17.67 0-32 14.33-32 32s14.33 32 32 32h64v544c0 17.67 14.33 32 32 32h608v64c0 17.67 14.33 32 32 32s32-14.33 32-32v-64h64c17.67 0 32-14.33 32-32s-14.33-32-32-32z m-160 0H224V256h576v512h-32z"
-                  p-id="854"
-                ></path></svg></el-tooltip
+                alt=""
+              /> </el-tooltip
             ><br />
             <el-tooltip content="画笔" placement="left" effect="datk">
-              <svg
-                t="1614528050966"
-                class="icon"
-                viewBox="0 0 1024 1024"
-                version="1.1"
-                xmlns="http://www.w3.org/2000/svg"
-                p-id="2799"
-                width="14"
-                height="14"
-              >
-                <path
-                  d="M800.46 547.624L413.14 934.93c-20.374 20.376-20.374 53.406 0 73.782 10.156 10.156 23.53 15.282 36.874 15.282s26.688-5.094 36.876-15.312l387.354-387.304-73.784-73.754z"
-                  fill="#ED5564"
-                  p-id="2800"
-                ></path>
-                <path
-                  d="M1004.52 416.408c-54.188 0-217.964 8.812-217.964 119.874 0 54.188 43.906 98.094 98.062 98.094 54.188 0 98.09-43.906 98.09-98.094 0-54.156 75.968-119.874 21.812-119.874z"
-                  fill="#965353"
-                  p-id="2801"
-                ></path>
-                <path
-                  d="M701.246 92.54c-28.876-29.28-64.312-51.968-105.406-67.468C551.746 8.448 500.826 0.01 444.42 0.01c-12.624 0-25.718 0.406-38.906 1.25-64.248 4.094-123.78 18.376-176.904 42.468-50.402 22.874-94.122 54.062-129.934 92.716-69.5 75-104.28 172.404-97.936 274.338C7.866 526.124 40.334 616.032 97.208 678c27.686 30.184 60.936 53.246 98.904 68.558 37.062 14.938 78.686 22.532 123.686 22.532 121.748 0 157.372-78.5 183.434-135.808 13.25-29.188 24.686-54.406 43.078-63.812 13.718-7.032 34.376-9.812 56.188-12.718 39.376-5.282 84.032-11.282 120.808-43.28 41.594-36.218 62.468-97.718 63.75-188.09 1.342-92.658-29.158-175.344-85.81-232.842zM597.34 448c-35.344 0-64.016-28.656-64.016-63.998s28.672-64 64.016-64 64 28.656 64 64S632.684 448 597.34 448z"
-                  fill="#FFD2A6"
-                  p-id="2802"
-                ></path>
-                <path
-                  d="M597.34 469.314c-47.062 0-85.358-38.282-85.358-85.31 0-47.062 38.296-85.342 85.358-85.342s85.344 38.282 85.344 85.342c0 47.028-38.282 85.31-85.344 85.31z m0-127.998c-23.532 0-42.656 19.156-42.656 42.686 0 23.5 19.124 42.654 42.656 42.654s42.656-19.156 42.656-42.654c0-23.53-19.124-42.686-42.656-42.686z"
-                  fill="#F4BE8E"
-                  p-id="2803"
-                ></path>
-                <path
-                  d="M469.326 149.32c0 23.562-19.094 42.686-42.656 42.686-23.562 0-42.686-19.124-42.686-42.686s19.124-42.656 42.686-42.656 42.656 19.092 42.656 42.656z"
-                  fill="#A0D468"
-                  p-id="2804"
-                ></path>
-                <path
-                  d="M426.67 85.32c-35.31 0-63.998 28.718-63.998 64 0 35.312 28.688 64 63.998 64 35.282 0 64-28.688 64-64 0-35.28-28.718-64-64-64z m0 85.344c-11.78 0-21.342-9.562-21.342-21.344 0-11.75 9.562-21.312 21.342-21.312 11.75 0 21.312 9.562 21.312 21.312 0 11.78-9.562 21.344-21.312 21.344z"
-                  fill="#8CC153"
-                  p-id="2805"
-                ></path>
-                <path
-                  d="M298.672 213.318c0 23.562-19.124 42.686-42.686 42.686s-42.656-19.124-42.656-42.686 19.094-42.656 42.656-42.656c23.562 0.002 42.686 19.094 42.686 42.656z"
-                  fill="#AC92EB"
-                  p-id="2806"
-                ></path>
-                <path
-                  d="M255.986 149.32c-35.282 0-64 28.718-64 64 0 35.312 28.718 63.998 64 63.998 35.312 0 64-28.686 64-63.998 0-35.282-28.688-64-64-64z m0 85.342c-11.75 0-21.312-9.562-21.312-21.342 0-11.75 9.562-21.312 21.312-21.312 11.78 0 21.342 9.562 21.342 21.312 0.002 11.78-9.562 21.342-21.342 21.342z"
-                  fill="#967ADC"
-                  p-id="2807"
-                ></path>
-                <path
-                  d="M213.33 362.66c0 23.562-19.094 42.654-42.654 42.654-23.562 0-42.688-19.092-42.688-42.654 0-23.562 19.124-42.656 42.688-42.656 23.56 0 42.654 19.094 42.654 42.656z"
-                  fill="#5D9CEC"
-                  p-id="2808"
-                ></path>
-                <path
-                  d="M170.676 298.66c-35.312 0-64 28.718-64 64 0 35.28 28.686 63.998 64 63.998 35.28 0 63.998-28.716 63.998-63.998s-28.718-64-63.998-64z m0 85.342c-11.782 0-21.344-9.592-21.344-21.342s9.562-21.344 21.344-21.344c11.75 0 21.31 9.594 21.31 21.344s-9.562 21.342-21.31 21.342z"
-                  fill="#4A89DC"
-                  p-id="2809"
-                ></path>
-                <path
-                  d="M234.674 533.312c0 23.562-19.124 42.688-42.688 42.688-23.56 0-42.654-19.124-42.654-42.688 0-23.562 19.094-42.656 42.654-42.656 23.562 0.002 42.688 19.094 42.688 42.656z"
-                  fill="#ED5564"
-                  p-id="2810"
-                ></path>
-                <path
-                  d="M191.986 469.314c-35.28 0-63.998 28.718-63.998 64s28.718 64 63.998 64c35.312 0 64-28.718 64-64s-28.688-64-64-64z m0 85.342c-11.75 0-21.31-9.562-21.31-21.344 0-11.75 9.562-21.312 21.31-21.312 11.782 0 21.344 9.562 21.344 21.312 0 11.782-9.562 21.344-21.344 21.344z"
-                  fill="#DA4453"
-                  p-id="2811"
-                ></path>
-              </svg>
+              <el-popover placement="left" trigger="click">
+                <div>
+                  <span class="label">尺寸:</span>
+                  <el-slider
+                    v-model="paintBrush.size"
+                    @change="setPaintSize()"
+                  ></el-slider>
+                  <div>
+                    颜色：
+                    <el-color-picker
+                      class="color-container tool-icon osbottom5"
+                      v-model="paintBrush.color"
+                      show-alpha
+                      :predefine="predefineColors"
+                      @change="setPaintColor"
+                      @active-change="setPaintColor"
+                    >
+                    </el-color-picker>
+                  </div>
+                </div>
+                <img
+                  slot="reference"
+                  class="tool-icon"
+                  src="./icons/draw.svg"
+                  @click="setDrawMode"
+                  alt="draw"
+                />
+              </el-popover>
             </el-tooltip>
-            <br>
+            <br />
             <div class="image-tool">
               <el-tooltip content="平铺" effect="dark">
-                <svg
-                  t="1613870236722"
-                  class="icon"
-                  viewBox="0 0 1024 1024"
-                  version="1.1"
-                  xmlns="http://www.w3.org/2000/svg"
-                  p-id="2125"
-                  width="14"
-                  height="14"
+                <img
+                  class="tool-icon"
+                  src="./icons/maxmize.svg"
                   @click="maxmize(canvas.getActiveObject())"
-                >
-                  <path
-                    d="M597.34016 554.33216q17.67424 0 30.33088 12.67712l268.32896 268.32896 0-195.66592q0-17.67424 12.4928-30.16704t30.16704-12.4928 30.16704 12.4928 12.4928 30.16704l0 298.65984q0 17.67424-12.67712 30.33088t-30.33088 12.67712l-298.65984 0q-17.67424 0-30.16704-12.4928t-12.4928-30.16704 12.4928-30.16704 30.16704-12.4928l195.66592 0-268.32896-268.32896q-12.32896-13.0048-12.32896-30.33088 0-17.67424 12.4928-30.33088t30.16704-12.67712zM85.34016 42.65984l298.65984 0q17.67424 0 30.16704 12.4928t12.4928 30.16704-12.4928 30.16704-30.16704 12.4928l-195.66592 0 268.32896 268.00128q12.67712 12.67712 12.67712 30.33088t-12.67712 30.16704-30.33088 12.4928q-16.9984 0-30.33088-12.32896l-268.00128-268.32896 0 195.66592q0 17.67424-12.4928 30.16704t-30.16704 12.4928-30.16704-12.4928-12.4928-30.16704l0-298.65984q0-17.67424 12.4928-30.16704t30.16704-12.4928z"
-                    p-id="2126"
-                  ></path>
-                </svg>
+                  alt="maxmize"
+                />
               </el-tooltip>
               <br />
-              <el-tooltip content="复制" effect="dark" placement="left"
-                ><i
-                  class="el-icon-document-copy"
+              <el-tooltip content="复制" effect="dark" placement="left">
+                <img
+                  class="tool-icon"
+                  src="./icons/copy.svg"
                   @click="copySelected(canvas.getActiveObject())"
-                ></i></el-tooltip
+                  alt="copy"
+                /> </el-tooltip
               ><br />
-              <el-tooltip content="粘贴" effect="dark" placement="left"
-                ><svg
-                  t="1613707083249"
-                  class="icon"
-                  viewBox="0 0 1025 1024"
-                  version="1.1"
-                  xmlns="http://www.w3.org/2000/svg"
-                  p-id="1898"
-                  width="14"
-                  height="14"
+              <el-tooltip content="粘贴" effect="dark" placement="left">
+                <img
+                  class="tool-icon"
+                  src="./icons/paste.svg"
                   @click="pasteSelected"
-                >
-                  <path
-                    d="M704 128l-128 0 0-64c0-35.20512-28.79488-64-64-64l-128 0c-35.20512 0-64 28.79488-64 64l0 64-128 0 0 128 512 0 0-128zM512 128l-128 0 0-63.87712c0.04096-0.04096 0.08192-0.08192 0.12288-0.12288l127.77472 0c0.04096 0.04096 0.08192 0.08192 0.12288 0.12288l0 63.87712zM832 320l0-160.01024c0-17.59232-14.39744-32.01024-32.01024-32.01024l-64 0 0 64 32.01024 0 0 128-192 0-192 192 0 256-256 0 0-576 32.01024 0 0-64-64 0c-17.59232 0-32.01024 14.39744-32.01024 32.01024l0 640c0 17.59232 14.39744 32.01024 32.01024 32.01024l288.01024 0 0 192 640 0 0-704-192 0zM576 410.50112l0 101.49888-101.49888 0 101.49888-101.49888zM960 960l-512 0 0-384 192 0 0-192 320 0 0 576z"
-                    p-id="1899"
-                  ></path></svg></el-tooltip
+                  alt="paste"/></el-tooltip
               ><br />
-              <el-tooltip content="删除" effect="dark" placement="left"
-                ><i
-                  class="el-icon-delete-solid"
+              <el-tooltip content="删除" effect="dark" placement="left">
+                <img
+                  class="tool-icon"
+                  src="./icons/delete.svg"
                   @click="deleteSelected(canvas.getActiveObject())"
-                ></i></el-tooltip
+                  alt="delete"/></el-tooltip
               ><br />
             </div>
             <div class="text-tool" v-show="activeType === 'Textbox'">
               <el-tooltip content="颜色" effect="dark" placement="left"
                 ><el-color-picker
-                  class="color"
+                  class="color-container"
                   v-model="textColor"
                   show-alpha
                   :predefine="predefineColors"
@@ -465,7 +404,6 @@ export default {
         data: [],
         account: 123456
       }, // 用户的设计数据
-      layer: [], // 图层
       showLayer: true,
       dragObject: null,
       selectedObject: null,
@@ -476,27 +414,21 @@ export default {
         upX: 0,
         upY: 0
       },
+      layer: [], // 图层
       iscroping: 0, // 0 未处于裁剪状态，1：处于裁剪阶段1，生成框框，监听dbclick， 2：处于裁剪阶段2,等待dbclick完成裁剪内容并添加到canvas中
-      // 截取图片
-      cropInfo: {
-        source: null,
-        iscroping: false,
-        scope: null
-      },
       lastPoint: {},
       // 被拖拽的元素
       draged: {
         sourceOffsetX: 0,
         sourceOffsetY: 0
       },
-      materialOptions: [],
-      decorationOptions: [],
-      sizeOptions: [],
-      fontFamilyOptions: [],
-      predefineColors: [],
       service: "",
       tab: "material",
       size: 14, // 文字尺寸
+      // 画笔
+      paintBrush: {
+        color: ""
+      },
       // 取色器
       bgcolor: "rgba(199, 21, 133, 1)",
       textColorFlag: "textColor", // textColor or textBGColor
@@ -508,6 +440,11 @@ export default {
         currentStateIndex: 0,
         canvasState: []
       },
+      materialOptions: [],
+      decorationOptions: [],
+      sizeOptions: [],
+      fontFamilyOptions: [],
+      predefineColors: [],
       currentPage: 0
     };
   },
@@ -1050,7 +987,22 @@ export default {
         });
       });
     },
-
+    // 设置draw模式，可以自由在canvas上绘画
+    setDrawMode() {
+      this.canvas.isDrawingMode = true;
+      this.canvas.defaultCursor = "crosshair";
+      console.log("draw:", this.canvas.freeDrawingBrush.color);
+      this.canvas.renderAll();
+    },
+    // 设置画笔颜色
+    setPaintColor() {
+      this.canvas.freeDrawingBrush.color = this.paintBrush.color;
+      this.canvas.renderAll();
+    },
+    setPaintSize() {
+      this.canvas.freeDrawingBrush.width = this.paintBrush.size;
+      this.canvas.renderAll();
+    },
     startCroping() {
       if (this.iscroping !== 2) {
         // 设置进入裁剪模式
@@ -1342,9 +1294,10 @@ export default {
             }
           }
         }
-        .color {
-          width: 40px;
-          height: 50px;
+        .color-container {
+          width: 24px;
+          vertical-align: middle;
+          margin: 0;
           vertical-align: middle;
         }
       }
@@ -1391,6 +1344,16 @@ export default {
     outline: tomato solid 1px;
   }
 }
+.tool-icon {
+  width: 16px;
+  height: 16px;
+  margin: 10px 0;
+  text-align: center;
+  cursor: pointer;
+  &:hover {
+    outline: tomato solid 1px;
+  }
+}
 .layer {
   display: flex;
   align-items: center;
@@ -1403,8 +1366,37 @@ export default {
     display: none;
   }
 }
+.label {
+  font-weight: 700;
+  font-size: 14px;
+}
 
 .cursor-crosshair {
   cursor: crosshair;
+}
+.osbottom5{
+  position: relative;
+  bottom: 5px;
+}
+</style>
+<style lang="scss">
+.el-color-picker {
+  // width: fit-content!important;
+  display: inline-block;
+  .el-color-picker__trigger {
+    border: none;
+    width: 24px;
+    height: 24px;
+    &:hover,
+    &:active {
+      outline: tomato solid 1px;
+    }
+  }
+}
+.color-container {
+  width: 24px;
+  vertical-align: middle;
+  margin: 0;
+  vertical-align: middle;
 }
 </style>
