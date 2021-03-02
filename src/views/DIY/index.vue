@@ -297,70 +297,30 @@
               <el-tooltip content="对齐" effect="dark" placement="left">
                 <el-popover class="pop-mw100" placement="bottom">
                   <div class="flex-sb">
-                    <svg
-                      t="1613813262557"
-                      class="icon"
-                      viewBox="0 0 1024 1024"
-                      version="1.1"
-                      xmlns="http://www.w3.org/2000/svg"
-                      p-id="2654"
-                      width="14"
-                      height="14"
+                    <img
+                      class="tool-icon"
+                      src="./icons/align_left.svg"
                       @click="setTextAlign('left')"
-                    >
-                      <path
-                        d="M85.333333 245.333333A32 32 0 0 1 117.333333 213.333333h661.333334a32 32 0 0 1 0 64H117.333333A32 32 0 0 1 85.333333 245.333333zM85.333333 800a32 32 0 0 1 32-32h448a32 32 0 0 1 0 64H117.333333a32 32 0 0 1-32-32zM117.333333 490.666667a32 32 0 0 0 0 64h789.333334a32 32 0 0 0 0-64H117.333333z"
-                        p-id="2655"
-                      ></path>
-                    </svg>
-                    <svg
-                      t="1613813294956"
-                      class="icon"
-                      viewBox="0 0 1024 1024"
-                      version="1.1"
-                      xmlns="http://www.w3.org/2000/svg"
-                      p-id="2784"
-                      width="14"
-                      height="14"
+                      alt="align_left"
+                    />
+                    <img
+                      class="tool-icon"
+                      src="./icons/align_center.svg"
                       @click="setTextAlign('center')"
-                    >
-                      <path
-                        d="M170.666667 256a42.666667 42.666667 0 0 1 42.666666-42.666667h597.333334a42.666667 42.666667 0 1 1 0 85.333334H213.333333a42.666667 42.666667 0 0 1-42.666666-42.666667zM256 768a42.666667 42.666667 0 0 1 42.666667-42.666667h426.666666a42.666667 42.666667 0 1 1 0 85.333334H298.666667a42.666667 42.666667 0 0 1-42.666667-42.666667zM128 469.333333a42.666667 42.666667 0 1 0 0 85.333334h768a42.666667 42.666667 0 1 0 0-85.333334H128z"
-                        p-id="2785"
-                      ></path>
-                    </svg>
-                    <svg
-                      t="1613813323050"
-                      class="icon"
-                      viewBox="0 0 1024 1024"
-                      version="1.1"
-                      xmlns="http://www.w3.org/2000/svg"
-                      p-id="2914"
-                      width="14"
-                      height="14"
+                      alt=""
+                    />
+                    <img
+                      class="tool-icon"
+                      src="./icons/align_right.svg"
                       @click="setTextAlign('right')"
-                    >
-                      <path
-                        d="M213.333333 245.333333A32 32 0 0 1 245.333333 213.333333h661.333334a32 32 0 0 1 0 64H245.333333A32 32 0 0 1 213.333333 245.333333zM426.666667 800a32 32 0 0 1 32-32h448a32 32 0 0 1 0 64h-448a32 32 0 0 1-32-32zM117.333333 490.666667a32 32 0 0 0 0 64h789.333334a32 32 0 0 0 0-64H117.333333z"
-                        p-id="2915"
-                      ></path>
-                    </svg>
-                    <svg
-                      t="1613813489945"
-                      class="icon"
-                      viewBox="0 0 1024 1024"
-                      version="1.1"
-                      xmlns="http://www.w3.org/2000/svg"
-                      p-id="3044"
-                      width="14"
-                      height="14"
+                      alt=""
+                    />
+                    <img
+                      class="tool-icon"
+                      src="./icons/justify_center.svg"
                       @click="setTextAlign('justify-center')"
-                    >
-                      <path
-                        d="M85.333333 245.333333A32 32 0 0 1 117.333333 213.333333h789.333334a32 32 0 0 1 0 64H117.333333A32 32 0 0 1 85.333333 245.333333zM85.333333 800a32 32 0 0 1 32-32h789.333334a32 32 0 0 1 0 64H117.333333a32 32 0 0 1-32-32zM117.333333 490.666667a32 32 0 0 0 0 64h789.333334a32 32 0 0 0 0-64H117.333333z"
-                        p-id="3045"
-                      ></path>
-                    </svg>
+                      alt=""
+                    />
                   </div>
 
                   <i slot="reference" class="el-icon-s-operation"></i>
@@ -887,7 +847,7 @@ export default {
         cf.isUndoing = 1;
         cf.currentStateIndex -= 1;
         this.canvas.loadFromJSON(cf.canvasState[cf.currentStateIndex], () => {
-          this.updateCanvasState()
+          this.updateCanvasState();
           this.canvas.renderAll();
           cf.isUndoing = 0;
         });
