@@ -2,19 +2,19 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
-const service = axios.create({
+const request = axios.create({
     timeout: 5000,
     baseURL: process.env.BASE_API,
     // baseURL: "http://localhost:3000",
-    withCredentials: true, // 跨域带cookie
+    // withCredentials: true, // 跨域带cookie
 })
 
 // request interceptor
-service.interceptors.request.use(
-    config => {
-        config.headers['Authorization'] = Cookies.get('access_token');
-        return config;
-    },
+request.interceptors.request.use(
+    // config => {
+    //     config.headers['Authorization'] = Cookies.get('access_token');
+    //     return config;
+    // },
     // error => {
     //     // Do something with request error
     //     console.log(error); // for debug
@@ -22,7 +22,7 @@ service.interceptors.request.use(
     // }
 );
 // response interceptor
-service.interceptors.response.use(
+request.interceptors.response.use(
     /**
      * If you want to get http information such as headers or status
      * Please return  response => response
@@ -72,4 +72,4 @@ service.interceptors.response.use(
         //       return Promise.reject(error)
     }
 )
-export default service
+export default request

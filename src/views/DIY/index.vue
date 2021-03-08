@@ -1364,4 +1364,4 @@ export default {
   margin: 0;
   vertical-align: middle;
 }
-</style>
+</style>   
