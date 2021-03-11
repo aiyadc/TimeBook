@@ -915,6 +915,7 @@ export default {
     // 复制选中
     copySelected(selected) {
       this.$store.commit("Push_TStack", selected);
+     
     },
     // 粘贴选中
     pasteSelected() {

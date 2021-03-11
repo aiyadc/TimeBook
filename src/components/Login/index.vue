@@ -14,63 +14,86 @@
       </div>
       <div id="boxhead">
         <div class="theme">
-          <slot name="theme" v-if="!isQrcode">
-          </slot>
+          <slot name="theme" v-if="!isQrcode"> </slot>
         </div>
       </div>
       <div id="boxmain">
         <el-tabs
-          class="psw-login"
+          class="tabs"
           v-model="activeTab"
           @tab-click="handleTabClick"
           v-show="!isQrcode"
         >
           <el-tab-pane
-            v-for="tab in tabs"
+            v-for="tab in tabList"
             :label="tab.label"
-            :name="tab.name"
-            :key="tab.name"
+            :name="tab.tab"
+            :key="tab.tab"
           >
             <el-form
+              :class="{ 'form-equal250': service === 'pc' }"
               :model="lgParams"
               :rules="rules"
-              :ref="'loginForm' + tab.name"
+              :inline="service === 'pc'"
+              :ref="tab.tab"
+              :label-width="service === 'pc' ? '80px' : '0px'"
             >
               <el-form-item
-                label=""
-                v-if="!!tab.components.account"
+                :label="service === 'pc' ? formOptions.identity.label : ''"
+                prop="dientity"
+                v-if="tab.components.indexOf('identity') !== -1"
+              >
+                <el-select
+                  v-model="lgParams.identity"
+                  :placeholder="formOptions.identity.placeholder"
+                >
+                  <img class="icon" slot="prefix" src="./images/identity.png" />
+                  <el-option
+                    v-for="(u, i) in formOptions.identity.options"
+                    :key="i"
+                    :label="u.lable"
+                    value="u.value"
+                  ></el-option>
+                </el-select>
+              </el-form-item>
+              <el-form-item
+                :label="service === 'pc' ? formOptions.account.label : ''"
                 prop="account"
+                v-if="tab.components.indexOf('account') !== -1"
               >
                 <el-input
                   v-model="lgParams.account"
-                  :placeholder="tab.components.account.placeholder"
+                  :placeholder="formOptions.account.placeholder"
                   prefix-icon="el-icon-user"
                 >
                 </el-input>
               </el-form-item>
 
               <el-form-item
-                label=""
-                v-if="!!tab.components.password"
+                :label="service === 'pc' ? formOptions.password.label : ''"
                 prop="password"
+                v-if="tab.components.indexOf('password') !== -1"
               >
                 <el-input
                   type="password"
                   v-model="lgParams.password"
-                  :placeholder="tab.components.password.placeholder"
+                  :placeholder="formOptions.password.placeholder"
                   prefix-icon="el-icon-lock"
                 ></el-input>
               </el-form-item>
               <el-form-item
-                label=""
-                v-if="!!tab.components.artcode"
-                prop="checkCode"
+                :label="service === 'pc' ? formOptions.validCode.label : ''"
+                v-if="tab.components.indexOf('validCode') !== -1"
+                prop="validCode"
               >
                 <el-input
-                  v-model="lgParams.checkCode"
-                  :placeholder="tab.components.artcode.placeholder"
+                  class="valid-code"
+                  v-model="lgParams.validCode"
+                  :placeholder="formOptions.validCode.placeholder"
                   prefix-icon="el-icon-s-claim"
-                ></el-input>
+                >
+                </el-input>
+                <el-button type="primary">发送验证码</el-button>
               </el-form-item>
               <div>
                 <div v-loading="loading">
@@ -105,10 +128,13 @@
           </el-tab-pane>
         </el-tabs>
         <div class="code-login" v-show="isQrcode">
-          <slot name="qrcode_tips" v-if="isQrcode">
-          </slot>
+          <slot name="qrcode_tips" v-if="isQrcode"> </slot>
           <!--放置二维码-->
-          <div id="qrcode" v-loading="codeLoginLoading" element-loading-text="登录中，请稍后">
+          <div
+            id="qrcode"
+            v-loading="codeLoginLoading"
+            element-loading-text="登录中，请稍后"
+          >
             <slot name="qrcode"> </slot>
           </div>
           <div class="under-code">
@@ -166,31 +192,33 @@
 export default {
   name: "mulLogin",
   props: {
+    // 平台 pc/h5
+    platform: String,
     boxStyle: Object,
     // 功能物件集合如['记住我','忘记密码','其他登录方式','二维码登录','重置密码（未设计）'，'注册（未设计）']
     features: {
       type: Array,
-      default: () => ["rememberMe", "forgetPsw", "qrcode", "register"],
+      default: () => ["rememberMe", "forgetPsw", "qrcode", "register"]
     },
     // 登录器最下面的内容，如文字，可自定义
     footText: {
       type: String,
       default:
-        '<span style="text-align:center; font-size:8px;">如登录、注册遇到问题，请联系客服</span>',
+        '<span style="text-align:center; font-size:8px;">如登录、注册遇到问题，请联系客服</span>'
     },
     // 优先展示的登录方式
-    firstMode:{
+    firstMode: {
       type: String,
-      default: 'accountLogin'
+      default: "accountLogin"
     },
     // 登录按钮loading效果：
     loading: {
       type: Boolean,
-      default: false,
+      default: false
     },
     // 二维码扫描loading效果
-    codeLoginLoading:{
-      type:Boolean,
+    codeLoginLoading: {
+      type: Boolean,
       default: false
     },
     // 表单校验规则
@@ -203,90 +231,107 @@ export default {
             {
               type: "number" && "string",
               message: "请输入正确格式的账号",
-              trigger: "blur",
-            },
+              trigger: "blur"
+            }
           ],
           password: {
             required: true,
             message: "密码不能为空",
-            trigger: "blur",
+            trigger: "blur"
           },
-          checkCode: {
+          validCode: {
             required: true,
             message: "验证码不能为空",
-            trigger: "blur",
-          },
+            trigger: "blur"
+          }
         };
-      },
+      }
     },
     // 面板和表单内容
-    tabs: {
+    tabList: {
       type: Array,
       default: () => {
         return [
           {
+            tab: "account_login",
             label: "账号登录",
-            name: "account",
-            components: {
-              account: {
-                placeholder: "请输入您的账号",
-              },
-              password: {
-                placeholder: "请输入您的密码",
-              },
-            },
+            components: ["identity", "account", "password", "validCode"]
           },
-          // {
-          //   label: "手机号登录",
-          //   name: "phone",
-          //   components: {
-          //     account: {
-          //       label: "手机号",
-          //       placeholder: "请输入您的手机号",
-          //     },
-          //     artcode: {
-          //       label: "",
-          //       placeholder: "请输入验证码",
-          //     },
-          //   },
-          // },
+          {
+            tab: "phone_login",
+            label: "手机号登录",
+            components: ["account", "validCode"]
+          }
         ];
-      },
+      }
     },
+    formOptions: {
+      type: Object,
+      default: () => {
+        return {
+          identity: {
+            label: "身份：",
+            placeholder: "请选择您的身份",
+            options: []
+          },
+          account: {
+            label: "账号：",
+            placeholder: "请输入账号"
+          },
+          password: {
+            label: "密码：",
+            placeholder: "请输入密码"
+          },
+          validCode: {
+            label: "验证码：",
+            placeholder: "请输入验证码"
+          }
+        };
+      }
+    }
   },
   data() {
     return {
+      // 使用平台
+      service: "pc",
       // 当前的登录模式
       isQrcode: false,
       // 当前激活的面板
-      activeTab: "account",
+      activeTab: "account_login",
       // 表单参数
       lgParams: {
+        identity: "",
         account: "",
         password: "",
-        checkCode: "", // 表单验证码
+        validCode: "" // 表单验证码
       },
       // 是否记住本次登录信息
       ifRememberMe: false,
       // 对话框是否可见
       registerVisible: false,
-      resetPswVisible: false,
+      resetPswVisible: false
     };
+  },
+  watch: {
+    platform: {
+      handler(val) {
+        this.service = val;
+        console.log("login", val, this.service);
+      },
+      immediate: true
+    }
   },
   methods: {
     // 切换面板
     handleTabClick(tab, event) {
-      // this.$refs['formField'].resetFields()
-      console.log(
-        tab.name,
-        this.$refs["loginForm" + tab.name][0].resetFields()
-      );
+      console.log(this.$refs[this.activeTab][0]);
+      this.$refs[this.activeTab][0].resetFields();
       this.$emit("clicktab", tab, event);
     },
     // 点击登录
     handleLogin() {
-      let ref = "loginForm" + this.activeTab;
-      this.$refs[ref][0].validate((valid) => {
+      let ref = this.activeTab;
+      this.$refs[ref][0].validate(valid => {
         if (valid) {
           this.$emit("login", this.lgParams, ref);
           if (this.features.indexOf("rememberMe")) {
@@ -324,11 +369,11 @@ export default {
     },
     beforeCloseRS() {
       this.resetPswVisible = false;
-    },
+    }
   },
   mounted() {
-    this.isQrcode = this.firstMode == 'accountLogin'? false:true
-  },
+    this.isQrcode = this.firstMode == "accountLogin" ? false : true;
+  }
 };
 </script>
 
@@ -347,12 +392,17 @@ export default {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 400px;
+  width: 500px;
   min-height: 400px;
   transform: translate(-50%, -50%);
-
   box-shadow: 0 0 10px 0 rgba(0, 33, 79, 0.11);
   border-radius: 6px;
+  @media screen and (max-width: 600px) {
+    width: 100vw;
+  }
+  .valid-code {
+    width: 180px;
+  }
   .loginmode {
     position: absolute;
     top: 5px;
@@ -370,8 +420,9 @@ export default {
     }
   }
   #boxmain {
-    .psw-login {
+    .tabs {
       margin: 45px 20px 0;
+      text-align: left;
     }
     .code-login {
       margin: 0 20px;
@@ -410,5 +461,10 @@ export default {
   width: 100%;
   margin: 20px 0 0;
 }
+.icon {
+  width: 14px;
+  height: 14px;
+  margin-left: 7px;
+  vertical-align: middle;
+}
 </style>
-

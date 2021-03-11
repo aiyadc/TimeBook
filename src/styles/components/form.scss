@@ -1,0 +1,9 @@
+// 输入宽等长 250px
+.form-equal250 {
+    .el-input {
+        width: 350px;
+    }
+    .el-select .el-input {
+        width: 350px;
+    }
+}
