@@ -49,9 +49,10 @@ export default {
   },
 
   methods: {
-    login(params) {
-      if (params.account == "eachan" && params.password == "123456")
-        this.$router.push("/");
+    login(form) {
+    //   if (params.account == "eachan" && params.password == "123456")
+    //     this.$router.push("/");
+        console.log(form)
     }
   }
 };

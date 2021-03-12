@@ -333,7 +333,15 @@ export default {
       let ref = this.activeTab;
       this.$refs[ref][0].validate(valid => {
         if (valid) {
-          this.$emit("login", this.lgParams, ref);
+          let form = {};
+          let activeComponent = this.tabList.find(tab => {
+            return tab.tab === this.activeTab;
+          }).components;
+          for (let i in activeComponent) {
+            // 这里由于tab中component名字和表单内的属性名相同,所以直接匹配
+            form[activeComponent[i]] = this.lgParams[activeComponent[i]];
+          }
+          this.$emit("login", form, ref);
           if (this.features.indexOf("rememberMe")) {
             this.$emit("storeme", this.ifRememberMe, this.lgParams);
           }
