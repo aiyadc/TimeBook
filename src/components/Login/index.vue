@@ -247,6 +247,10 @@ export default {
         };
       }
     },
+    // 错误信息
+    errInfo: {type:String,
+        default:null
+    },
     // 面板和表单内容
     tabList: {
       type: Array,
@@ -285,7 +289,8 @@ export default {
           validCode: {
             label: "验证码：",
             placeholder: "请输入验证码"
-          }
+          },
+
         };
       }
     }
