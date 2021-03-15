@@ -1,6 +1,7 @@
 <!-- 设计页 -->
 <template>
   <div class="diy">
+    <!-- 顶部工具栏 -->
     <div class="nav">
       <div class="nav-left"><p>DIY</p></div>
       <div class="nav-right">
@@ -23,28 +24,47 @@
     </div>
 
     <div class="content">
-      <div class="material">
+      <!-- 素材部分 -->
+      <div class="materials">
         <div class="m-nav">
           <el-tabs
             class="m-tab"
             v-model="tab"
             :tab-position="plateform === 'pc' ? 'left' : 'top'"
           >
+            <!-- 我的素材 -->
             <el-tab-pane name="material" label="素材">
-              <div class="m-child">
-                <div v-for="(m, i) in materialOptions" :key="i">
-                  <img
-                    :src="m.src"
-                    :alt="m.name"
-                    :width="service === 'pc' ? 94 : 76"
-                    :height="service === 'pc' ? 90 : 70"
-                    draggable="true"
-                    @dragstart="dragstart($event)"
-                    @touchstart="setOnCanvas($event)"
-                  />
+              <div class="m-nav">
+                <el-input
+                  class="material-search"
+                  v-model="search.materialSearch"
+                  size="small"
+                  placeholder="可输入照片名进行搜索"
+                  suffix-icon="el-icon-search"
+                ></el-input>
+                <div>
+                  <i class="el-icon-plus tool-icon" @click="addMaterial"></i>
+                  <i class="el-icon-delete tool-icon"></i>
                 </div>
               </div>
+              <div class="m-child">
+                <template v-for="(m, i) in materialOptions">
+                  <div :tabindex="i" :key="i">
+                    <img
+                      :src="m.src"
+                      :alt="m.name"
+                      :width="service === 'pc' ? 94 : 76"
+                      :height="service === 'pc' ? 90 : 70"
+                      draggable="true"
+                      @dragstart="dragstart($event)"
+                      @touchstart="setOnCanvas($event)"
+                    />
+                    <span class="pic-name ellipsis">{{ m.name }}</span>
+                  </div>
+                </template>
+              </div>
             </el-tab-pane>
+            <!-- 文案选择 -->
             <el-tab-pane name="text" label="文本">
               <a
                 href="javascript:void(0)"
@@ -54,7 +74,19 @@
                 >H1</a
               >
             </el-tab-pane>
+            <!-- 系统素材 -->
             <el-tab-pane name="decoration" label="装饰">
+              <div class="material-tool">
+                <el-input
+                  class="decoration-search"
+                  v-model="search.materialSearch"
+                  size="small"
+                  placeholder="可输入照片名进行搜索"
+                  suffix-icon="el-icon-search"
+                ></el-input>
+                <i class="el-icon-plus tool-icon"></i>
+                <i class="el-icon-delete tool-icon"></i>
+              </div>
               <div class="d-child">
                 <div v-for="(d, i) in decorationOptions" :key="i">
                   <img
@@ -66,6 +98,7 @@
                 </div>
               </div>
             </el-tab-pane>
+            <!-- 我的相册，H5中才有显示 -->
             <el-tab-pane name="album" label="相册" v-if="service === 'h5'">
               <div class="my-album">
                 <div class="page" v-for="(ctx, i) in myAlbum.data" :key="i">
@@ -82,6 +115,7 @@
           </el-tabs>
         </div>
       </div>
+      <!-- 画布部分 -->
       <div class="draw">
         <div class="canvas-container">
           <div class="tool">
@@ -331,7 +365,7 @@
           <canvas id="canvas"></canvas>
         </div>
       </div>
-
+      <!-- 相册效果展示 -->
       <div class="my-album content-right pc">
         <div class="page" v-for="(ctx, i) in myAlbum.data" :key="i">
           <img
@@ -344,6 +378,32 @@
         </div>
       </div>
     </div>
+    <el-dialog
+      custom-class="upload-dia"
+      title="上传照片"
+      :visible="uploadDia"
+      center
+      @close="closeUploadDia"
+    >
+      <el-upload action="#" list-type="picture-card" multiple show-file-list drag :limit="10" :auto-upload="false">
+        <i slot="default" class="el-icon-plus"></i>
+        <div slot="file" slot-scope="{ file }">
+          <img class="el-upload-list__item-thumbnail" :src="file.url" alt="" />
+          <span class="el-upload-list__item-actions">
+            <span
+              v-if="!disabled"
+              class="el-upload-list__item-delete"
+              @click="handleRemove(file)"
+            >
+              <i class="el-icon-delete"></i>
+            </span>
+          </span>
+        </div>
+      </el-upload>
+      <div slot="footer">
+            <el-button type="primary" @click="handleUpload">上传</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -368,6 +428,7 @@ export default {
       dragObject: null,
       selectedObject: null,
       activeType: "", // 当前画布激活的对象的类型
+      currentPage: 0, // 当前的照片页
       selectedOCoods: {
         dwX: 0,
         dwY: 0,
@@ -400,12 +461,18 @@ export default {
         currentStateIndex: 0,
         canvasState: []
       },
+      // search
+      search: {
+        materialSearch: ""
+      },
+      // select Options
       materialOptions: [],
       decorationOptions: [],
       sizeOptions: [],
       fontFamilyOptions: [],
       predefineColors: [],
-      currentPage: 0
+      // Dialog
+      uploadDia: false
     };
   },
 
@@ -742,7 +809,24 @@ export default {
       let obj = e.target;
       this.dragObject = obj;
     },
-    // 工具栏
+    /**
+     * 素材
+     */
+    addMaterial() {
+      // todo
+      this.uploadDia = true;
+    },
+    uploadRemove() {},
+    handleUpload(){
+        //todo
+    },
+    closeUploadDia() {
+      this.uploadDia = false;
+    },
+
+    /**
+     * 工具栏
+     */
     // 改变画板各对象的层叠顺序
     setLayerforward(el) {
       el.object.bringForward();
@@ -801,46 +885,6 @@ export default {
     },
     // 撤销
     undo() {
-      // console.log(this.canvas.isEmpty());
-      // if (this.canvas.isEmpty()) return;
-      // if (this._config.undoFinishedStatus) {
-      //   if (this._config.currentStateIndex == 0) {
-      //     this._config.undoStatus = false;
-      //   } else {
-      //     if (this._config.canvasState.length >= 1) {
-      //       this._config.undoFinishedStatus = 0;
-      //       if (this._config.currentStateIndex != 0) {
-      //         this._config.undoStatus = true;
-      //         this.canvas.loadFromJSON(
-      //           this._config.canvasState[this._config.currentStateIndex - 1],
-      //           () => {
-      //             var jsonData = JSON.parse(
-      //               this._config.canvasState[this._config.currentStateIndex - 1]
-      //             );
-      //             this.canvas.renderAll();
-      //             this._config.undoStatus = false;
-      //             this._config.currentStateIndex -= 1;
-      //             this._config.undoButton.removeAttribute("disabled");
-      //             // 只要不是最前面的步骤，undo之后，redo就是解封的
-      //             if (
-      //               this._config.currentStateIndex !==
-      //               this._config.canvasState.length - 1
-      //             ) {
-      //               this._config.redoButton.removeAttribute("disabled");
-      //             }
-      //             this._config.undoFinishedStatus = 1;
-      //           }
-      //         );
-      //       } else if (this._config.currentStateIndex == 0) {
-      //         this.canvas.clear();
-      //         this._config.undoFinishedStatus = 1;
-      //         this._config.undoButton.disabled = "disabled";
-      //         this._config.redoButton.removeAttribute("disabled");
-      //         this._config.currentStateIndex -= 1;
-      //       }
-      //     }
-      //   }
-      // }
       let cf = this._config;
       if (cf.currentStateIndex < 1) return void 0;
       else {
@@ -864,45 +908,6 @@ export default {
           cf.isRedoing = 0;
         });
       }
-      // if (this._config.redoFinishedStatus) {
-      //   if (
-      //     this._config.currentStateIndex ==
-      //       this._config.canvasState.length - 1 &&
-      //     this._config.currentStateIndex != -1
-      //   ) {
-      //     this._config.redoButton.disabled = "disabled";
-      //   } else {
-      //     if (
-      //       this._config.canvasState.length > this._config.currentStateIndex &&
-      //       this._config.canvasState.length != 0
-      //     ) {
-      //       this._config.redoFinishedStatus = 0;
-      //       this._config.redoStatus = true;
-      //       this.canvas.loadFromJSON(
-      //         this._config.canvasState[this._config.currentStateIndex + 1],
-      //         () => {
-      //           var jsonData = JSON.parse(
-      //             this._config.canvasState[this._config.currentStateIndex + 1]
-      //           );
-      //           this.canvas.renderAll();
-      //           this._config.redoStatus = false;
-      //           this._config.currentStateIndex += 1;
-      //           if (this._config.currentStateIndex != -1) {
-      //             this._config.undoButton.removeAttribute("disabled");
-      //           }
-      //           this._config.redoFinishedStatus = 1;
-      //           if (
-      //             this._config.currentStateIndex ==
-      //               this._config.canvasState.length - 1 &&
-      //             this._config.currentStateIndex != -1
-      //           ) {
-      //             this._config.redoButton.disabled = "disabled";
-      //           }
-      //         }
-      //       );
-      //     }
-      //   }
-      // }
     },
     // 删除对象
     deleteSelected(selected) {
@@ -915,7 +920,6 @@ export default {
     // 复制选中
     copySelected(selected) {
       this.$store.commit("Push_TStack", selected);
-     
     },
     // 粘贴选中
     pasteSelected() {
@@ -1139,7 +1143,7 @@ export default {
   @media screen and (max-width: 700px) {
     flex-direction: column-reverse;
   }
-  .material {
+  .materials {
     width: 10rem;
     height: 100%;
     background-color: #fff;
@@ -1165,20 +1169,41 @@ export default {
         }
       }
     }
+    .m-nav {
+      display: flex;
+      justify-content: space-between;
+      .material-search,
+      .decoration-search {
+        width: 180px;
+      }
+    }
     .m-child,
     .d-child {
       width: 100%;
       height: 100%;
+      min-width: 220px;
       display: flex;
       flex-wrap: wrap;
       div {
-        display: inline-block;
+        cursor: pointer;
         width: 100px;
-        height: 100px;
+        height: 110px;
         background-color: antiquewhite;
         box-sizing: border-box;
         padding: 5px 2px;
         margin: 5px;
+        position: relative;
+        img {
+          vertical-align: middle;
+        }
+        .pic-name {
+          vertical-align: super;
+          width: 60px;
+          font-size: 12px;
+        }
+        &:focus {
+          outline: turquoise 2px solid;
+        }
       }
     }
     @media screen and (max-width: 700px) {
@@ -1365,4 +1390,8 @@ export default {
   margin: 0;
   vertical-align: middle;
 }
-</style>   
+/deep/ .el-upload-list--picture-card {
+  width: 100px;
+  height: 100px;
+}
+</style>

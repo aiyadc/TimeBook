@@ -18,3 +18,10 @@
     display: flex;
     justify-content: space-around;
 }
+
+// 超出宽度省略号表示
+.ellipsis{
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
