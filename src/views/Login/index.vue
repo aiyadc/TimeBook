@@ -85,7 +85,7 @@ export default {
     login(form, ref) {
       //   if (params.account == "eachan" && params.password == "123456")
       //     this.$router.push("/");
-      console.log(form, user);
+      console.log('form:', form);
       user
         .login(form)
         .then(res => {

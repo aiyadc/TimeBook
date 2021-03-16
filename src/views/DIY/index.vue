@@ -34,7 +34,7 @@
           >
             <!-- 我的素材 -->
             <el-tab-pane name="material" label="素材">
-              <div class="m-nav">
+              <div class="head-tool">
                 <el-input
                   class="material-search"
                   v-model="search.materialSearch"
@@ -385,23 +385,30 @@
       center
       @close="closeUploadDia"
     >
-      <el-upload action="#" list-type="picture-card" multiple show-file-list drag :limit="10" :auto-upload="false">
+      <el-upload
+        action="#"
+        list-type="picture-card"
+        multiple
+        :file-list="fileList"
+        show-file-list
+        :limit="10"
+        :auto-upload="false"
+        :on-success="handleUploadSuccess"
+        :on-change="updateUploadList"
+      >
         <i slot="default" class="el-icon-plus"></i>
         <div slot="file" slot-scope="{ file }">
           <img class="el-upload-list__item-thumbnail" :src="file.url" alt="" />
           <span class="el-upload-list__item-actions">
-            <span
-              v-if="!disabled"
-              class="el-upload-list__item-delete"
+            <i
+              class="el-icon-delete cursor-pointer"
               @click="handleRemove(file)"
-            >
-              <i class="el-icon-delete"></i>
-            </span>
+            ></i>
           </span>
         </div>
       </el-upload>
       <div slot="footer">
-            <el-button type="primary" @click="handleUpload">上传</el-button>
+        <el-button type="primary" @click="UploadToService">上传</el-button>
       </div>
     </el-dialog>
   </div>
@@ -413,6 +420,7 @@ import { fabric } from "fabric";
 export default {
   data() {
     return {
+      service: "",
       canvas: null,
       canvasInfo: {},
       canvasElements: [],
@@ -443,7 +451,6 @@ export default {
         sourceOffsetX: 0,
         sourceOffsetY: 0
       },
-      service: "",
       tab: "material",
       size: 14, // 文字尺寸
       // 画笔
@@ -472,7 +479,9 @@ export default {
       fontFamilyOptions: [],
       predefineColors: [],
       // Dialog
-      uploadDia: false
+      // 上传弹窗
+      uploadDia: false,
+      fileList: []
     };
   },
 
@@ -816,9 +825,23 @@ export default {
       // todo
       this.uploadDia = true;
     },
-    uploadRemove() {},
-    handleUpload(){
-        //todo
+    updateUploadList(file, fileList) {
+      console.log("fileList", fileList);
+      this.fileList = fileList;
+    },
+    handleRemove(file) {
+      console.log("file", file, "fileList:", this.fileList);
+      this.fileList.forEach((pic, index, fileList) => {
+        if (pic.uid == file.uiid) {
+          fileList.splice(index, 1);
+        }
+      });
+    },
+    handleUploadSuccess(response, file, fileList) {
+      console.log("fileList :>> ", fileList);
+    },
+    UploadToService() {
+      //todo
     },
     closeUploadDia() {
       this.uploadDia = false;
@@ -1149,8 +1172,8 @@ export default {
     background-color: #fff;
     .m-nav {
       width: 100%;
-      padding: 5px;
       height: 100%;
+      padding: 5px;
       overflow: auto;
       .m-tab {
         height: 100%;
@@ -1169,9 +1192,10 @@ export default {
         }
       }
     }
-    .m-nav {
+    .head-tool {
       display: flex;
       justify-content: space-between;
+      flex-wrap: wrap;
       .material-search,
       .decoration-search {
         width: 180px;
