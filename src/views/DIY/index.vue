@@ -383,28 +383,21 @@
       title="上传照片"
       :visible="uploadDia"
       center
+      width="420px"
       @close="closeUploadDia"
     >
       <el-upload
-        action="#"
-        list-type="picture-card"
+        class="upload"
+        drag
+        action="uploadURL"
         multiple
-        :file-list="fileList"
-        show-file-list
-        :limit="10"
+        ref="upload"
         :auto-upload="false"
-        :on-success="handleUploadSuccess"
-        :on-change="updateUploadList"
       >
-        <i slot="default" class="el-icon-plus"></i>
-        <div slot="file" slot-scope="{ file }">
-          <img class="el-upload-list__item-thumbnail" :src="file.url" alt="" />
-          <span class="el-upload-list__item-actions">
-            <i
-              class="el-icon-delete cursor-pointer"
-              @click="handleRemove(file)"
-            ></i>
-          </span>
+        <i class="el-icon-upload"></i>
+        <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
+        <div class="el-upload__tip" slot="tip">
+          只能上传jpg/png文件，且不超过500kb
         </div>
       </el-upload>
       <div slot="footer">
@@ -481,6 +474,7 @@ export default {
       // Dialog
       // 上传弹窗
       uploadDia: false,
+      uploadURL: process.env.BASE_API + "/decoration/upload",
       fileList: []
     };
   },
@@ -498,6 +492,14 @@ export default {
     }
   },
   created() {
+    setTimeout(() => {
+      console.log(
+        "process.env",
+        process.env.BASE_API,
+        "this.uploadURL",
+        this.uploadURL
+      );
+    }, 0);
     Fastclick.attach(document.body);
   },
   mounted() {
@@ -842,6 +844,7 @@ export default {
     },
     UploadToService() {
       //todo
+      this.$refs.upload.submit();
     },
     closeUploadDia() {
       this.uploadDia = false;
@@ -1414,8 +1417,12 @@ export default {
   margin: 0;
   vertical-align: middle;
 }
-/deep/ .el-upload-list--picture-card {
-  width: 100px;
-  height: 100px;
+.upload-dia {
+  .upload {
+    .el-upload-list {
+      max-height: 10rem;
+      overflow: auto;
+    }
+  }
 }
 </style>
