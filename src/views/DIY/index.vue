@@ -1083,6 +1083,8 @@ export default {
     // 切换页面
     togglePage(ctx) {
       // console.log(this.currentPage, ctx.page);
+      // 重置状态，由于在创建画布的时候初始化了一个状态，所以所以回到这个状态
+      this._config.canvasState = this._config.canvasState.slice(0,1);
       if (this.currentPage === ctx.page) return;
       this.myAlbum.data[this.currentPage].canvas = this.canvas.toJSON();
       let canvasJSON = ctx.canvas;
