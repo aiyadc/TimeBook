@@ -63,6 +63,11 @@
                   </div>
                 </template>
               </div>
+              <div class="m-footer">
+                <!-- 做上传提示等 -->
+                tips
+              </div>
+              <!-- <canvas id="materialCanvas" width="94px" height="90px"></canvas> -->
             </el-tab-pane>
             <!-- 文案选择 -->
             <el-tab-pane name="text" label="文本">
@@ -389,10 +394,12 @@
       <el-upload
         class="upload"
         drag
+        list-type="picture-card"
         action="uploadURL"
         multiple
         ref="upload"
         :auto-upload="false"
+        :on-change="updateUploadList"
       >
         <i class="el-icon-upload"></i>
         <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
@@ -740,7 +747,7 @@ export default {
         src: require("@/assets/cc.jpg")
       },
       {
-        did: 0,
+        mid: 1,
         theme: "dog",
         name: "dd",
         width: 50,
@@ -759,7 +766,7 @@ export default {
         src: require("@/assets/dd.jpg")
       },
       {
-        mid: 0,
+        did: 1,
         theme: "cat",
         name: "cc",
         width: 94,
@@ -828,7 +835,7 @@ export default {
       this.uploadDia = true;
     },
     updateUploadList(file, fileList) {
-      console.log("fileList", fileList);
+      //   console.log("fileList", fileList);
       this.fileList = fileList;
     },
     handleRemove(file) {
@@ -844,7 +851,95 @@ export default {
     },
     UploadToService() {
       //todo
-      this.$refs.upload.submit();
+      if (this.fileList.length !== 0) {
+        console.log("this.fileList", this.fileList);
+        this.fileList.forEach((img, index, fileList) => {
+          let obj = {};
+          obj.mid = index;
+          obj.theme = "unknow";
+          obj.name = img.name;
+          obj.width = 94;
+          obj.height = 90;
+          obj.src = img.url;
+          this.materialOptions.push(obj);
+        });
+        // console.log('this.materialOptions', this.materialOptions)
+        let canvas = document.createElement("canvas");
+        canvas.id = "materialCanvas";
+        canvas = new fabric.Canvas("materialCanvas");
+        // new Promise((resolve, reject) => {
+        let imgData = [];
+        this.fileList.forEach(async (img, index, fileList) => {
+          console.log("img :>> ", img);
+          new fabric.Image.fromURL(img.url, image => {
+            // 创建Image元素，获取相关图片的原始width和height,
+            let newIMG = new Image();
+            newIMG.src = img.url;
+            console.log("newIMG.src :>> ", newIMG.src);
+            console.dir(newIMG);
+            image.set({
+              width: newIMG.width,
+              height: newIMG.height,
+              name: img.name
+            });
+            canvas.set({
+              width: newIMG.width,
+              height: newIMG.height
+            });
+            canvas.add(image);
+            let src = canvas.toDataURL();
+            console.log("src", src);
+
+            let obj = {};
+            obj.mid = index;
+            obj.theme = "unknow";
+            obj.name = img.name;
+            obj.width = 94;
+            obj.height = 90;
+            obj.src = src;
+            // 此步骤为测试用
+            //   this.materialOptions.push(obj)
+            //   let json = Object.assign({}, canvas.toJSON());
+            //   json.objects[0].scaleX = 94/newIMG.width;
+            //   json.objects[0].scaleY = 90/newIMG.height;
+            //   console.log('json :>> ', json.objects[0].scaleY);
+            //   imgData.push(json);
+            //   console.log(index, imgData);
+            canvas.clear();
+            if (index == this.fileList.length - 1) {
+              console.log("this.materialOptions :>> ", this.materialOptions);
+            }
+            //   console.log("compare:", index, fileList.length, imgData);
+            //   if (index == fileList.length - 1) {
+            //     resolve(imgData);
+            //     console.log('imgData :>> ', imgData);
+            //   }
+          });
+        });
+        // })
+        // }).then(imgData => {
+        //   //   console.log("imageData", imgData);
+        //   imgData.forEach(async (cv, index) => {
+        //     // console.log("canvas :>> ", canvas);
+        //     let obj = {};
+        //     let img = cv.objects[0];
+        //     obj.mid = index;
+        //     obj.theme = "none";
+        //     obj.name = img.name;
+        //     obj.width = img.width;
+        //     obj.height = img.height;
+        //     await canvas.loadFromJSON(cv, () => {
+        //       obj.src = canvas.toDataURL();
+        //     });
+        //     this.materialOptions.push(obj);
+        //     if (index == imgData.length - 1) {
+        //       console.log("当前执行完毕，", this.materialOptions);
+        //     }
+        //   });
+        // });
+      } else {
+        this.$message.warning("请先上传照片");
+      }
     },
     closeUploadDia() {
       this.uploadDia = false;
@@ -1084,7 +1179,7 @@ export default {
     togglePage(ctx) {
       // console.log(this.currentPage, ctx.page);
       // 重置状态，由于在创建画布的时候初始化了一个状态，所以所以回到这个状态
-      this._config.canvasState = this._config.canvasState.slice(0,1);
+      this._config.canvasState = this._config.canvasState.slice(0, 1);
       if (this.currentPage === ctx.page) return;
       this.myAlbum.data[this.currentPage].canvas = this.canvas.toJSON();
       let canvasJSON = ctx.canvas;
@@ -1184,6 +1279,12 @@ export default {
         height: 100%;
         width: 100%;
         overflow: auto;
+        /deep/ .el-tabs__content {
+          height: 100%;
+          .el-tab-pane {
+            height: 100%;
+          }
+        }
         @media screen and (max-width: 700px) {
           & >>> .el-tabs__header {
             margin: 0;
@@ -1196,6 +1297,10 @@ export default {
           }
         }
       }
+    }
+    .material {
+      position: relative;
+      width: 100%;
     }
     .head-tool {
       display: flex;
@@ -1234,6 +1339,12 @@ export default {
           outline: turquoise 2px solid;
         }
       }
+    }
+    .m-footer {
+      width: 100%;
+      position: absolute;
+      bottom: 0;
+      background-color: #b9e9f0;
     }
     @media screen and (max-width: 700px) {
       width: 100%;
@@ -1398,6 +1509,46 @@ export default {
   position: relative;
   bottom: 5px;
 }
+
+// 上传组件
+/deep/ .el-dialog__wrapper {
+  .upload-dia {
+     .el-dialog__body {
+      position: relative;
+      min-height: 300px;
+      padding-bottom: 0;
+    }
+    .upload {
+      max-height: 60vh;
+      .el-upload {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        .el-upload__text {
+          position: absolute;
+          top: 60%;
+          left: 50%;
+          width: 100%;
+          transform: translate(-50%, -50%);
+        }
+      }
+      .el-upload__tip {
+        position: absolute;
+        top: 200px;
+      }
+      .el-upload-list {
+        display: block;
+        margin-top: 220px;
+        max-height: 200px;
+        overflow: auto;
+        li {
+          width: 100px;
+          height: 100px;
+        }
+      }
+    }
+  }
+}
 </style>
 <style lang="scss">
 .el-color-picker {
@@ -1418,13 +1569,5 @@ export default {
   vertical-align: middle;
   margin: 0;
   vertical-align: middle;
-}
-.upload-dia {
-  .upload {
-    .el-upload-list {
-      max-height: 10rem;
-      overflow: auto;
-    }
-  }
 }
 </style>
