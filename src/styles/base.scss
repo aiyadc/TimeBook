@@ -21,6 +21,7 @@
 
 // 超出宽度省略号表示
 .ellipsis {
+    display: inline-block;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

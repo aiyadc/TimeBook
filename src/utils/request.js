@@ -3,8 +3,9 @@ import axios from "axios";
 const request = axios.create({
     timeout: 5000,
     // baseURL: process.env.BASE_API,
-    baseURL: "http://127.0.0.1:7001"
-        // withCredentials: true, // 跨域可携带cookie
+    baseURL: "http://127.0.0.1:7001",
+    maxContentLength: 30000,
+    // withCredentials: true, // 跨域可携带cookie
 });
 
 // request interceptor

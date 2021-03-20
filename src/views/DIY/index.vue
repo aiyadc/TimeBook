@@ -105,15 +105,9 @@
             </el-tab-pane>
             <!-- 我的相册，H5中才有显示 -->
             <el-tab-pane name="album" label="相册" v-if="service === 'h5'">
-              <div class="my-album">
+              <div class="my-album-h5">
                 <div class="page" v-for="(ctx, i) in myAlbum.data" :key="i">
-                  <img
-                    :src="ctx.src"
-                    alt=""
-                    height="70"
-                    width="49"
-                    @click="togglePage(ctx)"
-                  />
+                  <img :src="ctx.src" alt="" @click="togglePage(ctx)" />
                 </div>
               </div>
             </el-tab-pane>
@@ -371,7 +365,7 @@
         </div>
       </div>
       <!-- 相册效果展示 -->
-      <div class="my-album content-right pc">
+      <div class="my-album-pc content-right pc">
         <div class="page" v-for="(ctx, i) in myAlbum.data" :key="i">
           <img
             :src="ctx.src"
@@ -417,6 +411,7 @@
 <script>
 import Fastclick from "fastclick";
 import { fabric } from "fabric";
+import material from "@/api/material.js";
 export default {
   data() {
     return {
@@ -867,57 +862,61 @@ export default {
         let canvas = document.createElement("canvas");
         canvas.id = "materialCanvas";
         canvas = new fabric.Canvas("materialCanvas");
-        // new Promise((resolve, reject) => {
-        let imgData = [];
-        this.fileList.forEach(async (img, index, fileList) => {
-          console.log("img :>> ", img);
-          new fabric.Image.fromURL(img.url, image => {
-            // 创建Image元素，获取相关图片的原始width和height,
-            let newIMG = new Image();
-            newIMG.src = img.url;
-            console.log("newIMG.src :>> ", newIMG.src);
-            console.dir(newIMG);
-            image.set({
-              width: newIMG.width,
-              height: newIMG.height,
-              name: img.name
-            });
-            canvas.set({
-              width: newIMG.width,
-              height: newIMG.height
-            });
-            canvas.add(image);
-            let src = canvas.toDataURL();
-            console.log("src", src);
+        new Promise((resolve, reject) => {
+          let imgData = [];
+          this.fileList.forEach(async (img, index, fileList) => {
+            // console.log("img :>> ", img);
+            new fabric.Image.fromURL(img.url, image => {
+              // 创建Image元素，获取相关图片的原始width和height,
+              let newIMG = new Image();
+              newIMG.src = img.url;
+              // console.log("newIMG.src :>> ", newIMG.src);
+              console.dir(newIMG);
+              image.set({
+                width: newIMG.width,
+                height: newIMG.height,
+                name: img.name
+              });
+              canvas.set({
+                width: newIMG.width,
+                height: newIMG.height
+              });
+              canvas.add(image);
+              let src = canvas.toDataURL();
+              console.log("src", src);
 
-            let obj = {};
-            obj.mid = index;
-            obj.theme = "unknow";
-            obj.name = img.name;
-            obj.width = 94;
-            obj.height = 90;
-            obj.src = src;
-            // 此步骤为测试用
-            //   this.materialOptions.push(obj)
-            //   let json = Object.assign({}, canvas.toJSON());
-            //   json.objects[0].scaleX = 94/newIMG.width;
-            //   json.objects[0].scaleY = 90/newIMG.height;
-            //   console.log('json :>> ', json.objects[0].scaleY);
-            //   imgData.push(json);
-            //   console.log(index, imgData);
-            canvas.clear();
-            if (index == this.fileList.length - 1) {
-              console.log("this.materialOptions :>> ", this.materialOptions);
-            }
-            //   console.log("compare:", index, fileList.length, imgData);
-            //   if (index == fileList.length - 1) {
-            //     resolve(imgData);
-            //     console.log('imgData :>> ', imgData);
-            //   }
+              let obj = {};
+              obj.mid = index;
+              obj.theme = "unknow";
+              obj.name = img.name.replace(/(\.jpg)$|(\.png)$/, "");
+              obj.width = 94;
+              obj.height = 90;
+              obj.src = (src + "").replace(/^data:image\/\w+;base64,/, "");
+              imgData.push(obj);
+              // 此步骤为测试用
+              //   this.materialOptions.push(obj)
+              //   let json = Object.assign({}, canvas.toJSON());
+              //   json.objects[0].scaleX = 94/newIMG.width;
+              //   json.objects[0].scaleY = 90/newIMG.height;
+              //   console.log('json :>> ', json.objects[0].scaleY);
+              //   imgData.push(json);
+              //   console.log(index, imgData);
+              canvas.clear();
+              if (index == this.fileList.length - 1) {
+                // console.log("this.materialOptions :>> ", this.imgData);
+              }
+              //   console.log("compare:", index, fileList.length, imgData);
+              if (index == fileList.length - 1) {
+                resolve(imgData);
+                console.log("imgData :>> ", imgData);
+              }
+            });
           });
+        }).then(imgData => {
+          console.log("imgData", imgData);
+          this.uploadDia = false;
+          material.uploadMore({ data: imgData });
         });
-        // })
-        // }).then(imgData => {
         //   //   console.log("imageData", imgData);
         //   imgData.forEach(async (cv, index) => {
         //     // console.log("canvas :>> ", canvas);
@@ -1245,7 +1244,7 @@ export default {
 }
 .nav {
   height: 1.7rem;
-  max-height: 54px;
+  // max-height: 54px;
   background-color: cyan;
   display: flex;
   justify-content: space-between;
@@ -1259,13 +1258,15 @@ export default {
     }
   }
 }
+// 内容部分
 .content {
-  height: calc(100% - 1.7rem);
-  max-height: calc(100% - 54px);
+  height: calc(100vh - 1.7rem);
+  overflow: hidden;
   display: flex;
   @media screen and (max-width: 700px) {
     flex-direction: column-reverse;
   }
+  // 左边导航栏
   .materials {
     width: 10rem;
     height: 100%;
@@ -1274,15 +1275,13 @@ export default {
       width: 100%;
       height: 100%;
       padding: 5px;
-      overflow: auto;
       .m-tab {
         height: 100%;
         width: 100%;
-        overflow: auto;
         /deep/ .el-tabs__content {
-          height: 100%;
           .el-tab-pane {
             height: 100%;
+            overflow-x: auto;
           }
         }
         @media screen and (max-width: 700px) {
@@ -1316,12 +1315,12 @@ export default {
       width: 100%;
       height: 100%;
       min-width: 220px;
-      display: flex;
-      flex-wrap: wrap;
+      text-align: left;
       div {
         cursor: pointer;
         width: 100px;
         height: 110px;
+        display: inline-block;
         background-color: antiquewhite;
         box-sizing: border-box;
         padding: 5px 2px;
@@ -1354,10 +1353,13 @@ export default {
         div {
           width: 80px;
           height: 80px;
+          overflow-x: auto;
         }
       }
     }
   }
+
+  // 中间画布部分
   .draw {
     flex: 1;
     position: relative;
@@ -1437,6 +1439,8 @@ export default {
       }
     }
   }
+
+  // PC端才展示的相册部分
   .content-right {
     overflow: auto;
     width: 175px;
@@ -1456,15 +1460,21 @@ export default {
         }
       }
     }
-    @media screen and (max-width: 700px) {
-      height: 100%;
-      width: calc(100%);
-      overflow: auto;
-      .page {
-        display: inline-block;
-        height: calc(100% - 10px);
-        width: 80px;
-        background-color: #eeeeee;
+  }
+  .my-album-h5 {
+    height: 100%;
+    width: 100vw;
+    overflow: auto;
+    white-space: nowrap;
+    .page {
+      display: inline-block;
+      // height: calc(100% - 10px);
+      width: 80px;
+      background-color: #fdf585;
+      margin: 5px;
+      padding-top: 5px;
+      img {
+        width: calc(100% - 10px);
       }
     }
   }
@@ -1492,11 +1502,6 @@ export default {
   border-bottom: solid 1px #eeeeee;
   padding: 5px;
 }
-.pc {
-  @media screen and (max-width: 700px) {
-    display: none;
-  }
-}
 .label {
   font-weight: 700;
   font-size: 14px;
@@ -1513,7 +1518,7 @@ export default {
 // 上传组件
 /deep/ .el-dialog__wrapper {
   .upload-dia {
-     .el-dialog__body {
+    .el-dialog__body {
       position: relative;
       min-height: 300px;
       padding-bottom: 0;
@@ -1549,6 +1554,17 @@ export default {
     }
   }
 }
+
+.diy {
+  @media screen and (max-width: 700px) {
+    .nav {
+      height: 1.7rem;
+    }
+    .pc {
+      display: none;
+    }
+  }
+}
 </style>
 <style lang="scss">
 .el-color-picker {
@@ -1571,3 +1587,4 @@ export default {
   vertical-align: middle;
 }
 </style>
+``
