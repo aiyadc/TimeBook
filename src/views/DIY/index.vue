@@ -36,18 +36,27 @@
             <el-tab-pane name="material" label="素材">
               <div class="head-tool">
                 <el-input
-                  class="material-search"
+                  class="material-search pc"
                   v-model="search.materialSearch"
                   size="small"
                   placeholder="可输入照片名进行搜索"
                   suffix-icon="el-icon-search"
                 ></el-input>
-                <div>
+                <div class="m-tool">
                   <i class="el-icon-plus tool-icon" @click="addMaterial"></i>
-                  <i class="el-icon-delete tool-icon"></i>
+                  <i
+                    class="el-icon-delete tool-icon"
+                    @click="removeMaterial"
+                  ></i>
                 </div>
               </div>
-              <div class="m-child">
+              <div
+                class="m-child"
+                @touchstart="calcTimeStart"
+                @touchend="calcTimeEnd"
+              >
+                <el-checkbox-group v-model="checkedmaterial">
+                  <!--
                 <template v-for="(m, i) in materialOptions">
                   <div :tabindex="i" :key="i">
                     <img
@@ -56,16 +65,29 @@
                       :width="service === 'pc' ? 94 : 76"
                       :height="service === 'pc' ? 90 : 70"
                       draggable="true"
-                      @dragstart="dragstart($event)"
-                      @touchstart="setOnCanvas($event)"
+                      @touchmove="setMaterialFlag"
+                      @touchend="setOnCanvas($event)"
                     />
-                    <span class="pic-name ellipsis">{{ m.name }}</span>
+                    <span class="pic-name ellipsis pc">{{ m.name }}</span>
                   </div>
                 </template>
-              </div>
-              <div class="m-footer">
-                <!-- 做上传提示等 -->
-                tips
+                -->
+                  <el-checkbox
+                    v-for="(m, i) in materialOptions"
+                    :label="m.mid"
+                    :key="i"
+                  >
+                    <img
+                      :src="m.src"
+                      :alt="m.name"
+                      :width="service === 'pc' ? 94 : 76"
+                      :height="service === 'pc' ? 90 : 70"
+                      draggable="true"
+                      @touchmove="setMaterialFlag"
+                      @touchend="setOnCanvas($event)"
+                    />
+                  </el-checkbox>
+                </el-checkbox-group>
               </div>
               <!-- <canvas id="materialCanvas" width="94px" height="90px"></canvas> -->
             </el-tab-pane>
@@ -81,16 +103,14 @@
             </el-tab-pane>
             <!-- 系统素材 -->
             <el-tab-pane name="decoration" label="装饰">
-              <div class="material-tool">
+              <div class="head-tool">
                 <el-input
-                  class="decoration-search"
+                  class="decoration-search pc"
                   v-model="search.materialSearch"
                   size="small"
                   placeholder="可输入照片名进行搜索"
                   suffix-icon="el-icon-search"
                 ></el-input>
-                <i class="el-icon-plus tool-icon"></i>
-                <i class="el-icon-delete tool-icon"></i>
               </div>
               <div class="d-child">
                 <div v-for="(d, i) in decorationOptions" :key="i">
@@ -108,6 +128,7 @@
               <div class="my-album-h5">
                 <div class="page" v-for="(ctx, i) in myAlbum.data" :key="i">
                   <img :src="ctx.src" alt="" @click="togglePage(ctx)" />
+                  <span>{{ i + 1 }}</span>
                 </div>
               </div>
             </el-tab-pane>
@@ -118,247 +139,242 @@
       <div class="draw">
         <div class="canvas-container">
           <div class="tool">
-            <el-tooltip content="图层" effect="dark" placement="left">
-              <el-popover placement="bottom" trigger="click">
-                <!-- <i slot="reference" class="el-icon-s-order"></i> -->
-                <img
-                  class="tool-icon"
-                  slot="reference"
-                  src="./icons/layer.svg"
-                  alt="layer"
-                />
-                <div>
-                  <div class="layer" v-for="(el, i) in layer" :key="i">
-                    <i
-                      class="el-icon-view icon"
-                      v-show="el.show"
-                      @click="updateLayer(el)"
-                    ></i>
-                    <img
-                      class="tool-icon"
-                      src="./icons/eyeoff.svg"
-                      alt="eyeoff"
-                      @click="updateLayer(el)"
-                      v-show="!el.show"
-                    />
-                    <img
-                      class="mr10-x"
-                      :src="el.src"
-                      width="60px"
-                      height="30px"
-                      :key="i"
-                    />
-                    <el-tooltip content="上移图层" placement="top"
-                      ><i
-                        class="el-icon-top tool-icon"
-                        @click="setLayerforward(el)"
-                      ></i
-                    ></el-tooltip>
-                    <el-tooltip content="下移图层" placement="top"
-                      ><i
-                        class="el-icon-bottom tool-icon mr10-x"
-                        @click="setLayerbottom(el)"
-                      ></i
-                    ></el-tooltip>
-                    <el-tooltip content="删除" placement="top"
-                      ><i
-                        class="el-icon-delete tool-icon"
-                        @click="deleteSelected(el.object)"
-                      ></i
-                    ></el-tooltip>
-                  </div>
-                </div>
-              </el-popover>
-            </el-tooltip>
-
-            <el-tooltip content="背景色" effect="dark" placement="left"
-              ><el-color-picker
-                class="color tool-icon"
-                v-model="bgcolor"
-                show-alpha
-                :predefine="predefineColors"
-                @change="setBGColor"
-                @active-change="setBGColor"
-              >
-              </el-color-picker
-            ></el-tooltip>
-            <el-tooltip content="撤销" effect="dark" placement="left"
-              ><img
-                class="tool-icon"
-                id="undo"
-                :draggable="false"
-                src="./icons/undo.svg"
-                @click="undo"/></el-tooltip
-            ><br />
-
-            <el-tooltip content="恢复" effect="dark" placement="left">
+            <el-popover placement="bottom" trigger="click">
+              <!-- <i slot="reference" class="el-icon-s-order"></i> -->
               <img
-                id="redo"
                 class="tool-icon"
-                src="./icons/redo.svg"
-                @click="redo"
-                alt="redo"
+                slot="reference"
+                src="./icons/layer.svg"
+                alt="layer"
               />
-              <!-- <i id="redo" class="el-icon-right" @click="redo"></i> --> </el-tooltip
-            ><br />
+              <div>
+                <div class="layer" v-for="(el, i) in layer" :key="i">
+                  <i
+                    class="el-icon-view icon"
+                    v-show="el.show"
+                    @click="updateLayer(el)"
+                  ></i>
+                  <img
+                    class="tool-icon"
+                    src="./icons/eyeoff.svg"
+                    alt="eyeoff"
+                    @click="updateLayer(el)"
+                    v-show="!el.show"
+                  />
+                  <img
+                    class="mr10-x"
+                    :src="el.src"
+                    width="60px"
+                    height="30px"
+                    :key="i"
+                  />
+                  <i
+                    class="el-icon-top tool-icon"
+                    @click="setLayerforward(el)"
+                  ></i>
+                  <i
+                    class="el-icon-bottom tool-icon mr10-x"
+                    @click="setLayerbottom(el)"
+                  ></i
+                  ><i
+                    class="el-icon-delete tool-icon"
+                    @click="deleteSelected(el.object)"
+                  ></i>
+                </div>
+              </div>
+            </el-popover>
 
-            <el-tooltip content="清空画布" effect="dark" placement="left">
-              <img
-                class="tool-icon"
-                src="./icons/clear.svg"
-                @click="clear"
-                alt="clear"
-              /> </el-tooltip
-            ><br />
-            <el-tooltip content="裁切" effect="dark" placement="left">
-              <img
-                class="tool-icon"
-                src="./icons/crop.svg"
-                @click="startCroping"
-                alt=""
-              /> </el-tooltip
-            ><br />
-            <el-tooltip content="画笔" placement="left" effect="datk">
-              <el-popover placement="left" trigger="click">
+            <el-color-picker
+              class="color tool-icon"
+              v-model="bgcolor"
+              show-alpha
+              :predefine="predefineColors"
+              @change="setBGColor"
+              @active-change="setBGColor"
+            >
+            </el-color-picker>
+            <img
+              class="tool-icon"
+              id="undo"
+              :draggable="false"
+              src="./icons/undo.svg"
+              @click="undo"
+            /><br />
+
+            <img
+              id="redo"
+              class="tool-icon"
+              src="./icons/redo.svg"
+              @click="redo"
+              alt="redo"
+            />
+            <!-- <i id="redo" class="el-icon-right" @click="redo"></i> -->
+            <br />
+
+            <img
+              class="tool-icon"
+              src="./icons/clear.svg"
+              @click="clear"
+              alt="clear"
+            />
+            <br />
+
+            <img
+              class="tool-icon"
+              src="./icons/crop.svg"
+              @click="startCroping"
+              alt=""
+            />
+            <br />
+
+            <el-popover v-model="paintDia" placement="left" trigger="click">
+              <div>
+                <span class="label">尺寸:{{ paintBrush.size }}</span>
+                <el-slider
+                  v-model="paintBrush.size"
+                  :show-tooltip="false"
+                  @change="setPaintSize()"
+                ></el-slider>
                 <div>
-                  <span class="label">尺寸:</span>
-                  <el-slider
-                    v-model="paintBrush.size"
-                    @change="setPaintSize()"
-                  ></el-slider>
+                  颜色：
+                  <el-color-picker
+                    class="color-container tool-icon osbottom5"
+                    v-model="paintBrush.color"
+                    show-alpha
+                    :predefine="predefineColors"
+                    @change="setPaintColor"
+                    @active-change="setPaintColor"
+                  >
+                  </el-color-picker>
                   <div>
-                    颜色：
-                    <el-color-picker
-                      class="color-container tool-icon osbottom5"
-                      v-model="paintBrush.color"
-                      show-alpha
-                      :predefine="predefineColors"
-                      @change="setPaintColor"
-                      @active-change="setPaintColor"
+                    <el-button type="primary" size="mini" @click="toPaintMode()"
+                      >确定</el-button
                     >
-                    </el-color-picker>
+                    <el-button
+                      type="default"
+                      size="mini"
+                      @click="closePaintMode()"
+                      >退出</el-button
+                    >
                   </div>
                 </div>
-                <img
-                  slot="reference"
-                  class="tool-icon"
-                  src="./icons/draw.svg"
-                  @click="setDrawMode"
-                  alt="draw"
-                />
-              </el-popover>
-            </el-tooltip>
+              </div>
+              <img
+                slot="reference"
+                class="tool-icon"
+                src="./icons/draw.svg"
+                @click="setDrawMode"
+                alt="draw"
+              />
+            </el-popover>
+
             <br />
             <div class="image-tool">
-              <el-tooltip content="平铺" effect="dark">
-                <img
-                  class="tool-icon"
-                  src="./icons/maxmize.svg"
-                  @click="maxmize(canvas.getActiveObject())"
-                  alt="maxmize"
-                />
-              </el-tooltip>
+              <img
+                class="tool-icon"
+                src="./icons/maxmize.svg"
+                @click="maxmize(canvas.getActiveObject())"
+                alt="maxmize"
+              />
+
               <br />
-              <el-tooltip content="复制" effect="dark" placement="left">
-                <img
-                  class="tool-icon"
-                  src="./icons/copy.svg"
-                  @click="copySelected(canvas.getActiveObject())"
-                  alt="copy"
-                /> </el-tooltip
-              ><br />
-              <el-tooltip content="粘贴" effect="dark" placement="left">
-                <img
-                  class="tool-icon"
-                  src="./icons/paste.svg"
-                  @click="pasteSelected"
-                  alt="paste"/></el-tooltip
-              ><br />
-              <el-tooltip content="删除" effect="dark" placement="left">
-                <img
-                  class="tool-icon"
-                  src="./icons/delete.svg"
-                  @click="deleteSelected(canvas.getActiveObject())"
-                  alt="delete"/></el-tooltip
-              ><br />
+
+              <img
+                class="tool-icon"
+                src="./icons/copy.svg"
+                @click="copySelected(canvas.getActiveObject())"
+                alt="copy"
+              />
+              <br />
+
+              <img
+                class="tool-icon"
+                src="./icons/paste.svg"
+                @click="pasteSelected"
+                alt="paste"
+              /><br />
+
+              <img
+                class="tool-icon"
+                src="./icons/delete.svg"
+                @click="deleteSelected(canvas.getActiveObject())"
+                alt="delete"
+              /><br />
             </div>
             <div class="text-tool" v-show="activeType === 'Textbox'">
-              <el-tooltip content="颜色" effect="dark" placement="left"
-                ><el-color-picker
-                  class="color-container"
-                  v-model="textColor"
-                  show-alpha
-                  :predefine="predefineColors"
-                  @change="setTextColor"
-                  @active-change="setTextColor"
-                >
-                </el-color-picker
-              ></el-tooltip>
-              <el-tooltip content="文字样式" effect="dark" placement="left">
-                <el-select
-                  class="size"
-                  v-model="fontFamily"
-                  placeholder="文"
-                  @change="setFontFamily"
-                >
-                  <el-option
-                    v-for="(f, i) in fontFamilyOptions"
-                    :key="i"
-                    :label="f.label"
-                    :value="f.value"
-                  ></el-option>
-                </el-select>
-                <span class="icon" slot="reference">文</span> </el-tooltip
-              ><br />
-              <el-tooltip content="尺寸" effect="dark" placement="left">
-                <!-- <el-popover placement="bottom" trigger="click"> -->
-                <el-select
-                  class="size"
-                  v-model="size"
-                  @change="setTextSize"
-                  placeholder=""
-                >
-                  <el-option
-                    v-for="num in sizeOptions"
-                    :key="num"
-                    :label="num"
-                    :value="num"
-                  ></el-option>
-                </el-select>
-              </el-tooltip>
-              <br />
-              <el-tooltip content="对齐" effect="dark" placement="left">
-                <el-popover class="pop-mw100" placement="bottom">
-                  <div class="flex-sb">
-                    <img
-                      class="tool-icon"
-                      src="./icons/align_left.svg"
-                      @click="setTextAlign('left')"
-                      alt="align_left"
-                    />
-                    <img
-                      class="tool-icon"
-                      src="./icons/align_center.svg"
-                      @click="setTextAlign('center')"
-                      alt=""
-                    />
-                    <img
-                      class="tool-icon"
-                      src="./icons/align_right.svg"
-                      @click="setTextAlign('right')"
-                      alt=""
-                    />
-                    <img
-                      class="tool-icon"
-                      src="./icons/justify_center.svg"
-                      @click="setTextAlign('justify-center')"
-                      alt=""
-                    />
-                  </div>
+              <el-color-picker
+                class="color-container"
+                v-model="textColor"
+                show-alpha
+                :predefine="predefineColors"
+                @change="setTextColor"
+                @active-change="setTextColor"
+              >
+              </el-color-picker>
 
-                  <i slot="reference" class="el-icon-s-operation"></i>
-                </el-popover> </el-tooltip
-              ><br />
+              <el-select
+                class="size"
+                v-model="fontFamily"
+                placeholder="文"
+                @change="setFontFamily"
+              >
+                <el-option
+                  v-for="(f, i) in fontFamilyOptions"
+                  :key="i"
+                  :label="f.label"
+                  :value="f.value"
+                ></el-option>
+              </el-select>
+              <span class="icon" slot="reference">文</span> <br />
+
+              <!-- <el-popover placement="bottom" trigger="click"> -->
+              <el-select
+                class="size"
+                v-model="size"
+                @change="setTextSize"
+                placeholder=""
+              >
+                <el-option
+                  v-for="num in sizeOptions"
+                  :key="num"
+                  :label="num"
+                  :value="num"
+                ></el-option>
+              </el-select>
+
+              <br />
+
+              <el-popover class="pop-mw100" placement="bottom">
+                <div class="flex-sb">
+                  <img
+                    class="tool-icon"
+                    src="./icons/align_left.svg"
+                    @click="setTextAlign('left')"
+                    alt="align_left"
+                  />
+                  <img
+                    class="tool-icon"
+                    src="./icons/align_center.svg"
+                    @click="setTextAlign('center')"
+                    alt=""
+                  />
+                  <img
+                    class="tool-icon"
+                    src="./icons/align_right.svg"
+                    @click="setTextAlign('right')"
+                    alt=""
+                  />
+                  <img
+                    class="tool-icon"
+                    src="./icons/justify_center.svg"
+                    @click="setTextAlign('justify-center')"
+                    alt=""
+                  />
+                </div>
+
+                <i slot="reference" class="el-icon-s-operation"></i>
+              </el-popover>
+              <br />
             </div>
           </div>
           <canvas id="canvas"></canvas>
@@ -382,13 +398,14 @@
       title="上传照片"
       :visible="uploadDia"
       center
-      width="420px"
+      :width="service === 'pc' ? '420px' : '100vw'"
       @close="closeUploadDia"
     >
       <el-upload
         class="upload"
         drag
         list-type="picture-card"
+        accept=".jpg,.jpeg,.png"
         action="uploadURL"
         multiple
         ref="upload"
@@ -438,7 +455,7 @@ export default {
         upX: 0,
         upY: 0
       },
-      layer: [], // 图层
+      layer: [], // 图层{object,src,show}
       iscroping: 0, // 0 未处于裁剪状态，1：处于裁剪阶段1，生成框框，监听dbclick， 2：处于裁剪阶段2,等待dbclick完成裁剪内容并添加到canvas中
       lastPoint: {},
       // 被拖拽的元素
@@ -450,7 +467,8 @@ export default {
       size: 14, // 文字尺寸
       // 画笔
       paintBrush: {
-        color: ""
+        size: 1,
+        color: "rgba(0,0,0,1)"
       },
       // 取色器
       bgcolor: "rgba(199, 21, 133, 1)",
@@ -474,10 +492,18 @@ export default {
       fontFamilyOptions: [],
       predefineColors: [],
       // Dialog
+      paintDia: false, // 绘画popover
       // 上传弹窗
       uploadDia: false,
       uploadURL: process.env.BASE_API + "/decoration/upload",
-      fileList: []
+      fileList: [],
+      // flag
+      moveFlag: 0, // 拖动标志
+      longClick: 0,
+      // 计时器
+      timer: 0,
+      timeInterval: null,
+      checkedmaterial: []
     };
   },
 
@@ -637,6 +663,7 @@ export default {
       }
     });
     this.canvas.on("mouse:up", e => {
+      document.getElementById("canvas").click();
       // 优化，点击裁剪时有蒙版出现，解决移动端如何确定裁剪问题
       if (this.iscroping === 0) void 0;
       if (this.iscroping === 1) {
@@ -829,6 +856,25 @@ export default {
       // todo
       this.uploadDia = true;
     },
+    // 删除选中图片
+    removeMaterial() {
+      console.log("this.checkedmaterial:", this.checkedmaterial);
+      this.materialOptions.forEach((m, i, list) => {
+        if (this.checkedmaterial.includes(m.mid)) {
+          list.splice(i, 1);
+          // 发送请求，从数据库移除
+          // 更新视图，将图片从画布中移除(暂未加上object属性)
+          // this.canvas.remove(m.object)
+        }
+      });
+      // 重新隐藏勾勾
+      let material = document.getElementsByClassName("m-child")[0];
+      let rect = material.getElementsByClassName("el-checkbox__inner");
+      console.log("rect", rect);
+      for (let i = 0; i < rect.length; i++) {
+        rect[i].style.display = "none";
+      }
+    },
     updateUploadList(file, fileList) {
       //   console.log("fileList", fileList);
       this.fileList = fileList;
@@ -996,6 +1042,12 @@ export default {
         this._config.currentStateIndex = this._config.canvasState.length - 1;
         console.log("after update :", this._config.currentStateIndex);
       }
+      // 更新图层视图
+      this.layer = [];
+      this.canvas.forEachObject(o => {
+        // console.log("o:", o);
+        this.setToLayer(o);
+      });
       // 更新相册视图，方法是把前一个视图删除掉，然后用限制的视图作为替换，使用splice可以让vue监听到变化，进行响应式交互
       let page = this.myAlbum.data[this.currentPage];
       page.canvas = this.canvas.toJSON();
@@ -1003,6 +1055,8 @@ export default {
       page.page = this.currentPage;
       this.myAlbum.data.splice(this.currentPage, 1, page);
     },
+    // 取出画布现有对象
+    getObjects(canvas) {},
     // 撤销
     undo() {
       let cf = this._config;
@@ -1031,9 +1085,6 @@ export default {
     },
     // 删除对象
     deleteSelected(selected) {
-      this.layer.forEach((el, index, layer) => {
-        if (el.object === selected) layer.splice(index, 1);
-      });
       this.canvas.remove(selected);
       this.canvas.renderAll();
     },
@@ -1092,6 +1143,13 @@ export default {
     setPaintSize() {
       this.canvas.freeDrawingBrush.width = this.paintBrush.size;
       this.canvas.renderAll();
+    },
+    toPaintMode() {
+      this.paintDia = false;
+    },
+    closePaintMode() {
+      this.canvas.isDrawingMode = false;
+      this.paintDia = false;
     },
     startCroping() {
       if (this.iscroping !== 2) {
@@ -1204,20 +1262,59 @@ export default {
     },
 
     // H5端
+    // 当moveFlag为1时，点击之后不会把照片放到画布上
+    setMaterialFlag() {
+      this.moveFlag = 1;
+    },
+    // 监听长按事件
+    calcTimeStart() {
+      console.log("监听长按开始");
+      this.timeInterval = setInterval(() => {
+        this.timer += 1;
+      }, 500);
+    },
+    calcTimeEnd(e) {
+      if (this.timeInterval) {
+        clearInterval(this.timeInterval);
+        this.timeInterval = null;
+      }
+      if (this.timer > 0) {
+        e.preventDefault();
+        this.longClick = 1; // 阻止将照片放到画布上
+        // 隐藏勾选框
+        let material = document.getElementsByClassName("m-child")[0];
+        let rect = material.getElementsByClassName("el-checkbox__inner");
+        for (let i = 0; i < rect.length; i++) {
+          rect[i].style.display = "inline-block";
+        }
+        // 允许图片选中
+        let imgs = material.getElementsByTagName("img");
+        for (let i = 0; i < imgs.length; i++) {
+          imgs[i].style.pointerEvents = "auto";
+        }
+        // rect.style.display = 'inline-block';
+        // console.log('rect:',rect.style.display)
+        this.timer = 0;
+        // 开启多选模式
+      }
+    },
     setOnCanvas(e) {
+      if (this.moveFlag || this.longClick) {
+        this.moveFlag = 0;
+        return;
+      }
       let target = e.target;
       // console.log(e);
       if (target.localName === "img") {
         let img = new fabric.Image(target);
         let scale = this.getScale(img);
         img.scale(scale);
-        this.canvas.add(img);
         img.left = (this.canvas.width - img.width * img.scaleX) * 0.5;
         img.top = (this.canvas.height - img.height * img.scaleY) * 0.5;
+        this.canvas.add(img);
         this.canvas.setActiveObject(img);
         this.canvas.renderAll();
         this.setToLayer(img);
-        this.layer.push(item);
       } else if (target.localName === "a") {
         let text = new fabric.Textbox(target.innerText);
         text.left = (this.canvas.width - text.width) * 0.5;
@@ -1225,11 +1322,7 @@ export default {
         this.canvas.add(text);
         this.canvas.setActiveObject(text);
         this.canvas.renderAll();
-        let item = {};
-        item.object = text;
-        item.src = text.toDataURL();
-        item.show = true;
-        this.layer.push(item);
+        this.setToLayer(text);
       }
     }
   }
@@ -1278,10 +1371,23 @@ export default {
       .m-tab {
         height: 100%;
         width: 100%;
+        position: relative;
+        /deep/ .el-tabs__header {
+          // 禁止长按选中文字
+          -webkit-touch-callout: none;
+          -webkit-user-select: none;
+          -khtml-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
+          .el-tabs__item {
+            padding: 0 10px;
+          }
+        }
         /deep/ .el-tabs__content {
           .el-tab-pane {
             height: 100%;
-            overflow-x: auto;
+            // overflow-x: auto;
           }
         }
         @media screen and (max-width: 700px) {
@@ -1312,6 +1418,7 @@ export default {
     }
     .m-child,
     .d-child {
+      -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
       width: 100%;
       height: 100%;
       min-width: 220px;
@@ -1320,8 +1427,9 @@ export default {
         cursor: pointer;
         width: 100px;
         height: 110px;
+        text-align: center;
         display: inline-block;
-        background-color: antiquewhite;
+        // background-color: antiquewhite;
         box-sizing: border-box;
         padding: 5px 2px;
         margin: 5px;
@@ -1351,9 +1459,33 @@ export default {
       .m-child,
       .d-child {
         div {
-          width: 80px;
-          height: 80px;
+          //   width: 80px;
+          //   height: 80px;
           overflow-x: auto;
+          /deep/.el-checkbox-group {
+            width: 100%;
+            text-align: left;
+            .el-checkbox {
+              display: inline-block;
+              position: relative;
+              width: 74px;
+              height: 70px;
+              margin-right: 10px;
+              span {
+                position: absolute;
+                bottom: 0;
+                right: 5px;
+                -webkit-user-select: none;
+                user-select: none;
+                img {
+                  pointer-events: none;
+                }
+              }
+              .el-checkbox__inner {
+                display: none;
+              }
+            }
+          }
         }
       }
     }
@@ -1447,7 +1579,7 @@ export default {
     padding: 10px;
     background-color: darkgoldenrod;
   }
-  .my-album {
+  .my-album-pc {
     .page {
       height: 250px;
       img {
@@ -1471,8 +1603,15 @@ export default {
       // height: calc(100% - 10px);
       width: 80px;
       background-color: #fdf585;
-      margin: 5px;
-      padding-top: 5px;
+      padding-top: 3px;
+      position: relative;
+      span {
+        position: absolute;
+        bottom: 5px;
+        font-size: 9px;
+        color: #ccc5c5;
+        right: 10px;
+      }
       img {
         width: calc(100% - 10px);
       }
@@ -1562,6 +1701,27 @@ export default {
     }
     .pc {
       display: none;
+    }
+    .materials {
+      .head-tool {
+        position: fixed;
+        left: 5px;
+        width: 20px;
+        display: inline-block;
+        height: 100%;
+        overflow: auto;
+        .m-tool {
+          .tool-icon {
+            margin: 5px 0;
+          }
+        }
+      }
+      .m-child {
+        margin-left: 20px;
+        overflow-x: auto;
+        white-space: nowrap;
+        text-align: left;
+      }
     }
   }
 }
