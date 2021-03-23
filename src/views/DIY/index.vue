@@ -27,6 +27,21 @@
       <!-- 素材部分 -->
       <div class="materials">
         <div class="m-nav">
+          <div class="nav-tool h5" v-if="tab == 'material'">
+            <i
+              class="el-icon-plus tool-icon"
+              @click="addMaterial"
+              v-if="!isCheck"
+            ></i>
+            <i
+              class="el-icon-delete tool-icon"
+              @click="removeMaterial"
+              v-if="isCheck"
+            ></i>
+            <el-button type="text" @click="isCheck = false" v-if="isCheck"
+              >取消</el-button
+            >
+          </div>
           <el-tabs
             class="m-tab"
             v-model="tab"
@@ -42,7 +57,7 @@
                   placeholder="可输入照片名进行搜索"
                   suffix-icon="el-icon-search"
                 ></el-input>
-                <div class="m-tool">
+                <div class="m-tool pc">
                   <i class="el-icon-plus tool-icon" @click="addMaterial"></i>
                   <i
                     class="el-icon-delete tool-icon"
@@ -50,28 +65,11 @@
                   ></i>
                 </div>
               </div>
-              <div
-                class="m-child"
-                @touchstart="calcTimeStart"
-                @touchend="calcTimeEnd"
-              >
-                <el-checkbox-group v-model="checkedmaterial">
-                  <!--
-                <template v-for="(m, i) in materialOptions">
-                  <div :tabindex="i" :key="i">
-                    <img
-                      :src="m.src"
-                      :alt="m.name"
-                      :width="service === 'pc' ? 94 : 76"
-                      :height="service === 'pc' ? 90 : 70"
-                      draggable="true"
-                      @touchmove="setMaterialFlag"
-                      @touchend="setOnCanvas($event)"
-                    />
-                    <span class="pic-name ellipsis pc">{{ m.name }}</span>
-                  </div>
-                </template>
-                -->
+              <div class="m-child">
+                <el-checkbox-group
+                  :class="{ 'm-checkbox': true, 'no-select': !isCheck }"
+                  v-model="checkedmaterial"
+                >
                   <el-checkbox
                     v-for="(m, i) in materialOptions"
                     :label="m.mid"
@@ -82,7 +80,8 @@
                       :alt="m.name"
                       :width="service === 'pc' ? 94 : 76"
                       :height="service === 'pc' ? 90 : 70"
-                      draggable="true"
+                      :draggable="service == 'pc' ? true : false"
+                      @touchstart="calcTimeStart"
                       @touchmove="setMaterialFlag"
                       @touchend="setOnCanvas($event)"
                     />
@@ -433,6 +432,7 @@ export default {
   data() {
     return {
       service: "",
+      tab: "material", // 当前tab栏
       canvas: null,
       canvasInfo: {},
       canvasElements: [],
@@ -463,7 +463,6 @@ export default {
         sourceOffsetX: 0,
         sourceOffsetY: 0
       },
-      tab: "material",
       size: 14, // 文字尺寸
       // 画笔
       paintBrush: {
@@ -499,7 +498,8 @@ export default {
       fileList: [],
       // flag
       moveFlag: 0, // 拖动标志
-      longClick: 0,
+      longClick: 0, // 长按标志
+      isCheck: false, //是否处于多选状态
       // 计时器
       timer: 0,
       timeInterval: null,
@@ -520,15 +520,14 @@ export default {
     }
   },
   created() {
-    setTimeout(() => {
-      console.log(
-        "process.env",
-        process.env.BASE_API,
-        "this.uploadURL",
-        this.uploadURL
-      );
-    }, 0);
-    Fastclick.attach(document.body);
+    window.addEventListener(
+      "touchmove",
+      () => {
+        void 0;
+      },
+      { passive: false }
+    );
+    // Fastclick.attach(document.body);
   },
   mounted() {
     this._config = {
@@ -858,21 +857,26 @@ export default {
     },
     // 删除选中图片
     removeMaterial() {
-      console.log("this.checkedmaterial:", this.checkedmaterial);
-      this.materialOptions.forEach((m, i, list) => {
-        if (this.checkedmaterial.includes(m.mid)) {
-          list.splice(i, 1);
-          // 发送请求，从数据库移除
-          // 更新视图，将图片从画布中移除(暂未加上object属性)
-          // this.canvas.remove(m.object)
-        }
-      });
-      // 重新隐藏勾勾
-      let material = document.getElementsByClassName("m-child")[0];
-      let rect = material.getElementsByClassName("el-checkbox__inner");
-      console.log("rect", rect);
-      for (let i = 0; i < rect.length; i++) {
-        rect[i].style.display = "none";
+      if (this.checkedmaterial.length) {
+        this.$confirm("确定要删除选中的图片吗？", "提示", {
+          type: "warning",
+          confirmButtonText: "确定",
+          cancelButtonText: "取消"
+        })
+          .then(() => {
+            console.log("this.checkedmaterial:", this.checkedmaterial);
+            this.materialOptions.forEach((m, i, list) => {
+              if (this.checkedmaterial.includes(m.mid)) {
+                list.splice(i, 1);
+                // 发送请求，从数据库移除
+                // 更新视图，将图片从画布中移除(暂未加上object属性)
+                // this.canvas.remove(m.object)
+              }
+            });
+          })
+          .catch(() => {});
+      } else {
+        this.$message.warning("请先选择图片");
       }
     },
     updateUploadList(file, fileList) {
@@ -1273,56 +1277,44 @@ export default {
         this.timer += 1;
       }, 500);
     },
-    calcTimeEnd(e) {
+    setOnCanvas(e) {
       if (this.timeInterval) {
         clearInterval(this.timeInterval);
         this.timeInterval = null;
       }
       if (this.timer > 0) {
+        console.log("长按，timer", this.timer);
         e.preventDefault();
         this.longClick = 1; // 阻止将照片放到画布上
-        // 隐藏勾选框
-        let material = document.getElementsByClassName("m-child")[0];
-        let rect = material.getElementsByClassName("el-checkbox__inner");
-        for (let i = 0; i < rect.length; i++) {
-          rect[i].style.display = "inline-block";
-        }
-        // 允许图片选中
-        let imgs = material.getElementsByTagName("img");
-        for (let i = 0; i < imgs.length; i++) {
-          imgs[i].style.pointerEvents = "auto";
-        }
-        // rect.style.display = 'inline-block';
-        // console.log('rect:',rect.style.display)
+        // 显示勾选框
+        this.isCheck = true;
         this.timer = 0;
         // 开启多选模式
-      }
-    },
-    setOnCanvas(e) {
-      if (this.moveFlag || this.longClick) {
-        this.moveFlag = 0;
-        return;
-      }
-      let target = e.target;
-      // console.log(e);
-      if (target.localName === "img") {
-        let img = new fabric.Image(target);
-        let scale = this.getScale(img);
-        img.scale(scale);
-        img.left = (this.canvas.width - img.width * img.scaleX) * 0.5;
-        img.top = (this.canvas.height - img.height * img.scaleY) * 0.5;
-        this.canvas.add(img);
-        this.canvas.setActiveObject(img);
-        this.canvas.renderAll();
-        this.setToLayer(img);
-      } else if (target.localName === "a") {
-        let text = new fabric.Textbox(target.innerText);
-        text.left = (this.canvas.width - text.width) * 0.5;
-        text.top = (this.canvas.height - text.height) * 0.5;
-        this.canvas.add(text);
-        this.canvas.setActiveObject(text);
-        this.canvas.renderAll();
-        this.setToLayer(text);
+      } else {
+        if (this.moveFlag || this.longClick) {
+          this.moveFlag = 0;
+        } else {
+          let target = e.target;
+          if (target.localName === "img") {
+            let img = new fabric.Image(target);
+            let scale = this.getScale(img);
+            img.scale(scale);
+            img.left = (this.canvas.width - img.width * img.scaleX) * 0.5;
+            img.top = (this.canvas.height - img.height * img.scaleY) * 0.5;
+            this.canvas.add(img);
+            this.canvas.setActiveObject(img);
+            this.canvas.renderAll();
+            this.setToLayer(img);
+          } else if (target.localName === "a") {
+            let text = new fabric.Textbox(target.innerText);
+            text.left = (this.canvas.width - text.width) * 0.5;
+            text.top = (this.canvas.height - text.height) * 0.5;
+            this.canvas.add(text);
+            this.canvas.setActiveObject(text);
+            this.canvas.renderAll();
+            this.setToLayer(text);
+          }
+        }
       }
     }
   }
@@ -1334,6 +1326,8 @@ export default {
   display: flex;
   height: 100%;
   flex-direction: column;
+  user-select: none;
+  touch-callout: none;
 }
 .nav {
   height: 1.7rem;
@@ -1364,6 +1358,7 @@ export default {
     width: 10rem;
     height: 100%;
     background-color: #fff;
+    position: relative;
     .m-nav {
       width: 100%;
       height: 100%;
@@ -1423,6 +1418,13 @@ export default {
       height: 100%;
       min-width: 220px;
       text-align: left;
+      .no-select {
+        /deep/ .el-checkbox {
+          .el-checkbox__inner {
+            display: none;
+          }
+        }
+      }
       div {
         cursor: pointer;
         width: 100px;
@@ -1478,11 +1480,11 @@ export default {
                 -webkit-user-select: none;
                 user-select: none;
                 img {
-                  pointer-events: none;
+                  // pointer-events: none;
                 }
               }
               .el-checkbox__inner {
-                display: none;
+                // display: none;
               }
             }
           }
@@ -1703,6 +1705,12 @@ export default {
       display: none;
     }
     .materials {
+      .nav-tool {
+        position: absolute;
+        right: 5px;
+        top: -2px;
+        z-index: 66;
+      }
       .head-tool {
         position: fixed;
         left: 5px;
@@ -1717,7 +1725,6 @@ export default {
         }
       }
       .m-child {
-        margin-left: 20px;
         overflow-x: auto;
         white-space: nowrap;
         text-align: left;
@@ -1725,8 +1732,18 @@ export default {
     }
   }
 }
+.no-display {
+  display: none;
+}
 </style>
 <style lang="scss">
+.el-message-box__wrapper {
+  @media screen and (max-width: 700px) {
+    .el-message-box {
+      width: 100vw;
+    }
+  }
+}
 .el-color-picker {
   // width: fit-content!important;
   display: inline-block;
