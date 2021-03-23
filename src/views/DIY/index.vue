@@ -5,19 +5,19 @@
     <div class="nav">
       <div class="nav-left"><p>DIY</p></div>
       <div class="nav-right">
-        <el-button type="default" size="small" circle>
+        <el-button type="text" size="small" circle>
           <i class="el-icon-share"></i><span>分享</span>
         </el-button>
-        <el-button type="default" size="small" circle>
+        <el-button type="text" size="small" circle>
           <i class="el-icon-view"></i><span>预览</span></el-button
         >
-        <el-button type="default" size="small" circle>
+        <el-button type="text" size="small" circle>
           <i class="el-icon-sort"></i><span>排序</span></el-button
         >
-        <el-button type="default" size="small" circle>
+        <el-button type="text" size="small" circle>
           <i class="el-icon-finished"></i><span>保存</span></el-button
         >
-        <el-button type="default" size="small" circle>
+        <el-button type="text" size="small" circle>
           <i class="el-icon-position"></i><span>提交</span></el-button
         >
       </div>
@@ -74,6 +74,7 @@
                     v-for="(m, i) in materialOptions"
                     :label="m.mid"
                     :key="i"
+                    :tabindex="i"
                   >
                     <img
                       :src="m.src"
@@ -81,6 +82,7 @@
                       :width="service === 'pc' ? 94 : 76"
                       :height="service === 'pc' ? 90 : 70"
                       :draggable="service == 'pc' ? true : false"
+                      @dragstart="dragstart"
                       @touchstart="calcTimeStart"
                       @touchmove="setMaterialFlag"
                       @touchend="setOnCanvas($event)"
@@ -112,12 +114,19 @@
                 ></el-input>
               </div>
               <div class="d-child">
-                <div v-for="(d, i) in decorationOptions" :key="i">
+                <div
+                  class="decoration"
+                  v-for="(d, i) in decorationOptions"
+                  :key="i"
+                  :tabindex="i"
+                >
                   <img
                     :src="d.src"
                     :alt="d.name"
                     :width="service === 'pc' ? 94 : 76"
                     :height="service === 'pc' ? 90 : 70"
+                    @dragstart="dragstart"
+                    @touchend="setOnCanvas($event)"
                   />
                 </div>
               </div>
@@ -145,7 +154,7 @@
                 slot="reference"
                 src="./icons/layer.svg"
                 alt="layer"
-              />
+              /> <br/>
               <div>
                 <div class="layer" v-for="(el, i) in layer" :key="i">
                   <i
@@ -404,7 +413,6 @@
         class="upload"
         drag
         list-type="picture-card"
-        accept=".jpg,.jpeg,.png"
         action="uploadURL"
         multiple
         ref="upload"
@@ -503,7 +511,9 @@ export default {
       // 计时器
       timer: 0,
       timeInterval: null,
-      checkedmaterial: []
+      checkedmaterial: [],
+      
+      mask: null,
     };
   },
 
@@ -527,6 +537,13 @@ export default {
       },
       { passive: false }
     );
+    document.οncοntextmenu = function(e) {
+      console.log("οncοntextmenu");
+      e.preventDefault();
+    };
+    document.addEventListener("contextmenu", function(e) {
+      e.preventDefault();
+    });
     // Fastclick.attach(document.body);
   },
   mounted() {
@@ -539,7 +556,7 @@ export default {
     let draw = document.getElementsByClassName("draw")[0];
     let toolContainer = document.getElementsByClassName("tool")[0];
     let height = draw.clientHeight;
-    let width = draw.clientWidth;
+    let width = draw.clientWidth-45;
     let canvasW, canvasH;
     let scale = this.plateform === "pc" ? 0.8 : 1;
     // console.log(draw);
@@ -592,9 +609,10 @@ export default {
     this.updateCanvasState();
     // console.log("this.canvas", this.canvas.on);
     this.canvas.on("drop", e => {
-      // console.log("drop:", e);
+      console.log("drop:", e);
       let offsetX = e.e.offsetX;
       let offsetY = e.e.offsetY;
+      console.log(this.dragObject, offsetX, offsetY);
       // console.log(this.dragObject, offsetX, offsetY);
       if (this.dragObject && offsetX > 0 && offsetY > 0) {
         if (this.dragObject.localName === "img") {
@@ -604,7 +622,7 @@ export default {
           });
           let scale = this.getScale(img);
           img.scale(scale); // 将图像缩小至同等比例
-          // console.log("img", img);
+          console.log("img", img);
           this.canvas.add(img);
           this.canvas.setActiveObject(img);
           // 将图层中的对象变成照片展示到图层面板上
@@ -676,16 +694,24 @@ export default {
           width: oCoods.upX - oCoods.dwX,
           height: oCoods.upY - oCoods.dwY,
           cornerColor: "#ec7259",
+          transparentCorners: true,
+          touchCornerSize:5,
           selectable: true,
           lockRotation: true,
-          fill: "rgba(0,0,0,0)"
+          fill: "rgba(255,255,255,5)",
+          opacity:0.2,
         });
+        console.log('corner',rect.touchCornerSize)
         this.canvas.add(rect);
+        // this.canvas.remove(this.mask)
         this.canvas.setActiveObject(rect);
         this.canvas.defaultCursor = "auto";
         this.iscroping = 2;
         this.canvas.on("mouse:dblclick", () => {
           if (this.iscroping === 2) {
+              this.canvas.remove(this.mask);
+              this.canvas.remove(rect)
+              this.canvas.renderAll()
             oCoods.dwX = rect.aCoords.tl.x;
             oCoods.dwY = rect.aCoords.tl.y;
             oCoods.upX = rect.aCoords.br.x;
@@ -711,6 +737,8 @@ export default {
                 height: oCoods.upY - oCoods.dwY
               });
               this.canvas.add(img);
+              // 删除蒙版
+              this.canvas.remove(this.mask)
               this.canvas.setActiveObject(img);
               this.canvas.renderAll();
               // 更新状态
@@ -842,7 +870,7 @@ export default {
   methods: {
     // 拖动其他地方的图像到canvas
     dragstart(e) {
-      // console.log(e);
+      console.log("aaaaa");
       this.draged.sourceOffsetX = e.offsetX;
       this.draged.sourceOffsetY = e.offsetY;
       let obj = e.target;
@@ -864,10 +892,9 @@ export default {
           cancelButtonText: "取消"
         })
           .then(() => {
-            console.log("this.checkedmaterial:", this.checkedmaterial);
-            this.materialOptions.forEach((m, i, list) => {
-              if (this.checkedmaterial.includes(m.mid)) {
-                list.splice(i, 1);
+            this.materialOptions = this.materialOptions.filter((m, i, list) => {
+              if (!this.checkedmaterial.includes(m.mid)) {
+                return m;
                 // 发送请求，从数据库移除
                 // 更新视图，将图片从画布中移除(暂未加上object属性)
                 // this.canvas.remove(m.object)
@@ -1016,10 +1043,11 @@ export default {
     // 改变画板背景色
     setBGColor(color) {
       requestAnimationFrame(() => {
-        this.canvas.setBackgroundColor(
-          color,
-          this.canvas.renderAll.bind(this.canvas)
-        );
+        this.canvas.setBackgroundColor(color, () => {
+          console.log("aaaa");
+          this.canvas.renderAll();
+          this.updateCanvasState();
+        });
       });
     },
     // updateCanvasState
@@ -1160,7 +1188,20 @@ export default {
         // 设置进入裁剪模式
         this.iscroping = 1;
         this.canvas.hasControls = false;
-        this.canvas.fill = "rgba(0,200,0,0.8)";
+        // 创建一个蒙版
+        this.mask = new fabric.Rect({
+            fill:'rgba(0,0,0,5)',
+            opacity: 0.2,
+            width:this.canvas.width,
+            height:this.canvas.height,
+            hasControls: false,
+            hoverCursor:'crosshair',
+            moveCursor: 'crosshair',
+            evented:false
+        })
+        this.canvas.add(this.mask)
+        this.canvas.discardActiveObject()
+        // this.canvas.fill = "rgba(0,200,0,0.8)";
         // 将鼠标样式变成裁剪样式
         this.canvas.defaultCursor = "crosshair";
         this.canvas.discardActiveObject();
@@ -1285,6 +1326,7 @@ export default {
       if (this.timer > 0) {
         console.log("长按，timer", this.timer);
         e.preventDefault();
+
         this.longClick = 1; // 阻止将照片放到画布上
         // 显示勾选框
         this.isCheck = true;
@@ -1321,18 +1363,24 @@ export default {
 };
 </script>
 <style lang="scss" scoped>
+body {
+}
 .diy {
   position: relative;
   display: flex;
   height: 100%;
   flex-direction: column;
-  user-select: none;
-  touch-callout: none;
+  -webkit-touch-callout: none; /*系统默认菜单被禁用*/
+  -webkit-user-select: none; /*webkit浏览器*/
+  -khtml-user-select: none; /*早起浏览器*/
+  -moz-user-select: none; /*火狐浏览器*/
+  -ms-user-select: none; /*IE浏览器*/
+  user-select: none; /*用户是否能够选中文本*/
 }
 .nav {
   height: 1.7rem;
   // max-height: 54px;
-  background-color: cyan;
+  background-color: #ffd3d7;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1418,34 +1466,48 @@ export default {
       height: 100%;
       min-width: 220px;
       text-align: left;
-      .no-select {
-        /deep/ .el-checkbox {
-          .el-checkbox__inner {
-            display: none;
+      .m-checkbox {
+        & >>> .el-checkbox {
+          cursor: pointer;
+          width: 100px;
+          height: 110px;
+          text-align: center;
+          display: inline-block;
+          box-sizing: border-box;
+          padding: 5px 2px;
+          margin: 5px;
+          position: relative;
+          .el-checkbox__label {
+            padding-left: 0;
+          }
+          img {
+            vertical-align: middle;
+          }
+          .pic-name {
+            vertical-align: super;
+            width: 60px;
+            font-size: 12px;
+          }
+          &:focus {
+            outline: turquoise 2px solid;
           }
         }
       }
-      div {
-        cursor: pointer;
-        width: 100px;
-        height: 110px;
-        text-align: center;
+      .decoration {
+        height: 90px;
+        width: 94px;
         display: inline-block;
-        // background-color: antiquewhite;
-        box-sizing: border-box;
-        padding: 5px 2px;
-        margin: 5px;
-        position: relative;
-        img {
-          vertical-align: middle;
-        }
-        .pic-name {
-          vertical-align: super;
-          width: 60px;
-          font-size: 12px;
-        }
+        margin: 5px 10px 0 2px;
+        cursor: pointer;
         &:focus {
           outline: turquoise 2px solid;
+        }
+      }
+      .no-select {
+        /deep/ .el-checkbox {
+          .el-checkbox__input {
+            display: none;
+          }
         }
       }
     }
@@ -1455,49 +1517,14 @@ export default {
       bottom: 0;
       background-color: #b9e9f0;
     }
-    @media screen and (max-width: 700px) {
-      width: 100%;
-      height: 7rem;
-      .m-child,
-      .d-child {
-        div {
-          //   width: 80px;
-          //   height: 80px;
-          overflow-x: auto;
-          /deep/.el-checkbox-group {
-            width: 100%;
-            text-align: left;
-            .el-checkbox {
-              display: inline-block;
-              position: relative;
-              width: 74px;
-              height: 70px;
-              margin-right: 10px;
-              span {
-                position: absolute;
-                bottom: 0;
-                right: 5px;
-                -webkit-user-select: none;
-                user-select: none;
-                img {
-                  // pointer-events: none;
-                }
-              }
-              .el-checkbox__inner {
-                // display: none;
-              }
-            }
-          }
-        }
-      }
-    }
   }
 
   // 中间画布部分
   .draw {
     flex: 1;
     position: relative;
-    background-color: crimson;
+    background-color: #f0f9eb;
+    overflow-y: auto;
     .canvas-container {
       position: absolute;
       left: 50%;
@@ -1512,9 +1539,10 @@ export default {
       display: flex;
       .tool {
         width: 45px;
+        box-sizing: border-box;
         padding: 0 5px 0 0;
         // height: 100%; // 为什么设置100%反而没有100%了
-        background-color: cadetblue;
+        background-color: #e1eff0;
         text-align: center;
         overflow: auto;
         i,
@@ -1579,7 +1607,7 @@ export default {
     overflow: auto;
     width: 175px;
     padding: 10px;
-    background-color: darkgoldenrod;
+    background-color: #bad5ac;
   }
   .my-album-pc {
     .page {
@@ -1695,16 +1723,61 @@ export default {
     }
   }
 }
+.h5 {
+  display: none;
+}
 
-.diy {
-  @media screen and (max-width: 700px) {
-    .nav {
-      height: 1.7rem;
+@media screen and (max-width: 700px) {
+  .diy {
+    .h5 {
+      display: inline-block;
     }
     .pc {
       display: none;
     }
+    .nav {
+      height: 1.7rem;
+    }
     .materials {
+      width: 100%;
+      height: 7rem;
+      .m-child {
+        .m-checkbox {
+          width: 100%;
+          overflow-x: auto;
+          text-align: left;
+          .el-checkbox {
+            display: inline-block;
+            position: relative;
+            width: 76px;
+            height: 70px;
+            padding: 0;
+            margin: 5px 10px 0 0;
+            /deep/ .el-checkbox__label {
+              padding-left: 0;
+            }
+            /deep/ .el-checkbox__input {
+              position: absolute;
+              bottom: 0;
+              right: 5px;
+              -webkit-user-select: none;
+              user-select: none;
+              img {
+                // pointer-events: none;
+              }
+            }
+          }
+        }
+      }
+      .d-child {
+        white-space: nowrap;
+        overflow-x: auto;
+        .decoration {
+          width: 76px;
+          height: 74px;
+          display: inline-block;
+        }
+      }
       .nav-tool {
         position: absolute;
         right: 5px;
@@ -1728,6 +1801,10 @@ export default {
         overflow-x: auto;
         white-space: nowrap;
         text-align: left;
+        .el-checkbox {
+          width: 76px;
+          height: 70px;
+        }
       }
     }
   }
