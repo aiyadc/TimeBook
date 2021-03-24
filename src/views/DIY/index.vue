@@ -154,7 +154,8 @@
                 slot="reference"
                 src="./icons/layer.svg"
                 alt="layer"
-              /> <br/>
+              />
+              <br />
               <div>
                 <div class="layer" v-for="(el, i) in layer" :key="i">
                   <i
@@ -276,6 +277,12 @@
               />
             </el-popover>
 
+            <br />
+            <img
+              class="tool-icon"
+              src="./icons/write.svg"
+              @click="setwriteMode"
+            />
             <br />
             <div class="image-tool">
               <img
@@ -429,6 +436,21 @@
         <el-button type="primary" @click="UploadToService">上传</el-button>
       </div>
     </el-dialog>
+    <div
+      id="pageBall"
+      draggable
+      @click="cropSelect"
+      @touchstart="handleBallMoveStart"
+      @touchmove="handleBallMove"
+      @touchend="handleBollMoveEnd"
+    >
+      <img
+        class="tool-icon center-center"
+        src="./icons/crop.svg"
+        v-if="iscroping === 2"
+      />
+    </div>
+    <div id="rect"></div>
   </div>
 </template>
 
@@ -464,12 +486,20 @@ export default {
         upY: 0
       },
       layer: [], // 图层{object,src,show}
-      iscroping: 0, // 0 未处于裁剪状态，1：处于裁剪阶段1，生成框框，监听dbclick， 2：处于裁剪阶段2,等待dbclick完成裁剪内容并添加到canvas中
       lastPoint: {},
       // 被拖拽的元素
       draged: {
         sourceOffsetX: 0,
         sourceOffsetY: 0
+      },
+      dragBall: {
+        width: 40,
+        height: 40,
+        offsetX: 0,
+        offsetY: 0,
+        nowX: 0,
+        nowY: 0,
+        rectdirection: "right"
       },
       size: 14, // 文字尺寸
       // 画笔
@@ -508,12 +538,16 @@ export default {
       moveFlag: 0, // 拖动标志
       longClick: 0, // 长按标志
       isCheck: false, //是否处于多选状态
+      iscroping: 0, // 0 未处于裁剪状态，1：处于裁剪阶段1，生成框框，监听dbclick， 2：处于裁剪阶段2,等待dbclick完成裁剪内容并添加到canvas中
+      isWriting: false, // 是否处于书写模式
+      ballMove: false, // 悬浮球移动标志
       // 计时器
-      timer: 0,
       timeInterval: null,
+      timer: 0,
       checkedmaterial: [],
-      
+      // 裁剪
       mask: null,
+      selectRect: null
     };
   },
 
@@ -530,13 +564,13 @@ export default {
     }
   },
   created() {
-    window.addEventListener(
-      "touchmove",
-      () => {
-        void 0;
-      },
-      { passive: false }
-    );
+    // window.addEventListener(
+    //   "touchmove",
+    //   e => {
+    //     e.preventDefault();
+    //   },
+    //   { passive: false }
+    // );
     document.οncοntextmenu = function(e) {
       console.log("οncοntextmenu");
       e.preventDefault();
@@ -556,7 +590,7 @@ export default {
     let draw = document.getElementsByClassName("draw")[0];
     let toolContainer = document.getElementsByClassName("tool")[0];
     let height = draw.clientHeight;
-    let width = draw.clientWidth-45;
+    let width = draw.clientWidth - 45;
     let canvasW, canvasH;
     let scale = this.plateform === "pc" ? 0.8 : 1;
     // console.log(draw);
@@ -607,6 +641,7 @@ export default {
       // 加载拉取的数据
     }
     this.updateCanvasState();
+    console.log(this._config);
     // console.log("this.canvas", this.canvas.on);
     this.canvas.on("drop", e => {
       console.log("drop:", e);
@@ -625,12 +660,7 @@ export default {
           console.log("img", img);
           this.canvas.add(img);
           this.canvas.setActiveObject(img);
-          // 将图层中的对象变成照片展示到图层面板上
-          let item = {};
-          item.object = img;
-          item.src = img.toDataURL();
-          item.show = true;
-          this.layer.push(item);
+          console.log("this.canvas :>> ", this.canvas);
         } else if (this.dragObject.localName === "a") {
           let text = this.dragObject.innerText;
           let textbox = new fabric.Textbox(text, {
@@ -646,6 +676,7 @@ export default {
           this.layer.push(item);
         }
         this.canvas.renderAll();
+        console.log("this.canvas :>> ", this.canvas);
       }
     });
     this.canvas.on("object:modified", e => {
@@ -680,9 +711,8 @@ export default {
       }
     });
     this.canvas.on("mouse:up", e => {
+      // 解决popover弹出框在点击canvas后并没有关闭问题
       document.getElementById("canvas").click();
-      // 优化，点击裁剪时有蒙版出现，解决移动端如何确定裁剪问题
-      if (this.iscroping === 0) void 0;
       if (this.iscroping === 1) {
         let p = e.absolutePointer;
         let oCoods = this.selectedOCoods;
@@ -695,61 +725,37 @@ export default {
           height: oCoods.upY - oCoods.dwY,
           cornerColor: "#ec7259",
           transparentCorners: true,
-          touchCornerSize:5,
+          touchCornerSize: 5,
           selectable: true,
           lockRotation: true,
           fill: "rgba(255,255,255,5)",
-          opacity:0.2,
+          opacity: 0.2
         });
-        console.log('corner',rect.touchCornerSize)
         this.canvas.add(rect);
-        // this.canvas.remove(this.mask)
+        this.selectRect = rect;
         this.canvas.setActiveObject(rect);
         this.canvas.defaultCursor = "auto";
         this.iscroping = 2;
         this.canvas.on("mouse:dblclick", () => {
           if (this.iscroping === 2) {
-              this.canvas.remove(this.mask);
-              this.canvas.remove(rect)
-              this.canvas.renderAll()
-            oCoods.dwX = rect.aCoords.tl.x;
-            oCoods.dwY = rect.aCoords.tl.y;
-            oCoods.upX = rect.aCoords.br.x;
-            oCoods.upY = rect.aCoords.br.y;
-            let src = this.canvas.toDataURL({
-              left: oCoods.dwX,
-              top: oCoods.dwY,
-              width: oCoods.upX - oCoods.dwX,
-              height: oCoods.upY - oCoods.dwY
-            });
-            fabric.Image.fromURL(src, img => {
-              img.set({
-                selectable: true,
-                left:
-                  oCoods.dwX + 20 < this.canvasInfo.width
-                    ? oCoods.dwX + 20
-                    : oCoods.dwX - 20,
-                top:
-                  oCoods.dwY + 20 < this.canvasInfo.height
-                    ? oCoods.dwY + 20
-                    : oCoods.dwY - 20,
-                width: oCoods.upX - oCoods.dwX,
-                height: oCoods.upY - oCoods.dwY
-              });
-              this.canvas.add(img);
-              // 删除蒙版
-              this.canvas.remove(this.mask)
-              this.canvas.setActiveObject(img);
-              this.canvas.renderAll();
-              // 更新状态
-              this.updateCanvasState();
-              this.iscroping = 0;
-              // 记录到图层里边
-              this.setToLayer(img);
-            });
-            this.canvas.remove(rect);
+            this.cropSelect();
           }
         });
+      }
+      if (this.isWriting) {
+        console.log("writing");
+        let p = e.absolutePointer;
+        let textbox = new fabric.Textbox("请输入内容", {
+          left: p.x,
+          top: p.y,
+          fontSize: 38
+        });
+        this.canvas.add(textbox);
+        this.canvas.setActiveObject(textbox);
+        this.canvas.defaultCursor = "default";
+        this.canvas.renderAll();
+        this.isWriting = false;
+        console.log("canvas:", this.canvas);
       }
     });
     this.predefineColors = [
@@ -762,8 +768,6 @@ export default {
       "#c71585",
       "rgba(255, 69, 0, 0.68)",
       "rgb(255, 120, 0)",
-      "hsv(51, 100, 98)",
-      "hsva(120, 40, 94, 0.5)",
       "hsl(181, 100%, 37%)",
       "hsla(209, 100%, 56%, 0.73)",
       "#c7158577"
@@ -960,7 +964,6 @@ export default {
               });
               canvas.add(image);
               let src = canvas.toDataURL();
-              console.log("src", src);
 
               let obj = {};
               obj.mid = index;
@@ -985,12 +988,10 @@ export default {
               //   console.log("compare:", index, fileList.length, imgData);
               if (index == fileList.length - 1) {
                 resolve(imgData);
-                console.log("imgData :>> ", imgData);
               }
             });
           });
         }).then(imgData => {
-          console.log("imgData", imgData);
           this.uploadDia = false;
           material.uploadMore({ data: imgData });
         });
@@ -1024,6 +1025,7 @@ export default {
     /**
      * 工具栏
      */
+
     // 改变画板各对象的层叠顺序
     setLayerforward(el) {
       el.object.bringForward();
@@ -1072,7 +1074,6 @@ export default {
         }
         // 无论什么情况，只要做了改变，那么当前指针就会跑到最前面
         this._config.currentStateIndex = this._config.canvasState.length - 1;
-        console.log("after update :", this._config.currentStateIndex);
       }
       // 更新图层视图
       this.layer = [];
@@ -1183,29 +1184,39 @@ export default {
       this.canvas.isDrawingMode = false;
       this.paintDia = false;
     },
+    // 写字
+    setwriteMode() {
+      this.canvas.defaultCursor = "cell";
+      this.isWriting = true;
+    },
     startCroping() {
-      if (this.iscroping !== 2) {
+      if (this.iscroping === 0) {
         // 设置进入裁剪模式
         this.iscroping = 1;
         this.canvas.hasControls = false;
         // 创建一个蒙版
         this.mask = new fabric.Rect({
-            fill:'rgba(0,0,0,5)',
-            opacity: 0.2,
-            width:this.canvas.width,
-            height:this.canvas.height,
-            hasControls: false,
-            hoverCursor:'crosshair',
-            moveCursor: 'crosshair',
-            evented:false
-        })
-        this.canvas.add(this.mask)
-        this.canvas.discardActiveObject()
+          fill: "rgba(0,0,0,5)",
+          opacity: 0.2,
+          width: this.canvas.width,
+          height: this.canvas.height,
+          hasControls: false,
+          hoverCursor: "crosshair",
+          moveCursor: "crosshair",
+          evented: false
+        });
+        this.canvas.add(this.mask);
+        this.canvas.discardActiveObject();
         // this.canvas.fill = "rgba(0,200,0,0.8)";
         // 将鼠标样式变成裁剪样式
         this.canvas.defaultCursor = "crosshair";
         this.canvas.discardActiveObject();
         this.canvas.renderAll();
+      } else if (this.iscroping > 0) {
+        this.canvas.remove(this.selectRect);
+        this.canvas.remove(this.mask);
+        this.canvas.defaultCursor = "default";
+        this.iscroping = 0;
       }
     },
     // 将图片最大化
@@ -1281,22 +1292,31 @@ export default {
     togglePage(ctx) {
       // console.log(this.currentPage, ctx.page);
       // 重置状态，由于在创建画布的时候初始化了一个状态，所以所以回到这个状态
-      this._config.canvasState = this._config.canvasState.slice(0, 1);
+      console.log("切换页面前", this._config.canvasState);
+
       if (this.currentPage === ctx.page) return;
+      if (this._config.canvasState.length > 1) {
+        this.$set(
+          this._config,
+          "canvasState",
+          this._config.canvasState.slice(0, 1)
+        );
+        console.log("切换页面后", this._config.canvasState);
+      }
       this.myAlbum.data[this.currentPage].canvas = this.canvas.toJSON();
       let canvasJSON = ctx.canvas;
-      console.log("切换页面,now the canvas is:", canvasJSON);
+      //   console.log("切换页面,now the canvas is:", canvasJSON);
       // this.updateCanvasState();
       this.canvas.loadFromJSON(canvasJSON, () => {
         this.layer = [];
         this.canvas.forEachObject(o => {
           this.setToLayer(o);
         });
-        this.canvas.renderAll.bind(this.canvas);
+        this.canvas.renderAll();
+        this.currentPage = ctx.page;
       });
-      this.currentPage = ctx.page;
-      // this.canvas.renderAll();
     },
+
     // 将对象放到图层里边
     setToLayer(object, boo = true) {
       let item = {};
@@ -1324,14 +1344,10 @@ export default {
         this.timeInterval = null;
       }
       if (this.timer > 0) {
-        console.log("长按，timer", this.timer);
+        // 阻止长按弹出默认事件
         e.preventDefault();
-
         this.longClick = 1; // 阻止将照片放到画布上
-        // 显示勾选框
-        this.isCheck = true;
-        this.timer = 0;
-        // 开启多选模式
+        this.isCheck = true; // 显示勾选框
       } else {
         if (this.moveFlag || this.longClick) {
           this.moveFlag = 0;
@@ -1345,8 +1361,9 @@ export default {
             img.top = (this.canvas.height - img.height * img.scaleY) * 0.5;
             this.canvas.add(img);
             this.canvas.setActiveObject(img);
+            console.log("setOnCanvas");
             this.canvas.renderAll();
-            this.setToLayer(img);
+            // this.setToLayer(img);
           } else if (target.localName === "a") {
             let text = new fabric.Textbox(target.innerText);
             text.left = (this.canvas.width - text.width) * 0.5;
@@ -1354,17 +1371,125 @@ export default {
             this.canvas.add(text);
             this.canvas.setActiveObject(text);
             this.canvas.renderAll();
-            this.setToLayer(text);
+            // this.setToLayer(text);
           }
         }
+      }
+    },
+    handleBallMoveStart(e) {
+      console.log("eStart:", e);
+      let o = document.getElementById("pageBall");
+      let pos = o.getBoundingClientRect();
+      this.dragBall.offsetX = e.targetTouches[0].clientX - pos.x;
+      this.dragBall.offsetY = e.targetTouches[0].clientY - pos.y;
+    },
+    handleBallMove(e) {
+      console.log("move");
+      let s = {};
+      s.left = e.changedTouches[0].clientX - this.dragBall.offsetX;
+      s.top = e.changedTouches[0].clientY - this.dragBall.offsetY;
+      s.width = this.dragBall.width;
+      s.height = this.dragBall.height;
+      let limit = {};
+      limit.left = 0;
+      limit.top = 0;
+      limit.maxX = document.documentElement.clientWidth || window.innerWidth;
+      limit.maxY = document.documentElement.clientHeight || window.innerHeight;
+      if (!this.isInRect(s, limit)) return;
+      let ball = e.target;
+      requestAnimationFrame(() => {
+        this.ballMove = true;
+        let left = e.changedTouches[0].clientX - this.dragBall.offsetX;
+        let top = e.changedTouches[0].clientY - this.dragBall.offsetY;
+        ball.style.left = left + "px";
+        ball.style.top = top + "px";
+        this.dragBall.nowX = left;
+        this.dragBall.nowY = top;
+        clearTimeout(this.ballTimeout);
+      });
+    },
+    handleBollMoveEnd(e) {
+      console.log("eEnd :>> ", e);
+      if (!this.ballMove) return;
+      this.ballMove = false;
+      let ball = e.target;
+      let clientX = document.documentElement.clientWidth || window.innerWidth;
+      if (this.dragBall.nowX < clientX * 0.5) {
+        ball.style.left = "5px";
+      } else {
+        ball.style.left = clientX - 5 - this.dragBall.width + "px";
+      }
+    },
+    // 裁剪选取内容
+    cropSelect() {
+      if (this.iscroping === 2) {
+        let oCoods = this.selectedOCoods;
+        this.canvas.remove(this.mask);
+        this.canvas.remove(this.selectRect);
+        this.canvas.renderAll();
+        oCoods.dwX = this.selectRect.aCoords.tl.x;
+        oCoods.dwY = this.selectRect.aCoords.tl.y;
+        oCoods.upX = this.selectRect.aCoords.br.x;
+        oCoods.upY = this.selectRect.aCoords.br.y;
+        let src = this.canvas.toDataURL({
+          left: oCoods.dwX,
+          top: oCoods.dwY,
+          width: oCoods.upX - oCoods.dwX,
+          height: oCoods.upY - oCoods.dwY
+        });
+        fabric.Image.fromURL(src, img => {
+          img.set({
+            selectable: true,
+            left:
+              oCoods.dwX + 20 < this.canvasInfo.width
+                ? oCoods.dwX + 20
+                : oCoods.dwX - 20,
+            top:
+              oCoods.dwY + 20 < this.canvasInfo.height
+                ? oCoods.dwY + 20
+                : oCoods.dwY - 20,
+            width: oCoods.upX - oCoods.dwX,
+            height: oCoods.upY - oCoods.dwY
+          });
+          this.canvas.add(img);
+          // 删除蒙版
+          this.canvas.remove(this.mask);
+          this.canvas.setActiveObject(img);
+          this.canvas.renderAll();
+          // 更新状态
+          this.updateCanvasState();
+          this.iscroping = 0;
+          // 记录到图层里边
+          this.setToLayer(img);
+        });
+        this.canvas.remove(this.selectRect);
+      }
+    },
+    // 限制移动范围
+    isInRect(
+      source,
+      limit,
+      func = () => {
+        void 0;
+      }
+    ) {
+      // source:{left,top,width,height},limit{left,top,maxX,maxY,}
+      let booll = source.left < limit.left;
+      let boolt = source.top < limit.top;
+      let boolb = source.top + source.height > limit.top + limit.maxY;
+      let boolr = source.left + source.width > limit.left + limit.maxX;
+      if (booll || boolt || boolb || boolr) {
+        // console.log("超出范围啦");
+        func();
+        return false;
+      } else {
+        return true;
       }
     }
   }
 };
 </script>
 <style lang="scss" scoped>
-body {
-}
 .diy {
   position: relative;
   display: flex;
@@ -1811,6 +1936,26 @@ body {
 }
 .no-display {
   display: none;
+}
+#pageBall {
+  width: 40px;
+  height: 40px;
+  border: 5px solid rgb(248, 153, 153);
+  border-radius: 50%;
+  background-color: #a0c6d1;
+  position: fixed;
+  right: 0;
+  bottom: 7rem;
+  img {
+    pointer-events: none;
+    display: inline-block;
+    margin: auto;
+  }
+  &:active {
+    opacity: 0.5;
+  }
+}
+#rect {
 }
 </style>
 <style lang="scss">

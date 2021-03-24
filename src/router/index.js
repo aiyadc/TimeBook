@@ -11,6 +11,10 @@ export default new Router({
         },
         {
             path: '/diy',
+            meta:{
+                title:'相册DIY',
+                // content:" width=device-width, initial-scale=1.0, user-scalable=no"
+            },
             component: () =>
                 import ('@/views/DIY/index')
         }, {

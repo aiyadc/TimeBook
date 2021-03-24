@@ -31,3 +31,10 @@
 .cursor-pointer {
     cursor: pointer;
 }
+// 垂直居中对齐
+.center-center{
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
