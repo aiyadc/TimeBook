@@ -572,16 +572,19 @@ export default {
   },
   created() {
     let u = navigator.userAgent;
-    if (u.indexOf("iPhone") > -1) {
-      inobounce.enable();
-    }
-    // window.addEventListener(
-    //   "touchmove",
-    //   e => {
-    //     e.preventDefault();
-    //   },
-    //   { passive: false }
-    // );
+    window.addEventListener(
+      "touchmove",
+      e => {
+        // console.log(e.target)
+        if (e.target.localName !== "img") {
+          // 禁止ios页面移动回弹
+          if (u.indexOf("iPhone") > -1) {
+            inobounce.enable();
+          }
+        }
+      },
+      { passive: false }
+    );
     document.οncοntextmenu = function(e) {
       console.log("οncοntextmenu");
       e.preventDefault();
@@ -758,7 +761,7 @@ export default {
         this.iscroping = 2;
         this.mode = "crop";
       }
-      if (this.mode == 'write') {
+      if (this.mode == "write") {
         let p = e.absolutePointer;
         let textbox = new fabric.Textbox("请输入内容", {
           left: p.x,
@@ -770,7 +773,7 @@ export default {
         this.canvas.setActiveObject(textbox);
         this.canvas.defaultCursor = "default";
         this.canvas.renderAll();
-        this.mode = 'default';
+        this.mode = "default";
         console.log("canvas:", this.canvas);
       }
     });
@@ -1194,7 +1197,7 @@ export default {
     // 写字
     setwriteMode() {
       // 进入写字模式
-      this.mode = 'write';
+      this.mode = "write";
       this.canvas.defaultCursor = "cell";
       this.isWriting = true;
     },
@@ -1396,7 +1399,7 @@ export default {
       this.dragBall.offsetY = e.targetTouches[0].clientY - pos.y;
     },
     handleBallMove(e) {
-      console.log("move");
+      // console.log("move");
       this.ballMove = true;
       let s = {};
       s.left = e.changedTouches[0].clientX - this.dragBall.offsetX;
@@ -1462,7 +1465,6 @@ export default {
       // 6种情况
       // 左下展示
       if (pos.y < (1 / 3) * clientY && pos.x > 0.5 * clientX) {
-        console.log("左下");
         style.left = pos.x - 0.4 * clientX - 4 + "px";
         style.top = pos.y + 20 + "px";
       }
@@ -1472,19 +1474,16 @@ export default {
         pos.y < (2 / 3) * clientY &&
         pos.x > 0.5 * clientX
       ) {
-        console.log("左中");
         style.left = pos.x - 0.4 * clientX - 4 + "px";
         style.top = pos.y - 0.125 * clientY + 20 + "px";
       }
       // 左上展示
       else if (pos.y > (2 / 3) * clientY && pos.x > 0.5 * clientX) {
-        console.log("左上");
         style.left = pos.x - 0.4 * clientX - 4 + "px";
         style.top = pos.y - 0.25 * clientY + 20 + "px";
       }
       // 右下展示
       else if (pos.y < (1 / 3) * clientY && pos.x < 0.5 * clientX) {
-        console.log("右下");
         style.top = pos.y + 20 + "px";
         style.left = pos.x + 44 + "px";
       }
@@ -1494,13 +1493,11 @@ export default {
         pos.y < (2 / 3) * clientY &&
         pos.x < 0.5 * clientX
       ) {
-        console.log("右中");
         style.left = pos.x + 44 + "px";
         style.top = pos.y - 0.125 * clientY + 20 + "px";
       }
       // 右上展示
       else if (pos.y > (2 / 3) * clientY && pos.x < 0.5 * clientX) {
-        console.log("右上");
         style.left = pos.x + 44 + "px";
         style.top = pos.y - 0.125 * clientY + 20 + "px";
       }
@@ -2060,30 +2057,6 @@ export default {
   }
   &:active {
     opacity: 0.5;
-  }
-  .mid-left {
-    top: calc(-12.5vh + 20px);
-    left: calc(-40vw - 4px);
-  }
-  .mid-right {
-    top: calc(-12.5vh + 20px);
-    left: 44px;
-  }
-  .top-left {
-    left: calc(-40vw - 4px);
-    top: calc(-12.5vh + 20px);
-  }
-  .top-right {
-    left: 44px;
-    top: calc(-12.5vh + 20px);
-  }
-  .bottom-left {
-    left: calc(-40vw - 4px);
-    top: 20px;
-  }
-  .bottom-right {
-    left: 44px;
-    top: 20px;
   }
 }
 #rect {
