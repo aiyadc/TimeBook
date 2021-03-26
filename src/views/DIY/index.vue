@@ -135,8 +135,8 @@
             <el-tab-pane name="album" label="相册" v-if="service === 'h5'">
               <div class="my-album-h5">
                 <div class="page" v-for="(ctx, i) in myAlbum.data" :key="i">
-                  <img :src="ctx.src" alt="" @click="togglePage(ctx)" />
-                  <span>{{ i + 1 }}</span>
+                  <img :src="ctx.src" draggable @click="togglePage(ctx)" />
+                  <span>{{ ctx.pageIndex }}</span>
                 </div>
               </div>
             </el-tab-pane>
@@ -398,10 +398,13 @@
       <div class="my-album-pc content-right pc">
         <div class="page" v-for="(ctx, i) in myAlbum.data" :key="i">
           <img
-            :src="ctx.src"
-            alt=""
             height="230"
             width="155"
+            :src="ctx.src"
+            :draggable="true"
+            @dragstart="getPageInfo(ctx)"
+            @dragover="handleDragOver($event, i)"
+            @dragenter="swapOrder"
             @click="togglePage(ctx)"
           />
         </div>
@@ -554,7 +557,10 @@ export default {
       checkedmaterial: [],
       // 裁剪
       mask: null,
-      selectRect: null
+      selectRect: null,
+      // 相册页拖动交换顺序
+      pageOnDrag: null,
+      pageIndex: null
     };
   },
 
@@ -643,7 +649,7 @@ export default {
       // let cvs = new fabric.Canvas('cvs')
       for (let i = 0; i < this.myAlbum.num; i++) {
         let page = {};
-        page.page = i;
+        page.pageIndex = i;
         page.canvas = json;
         // 图片展示
         // cvs.loadFromJSON(page.canvas,()=>{
@@ -658,7 +664,7 @@ export default {
       // 加载拉取的数据
     }
     this.updateCanvasState();
-    console.log(this._config);
+    // console.log(this._config);
     // console.log("this.canvas", this.canvas.on);
     this.canvas.on("drop", e => {
       console.log("drop:", e);
@@ -1033,6 +1039,77 @@ export default {
     },
 
     /**
+     * 相册页展示
+     *
+     */
+    getPageInfo(page) {
+      this.pageOnDrag = page;
+    },
+    handleDragOver(e, i) {
+      e.preventDefault();
+      this.pageIndex = i;
+      if (this.pageIndex == this.pageOnDrag.pageIndex) return;
+      let indexNow = this.pageOnDrag.pageIndex;
+      let indexNext = this.pageIndex;
+      let albums = this.myAlbum.data;
+      if (indexNow > indexNext) {
+        let p = Object.assign({}, albums[indexNow]);
+        albums.splice(indexNow, 1, albums[indexNext]);
+        albums.splice(indexNext, 1, p);
+        console.log(
+          "albums[indexNow],albums[indexNext] :>> ",
+          albums[indexNow],
+          albums[indexNext]
+        );
+ 
+        albums[indexNext].pageIndex--;
+        this.pageOnDrag = albums[indexNext];
+        this.togglePage(albums[indexNow]);
+      } else if (indexNow < indexNext) {
+        let p = Object.assign({}, albums[indexNow]);
+        albums.splice(indexNow, 1, albums[indexNext]);
+        albums.splice(indexNext, 1, p);
+        console.log(
+          "albums[indexNow],albums[indexNext] :>> ",
+          albums[indexNow],
+          albums[indexNext]
+        );
+        albums[indexNow].pageIndex--;
+        albums[indexNext].pageIndex++;
+        this.pageOnDrag = albums[indexNext];
+        this.togglePage(albums[indexNow]);
+        this.$nextTick(() => {
+          console.log(
+            "albums[indexNow],albums[indexNext] :>> ",
+            albums[indexNow],
+            albums[indexNext]
+          );
+        });
+      }
+    },
+    swapOrder(e) {
+      //   console.log("交换阶段", this.pageOnDrag.pageIndex);
+      //   console.log("this.pageIndex :>> ", this.pageIndex);
+      //   if (!this.pageIndex || this.pageIndex == this.pageOnDrag.pageIndex)
+      //     return;
+      //   console.log("成功进入交换阶段");
+      //   let indexNow = this.pageOnDrag.pageIndex;
+      //   let indexNext = this.pageIndex;
+      //   let albums = this.myAlbum.data;
+      //   let p = albums[indexNow];
+      //   this.$set(albums, indexNow, albums[indexNext]);
+      //   this.$set(albums, indexNext, p);
+      //   if (indexNow > indexNext) {
+      //     albums[indexNow].pageIndex--;
+      //     this.pageOnDrag.pageIndex--;
+      //     albums[indexNext].pageIndex++;
+      //   } else {
+      //     albums[indexNow].pageIndex++;
+      //     this.pageOnDrag.pageIndex++;
+      //     albums[indexNext].pageIndex--;
+      //   }
+    },
+    /**
      * 工具栏
      */
 
@@ -1093,9 +1170,10 @@ export default {
       });
       // 更新相册视图，方法是把前一个视图删除掉，然后用限制的视图作为替换，使用splice可以让vue监听到变化，进行响应式交互
       let page = this.myAlbum.data[this.currentPage];
+      console.log("page :>> ", page);
       page.canvas = this.canvas.toJSON();
       page.src = this.canvas.toDataURL();
-      page.page = this.currentPage;
+      page.pageIndex = this.currentPage;
       this.myAlbum.data.splice(this.currentPage, 1, page);
     },
     // 取出画布现有对象
@@ -1302,25 +1380,22 @@ export default {
     },
     // 切换页面
     togglePage(ctx) {
-      // console.log(this.currentPage, ctx.page);
+      console.log(
+        "this.currentPage :>> ",
+        this.currentPage,
+        ctx.pageIndex,
+        this.myAlbum.data[ctx.pageIndex]
+      );
+      if (this.currentPage === ctx.pageIndex) return;
       // 重置状态，由于在创建画布的时候初始化了一个状态，所以所以回到这个状态
       this._config.canvasState = this._config.canvasState.slice(0, 1);
-      console.log("切换页面前", this._config.canvasState);
-
-      if (this.currentPage === ctx.page) return;
       if (this._config.canvasState.length > 1) {
-        this.$set(
-          this._config,
-          "canvasState",
-          this._config.canvasState.slice(0, 1)
-        );
-        console.log("切换页面后", this._config.canvasState);
+        this._config.canvasState = this._config.canvasState.slice(0, 1);
       }
       this.myAlbum.data[this.currentPage].canvas = this.canvas.toJSON();
       let canvasJSON = ctx.canvas;
-      //   console.log("切换页面,now the canvas is:", canvasJSON);
-      // this.updateCanvasState();
-      this.currentPage = ctx.page;
+      this.currentPage = ctx.pageIndex;
+      console.log("this.currentPage :>> ", this.currentPage);
       this.$nextTick(() => {
         this.canvas.loadFromJSON(canvasJSON, () => {
           this.layer = [];
@@ -1542,7 +1617,7 @@ export default {
             width: oCoods.upX - oCoods.dwX,
             height: oCoods.upY - oCoods.dwY
           });
-          console.log("img :>> ", img);
+          //   console.log("img :>> ", img);
           this.canvas.add(img);
           // 删除蒙版
           this.canvas.remove(this.mask);
