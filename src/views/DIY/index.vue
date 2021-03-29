@@ -115,6 +115,7 @@
                       :width="service === 'pc' ? 94 : 76"
                       :height="service === 'pc' ? 90 : 70"
                       :draggable="service == 'pc' ? true : false"
+                      crossOrigin="Anonymous"
                       @dragstart="dragstart"
                       @touchstart="calcTimeStart"
                       @touchmove="setMaterialFlag"
@@ -772,14 +773,12 @@ export default {
         if (this.dragObject.localName === "img") {
           let img = new fabric.Image(this.dragObject, {
             left: offsetX - this.draged.sourceOffsetX,
-            top: offsetY - this.draged.sourceOffsetY,
-            crossOrigin: "Anonymous"
+            top: offsetY - this.draged.sourceOffsetY
           });
           let scale = this.getScale(img);
           // tofix:照片放到画布未立即显示
-          this.dragObject.crossOrigin = "Anonymous";
           img.scale(scale); // 将图像缩小至同等比例
-          console.log("scale", scale);
+          console.log("dragObject.src", this.dragObject.src);
           this.canvas.add(img);
           this.canvas.setActiveObject(img);
           console.log("this.canvas :>> ", this.canvas);
@@ -1019,18 +1018,25 @@ export default {
           console.log("err :>> ", err);
         });
     },
-    addMaterialFolder() {},
+    addMaterialFolder() {
+      console.log("this.mlid :>> ", this.mlid);
+    },
     toFolder(f) {
       // todo
-      material
-        .getMaterials({ mlid: f.mlid })
-        .then(res => {
-          console.log("res.data :>> ", res.data);
-          this.materialList = res.data;
-        })
-        .catch(err => {
-          console.log("err :>> ", err);
-        });
+      if (this.mlid == f.mid) {
+        this.mlid = 0;
+      } else {
+        this.mlid = f.mlid;
+        material
+          .getMaterials({ mlid: f.mlid })
+          .then(res => {
+            console.log("res.data :>> ", res.data);
+            this.materialList = res.data;
+          })
+          .catch(err => {
+            console.log("err :>> ", err);
+          });
+      }
     },
     addMaterial() {
       this.uploadDia = true;
