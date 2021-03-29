@@ -40,6 +40,10 @@ export default new Router({
             path: '/worker',
             component: () =>
                 import ('@/test/worker.vue')
+        },
+        {
+            path:'/album',
+            component:()=> import('@/test/cameras-and-albums')
         }
     ]
 })

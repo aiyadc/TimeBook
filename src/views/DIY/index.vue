@@ -28,6 +28,11 @@
       <div class="materials">
         <div class="m-nav">
           <div class="nav-tool h5" v-if="tab == 'material'">
+            <img
+              class="tool-icon"
+              src="./icons/folder_add.svg"
+              @click="addMaterialFolder"
+            />
             <i
               class="el-icon-plus tool-icon"
               @click="addMaterial"
@@ -58,20 +63,48 @@
                   suffix-icon="el-icon-search"
                 ></el-input>
                 <div class="m-tool pc">
+                  <img
+                    class="tool-icon"
+                    src="./icons/folder_add.svg"
+                    @click="addMaterialFolder"
+                  />
                   <i class="el-icon-plus tool-icon" @click="addMaterial"></i>
                   <i
                     class="el-icon-delete tool-icon"
                     @click="removeMaterial"
                   ></i>
+                  <el-button
+                    type="danger"
+                    size="mini"
+                    plain
+                    @click="isCheck = !isCheck"
+                    >批量删除</el-button
+                  >
                 </div>
               </div>
-              <div class="m-child">
+              <div class="m-content">
+                <div class="m-folders">
+                  <div
+                    class="folder"
+                    v-for="(f, i) in materialFolderList"
+                    :key="i"
+                  >
+                    <img
+                      class="svg-folder"
+                      src="./icons/album.svg"
+                      @click="toFolder(f)"
+                      alt=""
+                    />
+                    <span class="folder-name">{{ f.name }}</span>
+                  </div>
+                </div>
+                <hr />
                 <el-checkbox-group
                   :class="{ 'm-checkbox': true, 'no-select': !isCheck }"
                   v-model="checkedmaterial"
                 >
                   <el-checkbox
-                    v-for="(m, i) in materialOptions"
+                    v-for="(m, i) in materialList"
                     :label="m.mid"
                     :key="i"
                     :tabindex="i"
@@ -113,7 +146,7 @@
                   suffix-icon="el-icon-search"
                 ></el-input>
               </div>
-              <div class="d-child">
+              <div class="d-content">
                 <div
                   class="decoration"
                   v-for="(d, i) in decorationOptions"
@@ -480,7 +513,11 @@
         </div>
       </div>
     </el-dialog>
-    <el-dialog custom-class="dia-review" :visible.sync="reviewDia" :fullscreen="service == 'h5'">
+    <el-dialog
+      custom-class="dia-review"
+      :visible.sync="reviewDia"
+      :fullscreen="service == 'h5'"
+    >
       <span slot="title">My Album</span>
       <div class="review-pc">
         <img class="review-page" :src="reviewImg.src" alt="" />
@@ -494,7 +531,7 @@
           class="svg svg-right"
           src="./icons/right.svg"
           @click="toNextPage"
-          v-show="reviewImg.pageIndex < myAlbum.num-1"
+          v-show="reviewImg.pageIndex < myAlbum.num - 1"
         />
         <span class="page-index"
           >{{ reviewImg.pageIndex + 1 || 0 }}/{{ myAlbum.num || 0 }}</span
@@ -512,6 +549,8 @@ import material from "@/api/material.js";
 export default {
   data() {
     return {
+      uid: 0, // 当前用户id
+      mlid: 0, // 用户当前点击的素材目录id
       service: "", // 当前操作平台
       tab: "material", // 当前tab栏
       mode: "default", // 当前设计模式['default','crop','paint','featureshow']
@@ -573,15 +612,16 @@ export default {
       search: {
         materialSearch: ""
       },
-      // select Options
-      materialOptions: [],
+      // Options
+      materialList: [],
       decorationOptions: [],
       sizeOptions: [],
       fontFamilyOptions: [],
       predefineColors: [],
-      // Dialog
-      paintDia: false, // 绘画popover
-      // 上传弹窗
+      // 素材
+      curFolder: "",
+      materialFolderList: [],
+      // 上传
       uploadDia: false,
       uploadURL: "",
       fileList: [],
@@ -608,6 +648,7 @@ export default {
       showRight: false,
       reviewIndex: 0,
       // Dialog
+      paintDia: false, // 绘画popover
       sortDia: false,
       reviewDia: false
     };
@@ -631,7 +672,10 @@ export default {
     }
   },
   created() {
-    // this.uploadURL = process.env.BASE_API + "/decoration/upload";
+    this.uid = this.$store.state.uid;
+    this.getMaterialFolders();
+    this.uploadURL = process.env.BASE_API + "/decoration/upload";
+    // material.getFolders()
     let u = navigator.userAgent;
     window.addEventListener(
       "touchmove",
@@ -728,11 +772,14 @@ export default {
         if (this.dragObject.localName === "img") {
           let img = new fabric.Image(this.dragObject, {
             left: offsetX - this.draged.sourceOffsetX,
-            top: offsetY - this.draged.sourceOffsetY
+            top: offsetY - this.draged.sourceOffsetY,
+            crossOrigin: "Anonymous"
           });
           let scale = this.getScale(img);
+          // tofix:照片放到画布未立即显示
+          this.dragObject.crossOrigin = "Anonymous";
           img.scale(scale); // 将图像缩小至同等比例
-          console.log("img", img);
+          console.log("scale", scale);
           this.canvas.add(img);
           this.canvas.setActiveObject(img);
           console.log("this.canvas :>> ", this.canvas);
@@ -826,7 +873,7 @@ export default {
           top: p.y,
           fontSize: 24
         });
-        console.log('textbox.fontSize :>> ', textbox.fontSize);
+        console.log("textbox.fontSize :>> ", textbox.fontSize);
         this.canvas.add(textbox);
         this.canvas.setActiveObject(textbox);
         this.canvas.defaultCursor = "default";
@@ -866,24 +913,6 @@ export default {
       72,
       80,
       100
-    ];
-    this.materialOptions = [
-      {
-        mid: 0,
-        theme: "cat",
-        name: "cc",
-        width: 94,
-        height: 90,
-        src: require("@/assets/cc.jpg")
-      },
-      {
-        mid: 1,
-        theme: "dog",
-        name: "dd",
-        width: 50,
-        height: 50,
-        src: require("@/assets/dd.jpg")
-      }
     ];
 
     this.decorationOptions = [
@@ -979,8 +1008,31 @@ export default {
     /**
      * 素材
      */
-    addMaterial() {
+    getMaterialFolders() {
+      material
+        .getFolders(this.uid)
+        .then(res => {
+          console.log("res :>> ", res.data);
+          this.materialFolderList = res.data;
+        })
+        .catch(err => {
+          console.log("err :>> ", err);
+        });
+    },
+    addMaterialFolder() {},
+    toFolder(f) {
       // todo
+      material
+        .getMaterials({ mlid: f.mlid })
+        .then(res => {
+          console.log("res.data :>> ", res.data);
+          this.materialList = res.data;
+        })
+        .catch(err => {
+          console.log("err :>> ", err);
+        });
+    },
+    addMaterial() {
       this.uploadDia = true;
     },
     // 删除选中图片
@@ -992,7 +1044,7 @@ export default {
           cancelButtonText: "取消"
         })
           .then(() => {
-            this.materialOptions = this.materialOptions.filter((m, i, list) => {
+            this.materialList = this.materialList.filter((m, i, list) => {
               if (!this.checkedmaterial.includes(m.mid)) {
                 return m;
                 // 发送请求，从数据库移除
@@ -1000,6 +1052,7 @@ export default {
                 // this.canvas.remove(m.object)
               }
             });
+            this.isCheck = false;
           })
           .catch(() => {});
       } else {
@@ -1033,9 +1086,9 @@ export default {
           obj.width = 94;
           obj.height = 90;
           obj.src = img.url;
-          this.materialOptions.push(obj);
+          this.materialList.push(obj);
         });
-        // console.log('this.materialOptions', this.materialOptions)
+        // console.log('this.materialList', this.materialList)
         let canvas = document.createElement("canvas");
         canvas.id = "materialCanvas";
         canvas = new fabric.Canvas("materialCanvas");
@@ -1068,10 +1121,11 @@ export default {
               obj.width = 94;
               obj.height = 90;
               obj.src = (src + "").replace(/^data:image\/\w+;base64,/, "");
+              obj.mlid = this.mlid;
               imgData.push(obj);
               canvas.clear();
               if (index == this.fileList.length - 1) {
-                // console.log("this.materialOptions :>> ", this.imgData);
+                // console.log("this.materialList :>> ", this.imgData);
               }
               //   console.log("compare:", index, fileList.length, imgData);
               if (index == fileList.length - 1) {
@@ -1438,6 +1492,7 @@ export default {
       // console.log(img);
       let IH = img.getOriginalSize().height;
       let IW = img.getOriginalSize().width;
+      console.log("IH,IW :>> ", IH, IW);
       let CH = this.canvas.getHeight();
       let CW = this.canvas.getWidth();
       // 长宽不得规定在画布的0.5倍之内，并优先长宽的较小比例
@@ -1827,18 +1882,45 @@ export default {
       display: flex;
       justify-content: space-between;
       flex-wrap: wrap;
+      .m-tool {
+        img {
+          display: inline-block;
+          vertical-align: top;
+        }
+      }
       .material-search,
       .decoration-search {
         width: 180px;
       }
     }
-    .m-child,
-    .d-child {
+    .m-content,
+    .d-content {
       -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
       width: 100%;
       height: 100%;
       min-width: 220px;
       text-align: left;
+      .m-folders {
+        .folder {
+          display: inline-block;
+          cursor: pointer;
+          width: 100px;
+          height: 110px;
+          padding: 5px 2px;
+          margin: 5px;
+          position: relative;
+          img {
+            width: 100px;
+            height: 100px;
+          }
+          span {
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            transform: translateX(-50%);
+          }
+        }
+      }
       .m-checkbox {
         & >>> .el-checkbox {
           cursor: pointer;
@@ -1852,6 +1934,14 @@ export default {
           position: relative;
           .el-checkbox__label {
             padding-left: 0;
+          }
+          .el-checkbox__input {
+            position: absolute;
+            bottom: 20px;
+            right: 5px;
+            img {
+              // pointer-events: none;
+            }
           }
           img {
             vertical-align: middle;
@@ -2224,7 +2314,25 @@ export default {
     .materials {
       width: 100%;
       height: 7rem;
-      .m-child {
+      .m-content {
+        .m-folders {
+          .folder {
+            display: inline-block;
+            width: 100px;
+            height: 100px;
+            position: relative;
+            img {
+              width: 100%;
+              height: 100%;
+            }
+            .folder-name {
+              position: absolute;
+              left: 50%;
+              top: 50%;
+              transform: translate(-50%, -50%);
+            }
+          }
+        }
         .m-checkbox {
           width: 100%;
           overflow-x: auto;
@@ -2252,7 +2360,7 @@ export default {
           }
         }
       }
-      .d-child {
+      .d-content {
         white-space: nowrap;
         overflow-x: auto;
         .decoration {
@@ -2266,6 +2374,10 @@ export default {
         right: 5px;
         top: -2px;
         z-index: 66;
+        img {
+          display: inline-block;
+          vertical-align: top;
+        }
       }
       .head-tool {
         position: fixed;
@@ -2280,7 +2392,7 @@ export default {
           }
         }
       }
-      .m-child {
+      .m-content {
         overflow-x: auto;
         white-space: nowrap;
         text-align: left;
@@ -2293,7 +2405,7 @@ export default {
     & >>> .dia-sort {
       width: 90vw;
     }
-    & >>> .dia-review{
+    & >>> .dia-review {
       width: 100vw;
       height: 100vh;
     }

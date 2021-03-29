@@ -31,15 +31,12 @@
             :key="tab.tab"
           >
             <el-form
-              :class="{ 'form-equal250': service === 'pc' }"
+              class="form-equal350"
               :model="lgParams"
               :rules="rules"
-              :inline="service === 'pc'"
               :ref="tab.tab"
-              :label-width="service === 'pc' ? '80px' : '0px'"
             >
               <el-form-item
-                :label="service === 'pc' ? formOptions.identity.label : ''"
                 prop="dientity"
                 v-if="tab.components.indexOf('identity') !== -1"
               >
@@ -57,7 +54,6 @@
                 </el-select>
               </el-form-item>
               <el-form-item
-                :label="service === 'pc' ? formOptions.account.label : ''"
                 prop="account"
                 v-if="tab.components.indexOf('account') !== -1"
               >
@@ -70,7 +66,6 @@
               </el-form-item>
 
               <el-form-item
-                :label="service === 'pc' ? formOptions.password.label : ''"
                 prop="password"
                 v-if="tab.components.indexOf('password') !== -1"
               >
@@ -82,7 +77,6 @@
                 ></el-input>
               </el-form-item>
               <el-form-item
-                :label="service === 'pc' ? formOptions.validCode.label : ''"
                 v-if="tab.components.indexOf('validCode') !== -1"
                 prop="validCode"
               >
@@ -204,7 +198,7 @@ export default {
     footText: {
       type: String,
       default:
-        '<span style="text-align:center; font-size:8px;">如登录、注册遇到问题，请联系客服</span>'
+        '<span style="text-align:center; font-size:12px;">如登录、注册遇到问题，请联系客服</span>'
     },
     // 优先展示的登录方式
     firstMode: {
@@ -248,9 +242,7 @@ export default {
       }
     },
     // 错误信息
-    errInfo: {type:String,
-        default:null
-    },
+    errInfo: { type: String, default: null },
     // 面板和表单内容
     tabList: {
       type: Array,
@@ -289,8 +281,7 @@ export default {
           validCode: {
             label: "验证码：",
             placeholder: "请输入验证码"
-          },
-
+          }
         };
       }
     }
@@ -405,7 +396,7 @@ export default {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 500px;
+  width: 400px;
   min-height: 400px;
   transform: translate(-50%, -50%);
   box-shadow: 0 0 10px 0 rgba(0, 33, 79, 0.11);

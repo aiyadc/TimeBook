@@ -23,7 +23,7 @@ request.interceptors.request.use(
 // response interceptor
 request.interceptors.response.use(response => {
         console.log("this is res:", response);
-        const res = response;
+        const res = response.data;
         return res;
     },
     error => {
