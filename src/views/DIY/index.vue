@@ -8,10 +8,10 @@
         <el-button type="text" size="small" circle>
           <i class="el-icon-share"></i><span>分享</span>
         </el-button>
-        <el-button type="text" size="small" circle>
+        <el-button type="text" size="small" circle @click="reviewAlbum">
           <i class="el-icon-view"></i><span>预览</span></el-button
         >
-        <el-button type="text" size="small" circle>
+        <el-button type="text" size="small" @click="toSort" circle>
           <i class="el-icon-sort"></i><span>排序</span></el-button
         >
         <el-button type="text" size="small" circle>
@@ -404,7 +404,6 @@
             :draggable="true"
             @dragstart="getPageInfo(ctx)"
             @dragover="handleDragOver($event, i)"
-            @dragenter="swapOrder"
             @click="togglePage(ctx)"
           />
         </div>
@@ -461,6 +460,47 @@
     <div id="rect">
       <div class="feature-icon"></div>
     </div>
+    <el-dialog custom-class="dia-sort" title="排序" :visible.sync="sortDia">
+      <div class="sort-container">
+        <div
+          class="sort"
+          v-for="(ctx, i) in myAlbum.data"
+          :key="i"
+          @click="maskSwap($event, i)"
+        >
+          <img
+            class="sort-pic"
+            :src="ctx.src"
+            :draggable="true"
+            @dragstart="getPageInfo(ctx)"
+            @dragover="handleDragOver($event, i)"
+          />
+          <span class="order-number">{{ ctx.pageIndex }}</span>
+          <img class="svg-apple" src="./icons/apple.svg" />
+        </div>
+      </div>
+    </el-dialog>
+    <el-dialog custom-class="dia-review" :visible.sync="reviewDia" :fullscreen="service == 'h5'">
+      <span slot="title">My Album</span>
+      <div class="review-pc">
+        <img class="review-page" :src="reviewImg.src" alt="" />
+        <img
+          class="svg svg-left"
+          src="./icons/left.svg"
+          @click="toPastPage"
+          v-show="reviewImg.pageIndex > 0"
+        />
+        <img
+          class="svg svg-right"
+          src="./icons/right.svg"
+          @click="toNextPage"
+          v-show="reviewImg.pageIndex < myAlbum.num-1"
+        />
+        <span class="page-index"
+          >{{ reviewImg.pageIndex + 1 || 0 }}/{{ myAlbum.num || 0 }}</span
+        >
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -543,7 +583,7 @@ export default {
       paintDia: false, // 绘画popover
       // 上传弹窗
       uploadDia: false,
-      uploadURL: process.env.BASE_API + "/decoration/upload",
+      uploadURL: "",
       fileList: [],
       // flag
       moveFlag: 0, // 拖动标志
@@ -560,7 +600,16 @@ export default {
       selectRect: null,
       // 相册页拖动交换顺序
       pageOnDrag: null,
-      pageIndex: null
+      pageIndex: null,
+      AppleShow: false,
+      swapFirst: null,
+      // 相册预览
+      showLeft: false,
+      showRight: false,
+      reviewIndex: 0,
+      // Dialog
+      sortDia: false,
+      reviewDia: false
     };
   },
 
@@ -569,6 +618,11 @@ export default {
       let service = this.$store.state.plateform;
       this.service = service;
       return service;
+    },
+    reviewImg() {
+      return this.myAlbum.data.length
+        ? this.myAlbum.data[this.reviewIndex]
+        : {};
     }
   },
   watch: {
@@ -577,6 +631,7 @@ export default {
     }
   },
   created() {
+    // this.uploadURL = process.env.BASE_API + "/decoration/upload";
     let u = navigator.userAgent;
     window.addEventListener(
       "touchmove",
@@ -652,9 +707,6 @@ export default {
         page.pageIndex = i;
         page.canvas = json;
         // 图片展示
-        // cvs.loadFromJSON(page.canvas,()=>{
-        //   page.src = cvs.toDataURL();
-        // })
         this.canvas.loadFromJSON(json, function() {});
         page.src = this.canvas.toDataURL();
         this.myAlbum.data[i] = page;
@@ -772,9 +824,9 @@ export default {
         let textbox = new fabric.Textbox("请输入内容", {
           left: p.x,
           top: p.y,
-          fontSize: 24 * this.getPixelRatio(this.canvas)
+          fontSize: 24
         });
-        console.log("this.getPixelRatio(this.canvas)");
+        console.log('textbox.fontSize :>> ', textbox.fontSize);
         this.canvas.add(textbox);
         this.canvas.setActiveObject(textbox);
         this.canvas.defaultCursor = "default";
@@ -913,6 +965,7 @@ export default {
           break;
       }
     });
+    console.log("myAlbum.data[0].src :>> ", this.myAlbum.data[0]);
   },
   methods: {
     // 拖动其他地方的图像到canvas
@@ -1049,65 +1102,72 @@ export default {
       e.preventDefault();
       this.pageIndex = i;
       if (this.pageIndex == this.pageOnDrag.pageIndex) return;
+      this.swap();
+    },
+    swap() {
+      console.log("进入到交换环节");
       let indexNow = this.pageOnDrag.pageIndex;
       let indexNext = this.pageIndex;
+      let len = Math.abs(indexNow - indexNext);
       let albums = this.myAlbum.data;
+      let p = Object.assign({}, albums[indexNow]);
+      albums.splice(indexNow, 1, albums[indexNext]);
+      albums.splice(indexNext, 1, p);
       if (indexNow > indexNext) {
-        let p = Object.assign({}, albums[indexNow]);
-        albums.splice(indexNow, 1, albums[indexNext]);
-        albums.splice(indexNext, 1, p);
-        console.log(
-          "albums[indexNow],albums[indexNext] :>> ",
-          albums[indexNow],
-          albums[indexNext]
-        );
- 
-        albums[indexNext].pageIndex--;
-        this.pageOnDrag = albums[indexNext];
-        this.togglePage(albums[indexNow]);
+        albums[indexNow].pageIndex += len;
+        albums[indexNext].pageIndex -= len;
       } else if (indexNow < indexNext) {
-        let p = Object.assign({}, albums[indexNow]);
-        albums.splice(indexNow, 1, albums[indexNext]);
-        albums.splice(indexNext, 1, p);
-        console.log(
-          "albums[indexNow],albums[indexNext] :>> ",
-          albums[indexNow],
-          albums[indexNext]
-        );
-        albums[indexNow].pageIndex--;
-        albums[indexNext].pageIndex++;
-        this.pageOnDrag = albums[indexNext];
-        this.togglePage(albums[indexNow]);
-        this.$nextTick(() => {
-          console.log(
-            "albums[indexNow],albums[indexNext] :>> ",
-            albums[indexNow],
-            albums[indexNext]
-          );
-        });
+        albums[indexNow].pageIndex -= len;
+        albums[indexNext].pageIndex += len;
+      }
+      this.pageOnDrag = albums[indexNext];
+      this.currentPage = indexNext; //更新页码
+    },
+
+    /**
+     * 排序
+     */
+    toSort() {
+      console.log("排序");
+      this.sortDia = true;
+    },
+    maskSwap(e, i) {
+      if (this.swapFirst == null) {
+        // 标记要交换的对象
+        let sortDIV = e.target.parentElement;
+        this.pageOnDrag = this.myAlbum.data[i];
+        sortDIV.classList.add("show-apple");
+        this.swapFirst = i;
+        console.log("this.swapFirst :>> ", this.swapFirst);
+      } else if (this.swapFirst == i) {
+        let sortDIV = e.target.parentElement;
+        this.pageIndex = null;
+        console.log("sortDIV,second :>> ", sortDIV);
+        sortDIV.classList.remove("show-apple");
+        this.swapFirst = null;
+      } else {
+        this.pageIndex = i;
+        this.swap();
+        let sortContainer = document.getElementsByClassName(
+          "sort-container"
+        )[0];
+        let sortDIV = sortContainer.getElementsByClassName("show-apple")[0];
+        sortDIV.classList.remove("show-apple");
+        this.swapFirst = null;
       }
     },
-    swapOrder(e) {
-      //   console.log("交换阶段", this.pageOnDrag.pageIndex);
-      //   console.log("this.pageIndex :>> ", this.pageIndex);
-      //   if (!this.pageIndex || this.pageIndex == this.pageOnDrag.pageIndex)
-      //     return;
-      //   console.log("成功进入交换阶段");
-      //   let indexNow = this.pageOnDrag.pageIndex;
-      //   let indexNext = this.pageIndex;
-      //   let albums = this.myAlbum.data;
-      //   let p = albums[indexNow];
-      //   this.$set(albums, indexNow, albums[indexNext]);
-      //   this.$set(albums, indexNext, p);
-      //   if (indexNow > indexNext) {
-      //     albums[indexNow].pageIndex--;
-      //     this.pageOnDrag.pageIndex--;
-      //     albums[indexNext].pageIndex++;
-      //   } else {
-      //     albums[indexNow].pageIndex++;
-      //     this.pageOnDrag.pageIndex++;
-      //     albums[indexNext].pageIndex--;
-      //   }
+
+    /**
+     * 预览
+     */
+    reviewAlbum() {
+      this.reviewDia = true;
+    },
+    toPastPage() {
+      this.reviewIndex -= 1;
+    },
+    toNextPage() {
+      this.reviewIndex += 1;
     },
     /**
      * 工具栏
@@ -1141,6 +1201,7 @@ export default {
     },
     // updateCanvasState
     updateCanvasState() {
+      console.log("更新视图");
       if (!this._config.isUndoing && !this._config.isRedoing) {
         var jsonData = this.canvas.toJSON();
         var canvasAsJson = JSON.stringify(jsonData);
@@ -1186,9 +1247,15 @@ export default {
         cf.isUndoing = 1;
         cf.currentStateIndex -= 1;
         this.canvas.loadFromJSON(cf.canvasState[cf.currentStateIndex], () => {
-          this.updateCanvasState();
           this.canvas.renderAll();
           cf.isUndoing = 0;
+          // 更新相册视图，方法是把前一个视图删除掉，然后用限制的视图作为替换，使用splice可以让vue监听到变化，进行响应式交互
+          let page = this.myAlbum.data[this.currentPage];
+          console.log("page :>> ", page);
+          page.canvas = this.canvas.toJSON();
+          page.src = this.canvas.toDataURL();
+          page.pageIndex = this.currentPage;
+          this.myAlbum.data.splice(this.currentPage, 1, page);
         });
       }
     },
@@ -1201,6 +1268,7 @@ export default {
         this.canvas.loadFromJSON(cf.canvasState[cf.currentStateIndex], () => {
           this.canvas.renderAll();
           cf.isRedoing = 0;
+          // this.updateCanvasState()
         });
       }
     },
@@ -1387,6 +1455,7 @@ export default {
         this.myAlbum.data[ctx.pageIndex]
       );
       if (this.currentPage === ctx.pageIndex) return;
+      console.log("换页");
       // 重置状态，由于在创建画布的时候初始化了一个状态，所以所以回到这个状态
       this._config.canvasState = this._config.canvasState.slice(0, 1);
       if (this._config.canvasState.length > 1) {
@@ -2027,10 +2096,120 @@ export default {
     }
   }
 }
+#pageBall {
+  width: 40px;
+  height: 40px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background-color: #a0c6d1;
+  position: fixed;
+  right: 0;
+  bottom: 7rem;
+  img {
+    pointer-events: none;
+    display: inline-block;
+    margin: auto;
+  }
+  &:active {
+    opacity: 0.5;
+  }
+}
+#rect {
+  position: absolute;
+  z-index: 9999;
+  width: 40vw;
+  height: 25vh;
+  background-color: #000000;
+  opacity: 0.2;
+  display: none;
+}
+.diy >>> .dia-sort {
+  width: 30rem;
+  .sort-container {
+    max-height: 60vh;
+    overflow: auto;
+  }
+  .sort {
+    width: 4.2rem;
+    height: 6rem;
+    display: inline-block;
+    position: relative;
+
+    .sort-pic {
+      width: 100%;
+      height: 100%;
+      padding: 5px 5px 5px;
+      background-color: antiquewhite;
+    }
+    .order-number {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+    }
+    .svg-apple {
+      width: 30px;
+      height: 30px;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      display: none;
+      transform: translate(-50%, -50%);
+    }
+  }
+  .show-apple {
+    .svg-apple {
+      display: block !important;
+    }
+  }
+  .el-dialog__body {
+    padding: 0;
+  }
+}
 .h5 {
   display: none;
 }
-
+.diy >>> .dia-review {
+  width: 56vh;
+  height: 80vh;
+  .review-pc {
+    height: 70vh;
+    width: 49vh;
+    border: 1px solid #c894f0;
+    margin: 0 auto;
+    position: relative;
+    box-shadow: 5px 5px 20px #f3b6cc;
+    .review-page {
+      width: 100%;
+      height: 100%;
+    }
+  }
+  .svg {
+    width: 36px;
+    height: 36px;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.3;
+    &:hover {
+      opacity: 1;
+    }
+  }
+  .svg-left {
+    left: -20px;
+  }
+  .svg-right {
+    right: -20px;
+  }
+  .page-index {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .el-dialog__body {
+    padding: 0;
+  }
+}
 @media screen and (max-width: 700px) {
   .diy {
     .h5 {
@@ -2111,36 +2290,16 @@ export default {
         }
       }
     }
+    & >>> .dia-sort {
+      width: 90vw;
+    }
+    & >>> .dia-review{
+      width: 100vw;
+      height: 100vh;
+    }
   }
 }
 .no-display {
-  display: none;
-}
-#pageBall {
-  width: 40px;
-  height: 40px;
-  box-sizing: border-box;
-  border-radius: 50%;
-  background-color: #a0c6d1;
-  position: fixed;
-  right: 0;
-  bottom: 7rem;
-  img {
-    pointer-events: none;
-    display: inline-block;
-    margin: auto;
-  }
-  &:active {
-    opacity: 0.5;
-  }
-}
-#rect {
-  position: absolute;
-  z-index: 9999;
-  width: 40vw;
-  height: 25vh;
-  background-color: #000000;
-  opacity: 0.2;
   display: none;
 }
 </style>
