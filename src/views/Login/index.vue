@@ -85,17 +85,19 @@ export default {
     login(form, ref) {
       //   if (params.account == "eachan" && params.password == "123456")
       //     this.$router.push("/");
-      console.log('form:', form);
+      console.log("form:", form);
       user
         .login(form)
         .then(res => {
           console.log("res", res);
+          this.$store.commit('SET_UID',res.data.uid)
           this.$router.push("/");
         })
         .catch(err => {
           // console.log(err)
           this.errInfo = err.data.message;
           this.$refs["login"].$refs[ref][0].validateField("account");
+          this.errInfo = null;
         });
     }
   }

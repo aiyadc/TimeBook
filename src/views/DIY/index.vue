@@ -88,6 +88,7 @@
                     class="folder"
                     v-for="(f, i) in materialFolderList"
                     :key="i"
+                    :tabindex="f.mlid"
                   >
                     <img
                       class="svg-folder"
@@ -95,10 +96,27 @@
                       @click="toFolder(f)"
                       alt=""
                     />
+                    <div class="more" :tabindex="'000' + f.mlid">
+                      <div class="box-more">
+                        <i
+                          class="el-icon-edit"
+                          @click="updateMaterialFolder(f)"
+                        ></i>
+                        <i
+                          class="el-icon-delete"
+                          @click="deleteMaterialFolder(f)"
+                        ></i>
+                      </div>
+                      <img
+                        class="svg-more"
+                        src="./icons/more.svg"
+                        @click="showMoreTool"
+                      />
+                    </div>
                     <span class="folder-name">{{ f.name }}</span>
                   </div>
                 </div>
-                <hr />
+                <hr class="pc" />
                 <el-checkbox-group
                   :class="{ 'm-checkbox': true, 'no-select': !isCheck }"
                   v-model="checkedmaterial"
@@ -541,7 +559,6 @@
     </el-dialog>
   </div>
 </template>
-
 <script>
 import inobounce from "inobounce";
 import Fastclick from "fastclick";
@@ -1007,7 +1024,18 @@ export default {
     /**
      * 素材
      */
+    showMoreTool(e) {
+      let t = e.target.parentElement.getElementsByClassName("box-more")[0];
+      console.log("t.style.display :>> ", t.style.display);
+      if (!t.style.display || t.style.display == "none") {
+        t.style.display = "inline-block";
+      } else {
+        console.log("aaa");
+        t.style.display = "none";
+      }
+    },
     getMaterialFolders() {
+      console.log("typeof this.uid :>> ", typeof this.uid);
       material
         .getFolders(this.uid)
         .then(res => {
@@ -1020,15 +1048,55 @@ export default {
     },
     addMaterialFolder() {
       console.log("this.mlid :>> ", this.mlid);
+      this.$prompt("请输入目录名", "创建目录", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        inputPattern: /.+/,
+        inputErrorMessage: "目录名称不能为空"
+      }).then(({ value }) => {
+        console.log("value :>> ", value);
+        material.addFolder({ name: value }, this.uid);
+        this.getMaterialFolders();
+      });
+    },
+    updateMaterialFolder(f) {
+      this.$prompt("请输入新的目录名", "修改名称", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消"
+      }).then(({ value }) => {
+        material.updateFolder({ name: value }, f.mlid);
+        this.materialFolderList.forEach(folder => {
+          if (folder.mlid === f.mlid) {
+            console.log("folder.mlid,f.mlid :>> ", folder.mlid, f.mlid);
+            folder.name = value;
+          }
+        });
+      });
+    },
+    deleteMaterialFolder(f) {
+      this.$confirm("确定要删除该目录吗，目录中的图片也将会被删除噢", "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "danger"
+      }).then(() => {
+        material.deleteFolder(f.mlid).then(res => {
+          this.$message.success("删除成功");
+          this.materialFolderList.forEach((folder, i, list) => {
+            if (folder.mlid === f.mlid) {
+              list.splice(i, 1);
+            }
+          });
+        });
+      });
     },
     toFolder(f) {
-      // todo
-      if (this.mlid == f.mid) {
-        this.mlid = 0;
+      console.log("this.mlid,f.mid :>> ", this.mlid, f.mlid);
+      if (this.mlid == f.mlid) {
+        return;
       } else {
         this.mlid = f.mlid;
         material
-          .getMaterials({ mlid: f.mlid })
+          .getMaterials(f.mlid)
           .then(res => {
             console.log("res.data :>> ", res.data);
             this.materialList = res.data;
@@ -1910,20 +1978,59 @@ export default {
         .folder {
           display: inline-block;
           cursor: pointer;
-          width: 100px;
-          height: 110px;
-          padding: 5px 2px;
+          width: 76px;
+          height: 80px;
           margin: 5px;
           position: relative;
-          img {
-            width: 100px;
-            height: 100px;
+          .svg-folder {
+            width: 76px;
+            height: 70px;
+          }
+          .more {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 99;
+            &:active,
+            &:hover {
+              .box-more {
+                display: inline-block;
+              }
+            }
+            .box-more {
+              position: relative;
+              bottom: 3px;
+              margin-right: 5px;
+              background-color: rgba(255, 199, 199, 1);
+              display: none;
+              i {
+                &:active,
+                &:hover {
+                  outline: tomato solid 1px;
+                }
+              }
+            }
+            .svg-more {
+              width: 18px;
+              height: 18px;
+              opacity: 0.5;
+              &:active {
+                opacity: 1;
+              }
+              &:hover {
+                opacity: 1;
+              }
+            }
           }
           span {
+            font-size: 12px;
             position: absolute;
             left: 50%;
             bottom: 0;
             transform: translateX(-50%);
+          }
+          &:focus {
+            outline: #ffc5c5 2px solid;
           }
         }
       }
@@ -2323,20 +2430,6 @@ export default {
       .m-content {
         .m-folders {
           .folder {
-            display: inline-block;
-            width: 100px;
-            height: 100px;
-            position: relative;
-            img {
-              width: 100%;
-              height: 100%;
-            }
-            .folder-name {
-              position: absolute;
-              left: 50%;
-              top: 50%;
-              transform: translate(-50%, -50%);
-            }
           }
         }
         .m-checkbox {
