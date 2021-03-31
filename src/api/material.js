@@ -9,7 +9,7 @@ const material = {
     })
   },
   // 增加用户素材目录
-  addFolder(data,uid) {
+  addFolder(data, uid) {
     return request({
       url: `/material-list/${uid}`,
       method: 'post',
@@ -17,11 +17,11 @@ const material = {
     })
   },
   // 修改目录名称  
-  updateFolder(data,mlid){
+  updateFolder(data, mlid) {
     return request({
-        url: `/material-list?mlid=${mlid}`,
-        method: 'patch',
-        data
+      url: `/material-list?mlid=${mlid}`,
+      method: 'patch',
+      data
     })
   },
   // 删除用户素材目录
@@ -29,11 +29,13 @@ const material = {
     return request({
       url: '/material-list',
       method: 'delete',
-      params:{mlid}
+      params: {
+        mlid
+      }
     })
   },
   // 获取我的装饰屋
-  // 获取我上传的图片（按mlid分类）
+  // 获取指定素材目录中的素材
   getMaterials(mlid) {
     return request({
       url: `/material`,
@@ -43,14 +45,21 @@ const material = {
       }
     })
   },
-  // 添加上传照片
+  // 添加素材
   uploadMore: function (data, uid) {
     return request({
       url: `/material/${uid}`,
       method: "post",
       data
     });
+  },
+  // 删除素材
+  deleteMaterial(midList) {
+    return request({
+      url: `/material`,
+      method: 'delete',
+      data:{midList}
+    })
   }
-  // 删除上传的照片
 };
 export default material

@@ -27,25 +27,28 @@
       <!-- 素材部分 -->
       <div class="materials">
         <div class="m-nav">
-          <div class="nav-tool h5" v-if="tab == 'material'">
-            <img
-              class="tool-icon"
-              src="./icons/folder_add.svg"
-              @click="addMaterialFolder"
-            />
-            <i
-              class="el-icon-plus tool-icon"
-              @click="addMaterial"
-              v-if="!isCheck"
-            ></i>
-            <i
-              class="el-icon-delete tool-icon"
-              @click="removeMaterial"
-              v-if="isCheck"
-            ></i>
-            <el-button type="text" @click="isCheck = false" v-if="isCheck"
-              >取消</el-button
-            >
+          <div class="nav-tool h5">
+            <div class="inline-block" v-if="tab == 'material'">
+              <img
+                class="tool-icon mr0"
+                src="./icons/folder_add.svg"
+                @click="addMaterialFolder"
+              />
+              <i
+                class="el-icon-plus tool-icon"
+                @click="addMaterial"
+                v-if="!isCheck"
+              ></i>
+              <i
+                class="el-icon-delete tool-icon"
+                @click="removeMaterial"
+                v-if="isCheck"
+              ></i>
+              <el-button type="text" @click="cancelCheck" v-if="isCheck"
+                >取消</el-button
+              >
+            </div>
+
             <el-button
               class="text-btn"
               type="text"
@@ -58,7 +61,52 @@
             class="m-tab"
             v-model="tab"
             :tab-position="plateform === 'pc' ? 'left' : 'top'"
+            @tab-click="handleTabClick"
           >
+            <!-- 系统素材 -->
+            <el-tab-pane name="decoration" label="装饰">
+              <div class="head-tool">
+                <el-input
+                  class="decoration-search pc"
+                  v-model="search.materialSearch"
+                  size="small"
+                  placeholder="可输入照片名进行搜索"
+                  suffix-icon="el-icon-search"
+                ></el-input>
+              </div>
+              <div class="d-content">
+                <el-collapse class="pc" v-model="dCollapse">
+                  <el-collapse-item name="1" title="我的装饰屋">
+                    <folder
+                      v-for="(d, i) in decorationFolderList"
+                      :key="i"
+                      :tabindex="d.dlid"
+                      :name="d.name"
+                      @folder-click="toDFolder(d.dlid)"
+                    ></folder>
+                  </el-collapse-item>
+                </el-collapse>
+                <template v-if="decorationList.length">
+                  <div
+                    class="decoration"
+                    v-for="(d, i) in decorationList"
+                    :key="i"
+                    :tabindex="i"
+                  >
+                    <img
+                      crossOrigin="Anonymous"
+                      :src="d.src"
+                      :alt="d.name"
+                      :width="service === 'pc' ? 94 : 76"
+                      :height="service === 'pc' ? 90 : 70"
+                      @dragstart="dragstart"
+                      @touchend="setOnCanvas($event)"
+                    />
+                  </div>
+                </template>
+                <div class="empty-tips" v-else>未选择目录或此目录没有照片~</div>
+              </div>
+            </el-tab-pane>
             <!-- 我的素材 -->
             <el-tab-pane name="material" label="素材">
               <div class="head-tool">
@@ -84,58 +132,32 @@
                     type="danger"
                     size="mini"
                     plain
-                    @click="isCheck = !isCheck"
+                    @click="toMultiCheckMode"
                     >批量删除</el-button
                   >
                 </div>
               </div>
               <div class="m-content">
                 <div class="m-folders pc">
-                  <folder
-                    v-for="(f, i) in materialFolderList"
-                    :key="i"
-                    :tabindex="f.mlid"
-                    :name="f.name"
-                    @folder-click="toFolder(f)"
-                    @edit="updateMaterialFolder(f)"
-                    @delete="deleteMaterialFolder(f)"
-                  ></folder>
-                  <!-- <div
-                    class="folder"
-                    v-for="(f, i) in materialFolderList"
-                    :key="i"
-                    :tabindex="f.mlid"
-                  >
-                    <img
-                      class="svg-folder"
-                      src="./icons/album.svg"
-                      @click="toFolder(f)"
-                      alt=""
-                    />
-                    <div class="more" :tabindex="'000' + f.mlid">
-                      <div class="box-more">
-                        <i
-                          class="el-icon-edit"
-                          @click="updateMaterialFolder(f)"
-                        ></i>
-                        <i
-                          class="el-icon-delete"
-                          @click="deleteMaterialFolder(f)"
-                        ></i>
-                      </div>
-                      <img
-                        class="svg-more"
-                        src="./icons/more.svg"
-                        @click="showMoreTool"
-                      />
-                    </div>
-                    <span class="folder-name">{{ f.name }}</span>
-                  </div> -->
+                  <el-collapse v-model="mCollapse">
+                    <el-collapse-item name="1" title="我的素材库">
+                      <folder
+                        v-for="(f, i) in materialFolderList"
+                        :key="i"
+                        :tabindex="f.mlid"
+                        :name="f.name"
+                        :show-edit="true"
+                        @folder-click="toMFolder(f.mlid)"
+                        @edit="updateMaterialFolder(f)"
+                        @delete="deleteMaterialFolder(f)"
+                      ></folder>
+                    </el-collapse-item>
+                  </el-collapse>
                 </div>
-                <hr class="pc" />
                 <el-checkbox-group
                   :class="{ 'm-checkbox': true, 'no-select': !isCheck }"
-                  v-model="checkedmaterial"
+                  v-model="checkedMaterials"
+                  v-if="materialList.length"
                 >
                   <el-checkbox
                     v-for="(m, i) in materialList"
@@ -157,8 +179,8 @@
                     />
                   </el-checkbox>
                 </el-checkbox-group>
+                <div class="empty-tips" v-else>未选择目录或此目录没有照片~</div>
               </div>
-              <!-- <canvas id="materialCanvas" width="94px" height="90px"></canvas> -->
             </el-tab-pane>
             <!-- 文案选择 -->
             <el-tab-pane name="text" label="文本">
@@ -169,35 +191,6 @@
                 @touchstart="setOnCanvas($event)"
                 >H1</a
               >
-            </el-tab-pane>
-            <!-- 系统素材 -->
-            <el-tab-pane name="decoration" label="装饰">
-              <div class="head-tool">
-                <el-input
-                  class="decoration-search pc"
-                  v-model="search.materialSearch"
-                  size="small"
-                  placeholder="可输入照片名进行搜索"
-                  suffix-icon="el-icon-search"
-                ></el-input>
-              </div>
-              <div class="d-content">
-                <div
-                  class="decoration"
-                  v-for="(d, i) in decorationOptions"
-                  :key="i"
-                  :tabindex="i"
-                >
-                  <img
-                    :src="d.src"
-                    :alt="d.name"
-                    :width="service === 'pc' ? 94 : 76"
-                    :height="service === 'pc' ? 90 : 70"
-                    @dragstart="dragstart"
-                    @touchend="setOnCanvas($event)"
-                  />
-                </div>
-              </div>
             </el-tab-pane>
             <!-- 我的相册，H5中才有显示 -->
             <el-tab-pane name="album" label="相册" v-if="service === 'h5'">
@@ -574,16 +567,26 @@
       </div>
     </el-dialog>
     <div class="folders" v-if="folderDia">
-      <folder
-        v-for="(f, i) in materialFolderList"
-        :key="i"
-        :name="f.name"
-        @folder-click="toFolder(f)"
-        @edit="updateMaterialFolder(f)"
-        @delete="deleteMaterialFolder(f)"
-      >
-        <div class="triangle"></div>
-      </folder>
+      <template v-if="tab === 'material'">
+        <folder
+          v-for="(f, i) in materialFolderList"
+          :key="i"
+          :name="f.name"
+          @folder-click="toMFolder(f.mlid)"
+          @edit="updateMaterialFolder(f)"
+          @delete="deleteMaterialFolder(f)"
+        >
+        </folder>
+      </template>
+      <template v-if="tab === 'decoration'">
+        <folder
+          v-for="(d, i) in decorationFolderList"
+          :key="i"
+          :name="d.name"
+          @folder-click="toDFolder(d.dlid)"
+        >
+        </folder>
+      </template>
     </div>
   </div>
 </template>
@@ -592,6 +595,7 @@ import inobounce from "inobounce";
 import Fastclick from "fastclick";
 import { fabric } from "fabric";
 import material from "@/api/material.js";
+import decorationRequest from "@/api/decoration.js";
 import Folder from "./components/folder.vue";
 export default {
   components: {
@@ -600,9 +604,8 @@ export default {
   data() {
     return {
       uid: 0, // 当前用户id
-      mlid: 0, // 用户当前点击的素材目录id
       service: "", // 当前操作平台
-      tab: "material", // 当前tab栏
+      tab: "decoration", // 当前tab栏
       mode: "default", // 当前设计模式['default','crop','paint','featureshow']
       canvas: null,
       canvasInfo: {},
@@ -663,14 +666,23 @@ export default {
         materialSearch: ""
       },
       // Options
-      materialList: [],
-      decorationOptions: [],
       sizeOptions: [],
       fontFamilyOptions: [],
       predefineColors: [],
-      // 素材
+      // tab板块
+      // 我的素材
+      mlid: 0, // 用户当前点击的素材目录id
+      checkMode: "singleCheck", // sigleCheck/multiCheck ：单选和多选
       curFolder: "",
+      materialList: [],
       materialFolderList: [],
+      checkedMaterials: [],
+      checkedMaterial: null,
+      // 文本
+      // 装饰
+      dlid: 0, // 用户当前点击的装饰目录id
+      decorationList: [],
+      decorationFolderList: [],
       // 上传
       uploadDia: false,
       uploadURL: "",
@@ -684,7 +696,6 @@ export default {
       // 计时器
       timeInterval: null,
       timer: 0,
-      checkedmaterial: [],
       // 裁剪
       mask: null,
       selectRect: null,
@@ -701,7 +712,11 @@ export default {
       paintDia: false, // 绘画popover
       sortDia: false,
       reviewDia: false,
-      folderDia: false
+      folderDia: false,
+      // 折叠面板
+      mCollapse: ["1"],
+      dCollapse: ["1"],
+      tCollapse: ["1"]
     };
   },
 
@@ -723,10 +738,9 @@ export default {
     }
   },
   created() {
+    this.initDIY();
     this.uid = this.$store.state.uid;
-    this.getMaterialFolders();
     this.uploadURL = process.env.BASE_API + "/decoration/upload";
-    // material.getFolders()
     let u = navigator.userAgent;
     window.addEventListener(
       "touchmove",
@@ -964,7 +978,7 @@ export default {
       100
     ];
 
-    this.decorationOptions = [
+    this.decorationList = [
       {
         did: 0,
         theme: "dog",
@@ -1043,9 +1057,28 @@ export default {
           break;
       }
     });
-    console.log("myAlbum.data[0].src :>> ", this.myAlbum.data[0]);
   },
   methods: {
+    // 初始化界面
+    initDIY() {
+      this.getDecorationFloders(); // 获取系统素材目录
+    },
+    // 处理Tab标签点击事件
+    handleTabClick(tab) {
+      switch (tab.name) {
+        case "material":
+          this.getMaterialFolders();
+          break;
+        case "decotation":
+          this.getDecorationFloders();
+          break;
+        case "text":
+          this.getTextFolders();
+          break;
+        default:
+          this.getMaterialFolders();
+      }
+    },
     // 拖动其他地方的图像到canvas
     dragstart(e) {
       console.log("aaaaa");
@@ -1060,6 +1093,7 @@ export default {
     /**
      * 素材
      */
+    // 展示素材文件夹的相关操作图标
     showMoreTool(e) {
       let t = e.target.parentElement.getElementsByClassName("box-more")[0];
       console.log("t.style.display :>> ", t.style.display);
@@ -1070,18 +1104,19 @@ export default {
         t.style.display = "none";
       }
     },
+    // 进入多选模式
+    toMultiCheckMode() {
+      this.isCheck = !this.isCheck;
+    },
+    // 获取用户素材目录
     getMaterialFolders() {
       console.log("typeof this.uid :>> ", typeof this.uid);
-      material
-        .getFolders(this.uid)
-        .then(res => {
-          console.log("res :>> ", res.data);
-          this.materialFolderList = res.data;
-        })
-        .catch(err => {
-          console.log("err :>> ", err);
-        });
+      material.getFolders(this.uid).then(res => {
+        console.log("res :>> ", res.data);
+        this.materialFolderList = res.data;
+      });
     },
+    // 添加素材目录
     addMaterialFolder() {
       console.log("this.mlid :>> ", this.mlid);
       this.$prompt("请输入目录名", "创建目录", {
@@ -1089,14 +1124,15 @@ export default {
         cancelButtonText: "取消",
         inputPattern: /.+/,
         inputErrorMessage: "目录名称不能为空"
-      }).then(({ value }) => {
+      }).then(async ({ value }) => {
         console.log("value :>> ", value);
-        material.addFolder({ name: value }, this.uid);
-        this.getMaterialFolders();
+        await material.addFolder({ name: value }, this.uid);
+        await this.getMaterialFolders();
       });
     },
+    // 更新素材目录
     updateMaterialFolder(f) {
-      console.log('更新相册');
+      console.log("更新相册");
       this.$prompt("请输入新的目录名", "修改名称", {
         confirmButtonText: "确定",
         cancelButtonText: "取消"
@@ -1110,6 +1146,7 @@ export default {
         });
       });
     },
+    // 删除素材目录
     deleteMaterialFolder(f) {
       this.$confirm("确定要删除该目录吗，目录中的图片也将会被删除噢", "提示", {
         confirmButtonText: "确定",
@@ -1123,57 +1160,74 @@ export default {
               list.splice(i, 1);
             }
           });
+          this.materialList = [];
         });
       });
     },
-    toFolder(f) {
-      console.log("this.mlid,f.mid :>> ", this.mlid, f.mlid);
-      if (this.mlid == f.mlid) {
+    // 展示指定素材目录中的素材
+    toMFolder(mlid) {
+      if (this.mlid == mlid) {
         return;
       } else {
-        this.mlid = f.mlid;
-        material
-          .getMaterials(f.mlid)
-          .then(res => {
-            console.log("res.data :>> ", res.data);
-            this.materialList = res.data;
-          })
-          .catch(err => {
-            console.log("err :>> ", err);
-          });
+        this.mlid = mlid;
+        material.getMaterials(mlid).then(res => {
+          this.materialList = res.data;
+        });
       }
     },
+    // 添加素材
     addMaterial() {
       this.uploadDia = true;
     },
+    // 将点击的图片设为选中：单选模式
+    setSelected(m) {
+      this.checkedMaterial = m.mid;
+      console.log("this.checkedMaterial :>> ", this.checkedMaterial);
+    },
     // 删除选中图片
     removeMaterial() {
-      if (this.checkedmaterial.length) {
+      if (this.checkedMaterials.length || this.checkedMaterial) {
         this.$confirm("确定要删除选中的图片吗？", "提示", {
           type: "warning",
           confirmButtonText: "确定",
           cancelButtonText: "取消"
         })
           .then(() => {
-            this.materialList = this.materialList.filter((m, i, list) => {
-              if (!this.checkedmaterial.includes(m.mid)) {
-                return m;
-                // 发送请求，从数据库移除
-                // 更新视图，将图片从画布中移除(暂未加上object属性)
-                // this.canvas.remove(m.object)
-              }
+            //   material.deleteMaterial()
+            if (!this.isCheck) {
+              this.checkedMaterials = [this.checkedMaterial];
+            }
+            material.deleteMaterial(this.checkedMaterials).then(res => {
+              this.$message.success(res.message);
+              this.isCheck = false;
+              console.log("this.checkedMaterials :>> ", this.checkedMaterials);
+              this.materialList = this.materialList.filter((m, i, list) => {
+                if (!this.checkedMaterials.includes(m.mid)) {
+                  return m;
+                  this.timer = 0;
+                  // 发送请求，从数据库移除
+                  // 更新视图，将图片从画布中移除(暂未加上object属性)
+                  // this.canvas.remove(m.object)
+                }
+              });
             });
-            this.isCheck = false;
           })
           .catch(() => {});
       } else {
         this.$message.warning("请先选择图片");
       }
     },
+    // 取消选中
+    cancelCheck() {
+      this.isCheck = false;
+      this.timer = 0;
+    },
+    // 更新添加的素材图片
     updateUploadList(file, fileList) {
-      //   console.log("fileList", fileList);
+      // console.log("fileList", fileList);
       this.fileList = fileList;
     },
+    // 处理上传框中的图片删除
     handleRemove(file) {
       console.log("file", file, "fileList:", this.fileList);
       this.fileList.forEach((pic, index, fileList) => {
@@ -1182,23 +1236,25 @@ export default {
         }
       });
     },
+    // 处理上传成功事件
     handleUploadSuccess(response, file, fileList) {
       console.log("fileList :>> ", fileList);
     },
+    // 将图片上传到服务器
     UploadToService() {
       //todo
       if (this.fileList.length !== 0) {
-        console.log("this.fileList", this.fileList);
-        this.fileList.forEach((img, index, fileList) => {
-          let obj = {};
-          obj.mid = index;
-          obj.theme = "unknow";
-          obj.name = img.name;
-          obj.width = 94;
-          obj.height = 90;
-          obj.src = img.url;
-          this.materialList.push(obj);
-        });
+        // console.log("this.fileList", this.fileList);
+        // this.fileList.forEach((img, index, fileList) => {
+        //   let obj = {};
+        //   obj.mid = index;
+        //   obj.theme = "unknow";
+        //   obj.name = img.name;
+        //   obj.width = 94;
+        //   obj.height = 90;
+        //   obj.src = img.url;
+        //   this.materialList.push(obj);
+        // });
         // console.log('this.materialList', this.materialList)
         let canvas = document.createElement("canvas");
         canvas.id = "materialCanvas";
@@ -1224,7 +1280,6 @@ export default {
               });
               canvas.add(image);
               let src = canvas.toDataURL();
-
               let obj = {};
               obj.mid = index;
               obj.theme = "unknow";
@@ -1246,16 +1301,44 @@ export default {
           });
         }).then(imgData => {
           this.uploadDia = false;
-          material.uploadMore({ data: imgData });
+          material.uploadMore({ data: imgData }).then(res => {
+            console.log("this.mlid :>> ", this.mlid);
+            material.getMaterials(this.mlid).then(res => {
+              this.materialList = res.data;
+            });
+          });
         });
       } else {
         this.$message.warning("请先上传照片");
       }
     },
+    // 关闭上传弹框
     closeUploadDia() {
       this.uploadDia = false;
     },
 
+    /**
+     * 装饰
+     */
+    getDecorationFloders() {
+      decorationRequest.getFolders().then(res => {
+        this.decorationFolderList = res.data;
+      });
+    },
+    toDFolder(dlid) {
+      if (this.dlid == dlid) {
+        return;
+      } else {
+        this.dlid = dlid;
+        decorationRequest.getDecorations(dlid).then(res => {
+          this.decorationList = res.data;
+        });
+      }
+    },
+    /**
+     * 文字
+     */
+    getTextFolders() {},
     /**
      * 相册页展示
      *
@@ -1396,7 +1479,6 @@ export default {
       });
       // 更新相册视图，方法是把前一个视图删除掉，然后用限制的视图作为替换，使用splice可以让vue监听到变化，进行响应式交互
       let page = this.myAlbum.data[this.currentPage];
-      console.log("page :>> ", page);
       page.canvas = this.canvas.toJSON();
       page.src = this.canvas.toDataURL();
       page.pageIndex = this.currentPage;
@@ -1902,6 +1984,22 @@ export default {
 };
 </script>
 <style lang="scss" scoped>
+.icon {
+  cursor: pointer;
+  &:hover {
+    outline: tomato solid 1px;
+  }
+}
+.tool-icon {
+  width: 16px;
+  height: 16px;
+  margin: 10px 0;
+  text-align: center;
+  cursor: pointer;
+  &:hover {
+    outline: tomato solid 1px;
+  }
+}
 .diy {
   position: relative;
   display: flex;
@@ -2203,22 +2301,6 @@ export default {
     }
   }
 }
-.icon {
-  cursor: pointer;
-  &:hover {
-    outline: tomato solid 1px;
-  }
-}
-.tool-icon {
-  width: 16px;
-  height: 16px;
-  margin: 10px 0;
-  text-align: center;
-  cursor: pointer;
-  &:hover {
-    outline: tomato solid 1px;
-  }
-}
 .layer {
   display: flex;
   align-items: center;
@@ -2237,6 +2319,11 @@ export default {
 .osbottom5 {
   position: relative;
   bottom: 5px;
+}
+.empty-tips {
+  margin-top: 35px;
+  font-size: 14px;
+  color: coral;
 }
 
 // 上传组件
@@ -2464,13 +2551,15 @@ export default {
         }
       }
       .nav-tool {
+        height: 24px;
         position: absolute;
         right: 5px;
-        top: -2px;
         z-index: 66;
-        img {
+        img,
+        i {
           display: inline-block;
           vertical-align: top;
+          margin: 0;
         }
         .text-btn {
           padding: 0;
@@ -2521,7 +2610,6 @@ export default {
   }
 }
 .el-color-picker {
-  // width: fit-content!important;
   display: inline-block;
   .el-color-picker__trigger {
     border: none;

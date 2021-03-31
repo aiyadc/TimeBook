@@ -17,13 +17,11 @@ request.interceptors.request.use(
   },
   error => {
     // Do something with request error
-    console.log("error----------", error); // for debug
     return Promise.reject(error);
   }
 );
 // response interceptor
 request.interceptors.response.use(response => {
-    console.log("this is res:", response);
     const res = response.data;
     return res;
   },

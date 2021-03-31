@@ -1,15 +1,18 @@
-const decoration = [
-  {
-    // 获取我的装饰主题
-    // 获取装饰主题
-    // 获取装饰
-    // 添加装饰主题
-    // 添加装饰
-    // 添加我的装饰主题
-    // 添加装饰主题
-    // 查找装饰主题
-    // 删除装饰
-    // 删除我的装饰主题
-    // 删除装饰主题
+import request from "@/utils/request";
+const decoration = {
+    // 获取装饰目录
+    getFolders(){
+        return request({
+            url:'/decoration-list',
+            method:'get',
+        })
+    },
+    // 获取装饰目录中的图片
+    getDecorations(dlid){
+        return request({
+            url:`/decoration?dlid=${dlid}`,
+            method:'get'
+        })
+    }
   }
-];
+export default decoration

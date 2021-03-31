@@ -1,10 +1,10 @@
 import Vue from 'vue'
 import ElementUI from 'element-ui';
 import 'element-ui/lib/theme-chalk/index.css';
-import './styles/index.scss'
 import store from "./store";
 import { setRem } from '@/utils/setRem.js'
 import App from './App'
+import './styles/index.scss'
 import router from './router'
 
 Vue.use(ElementUI)

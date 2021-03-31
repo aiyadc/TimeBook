@@ -1,7 +1,7 @@
 <template>
-  <div class="folder" tabindex="2">
+  <div class="folder" :tabindex="-1">
     <img class="svg-folder" src="../icons/album.svg" @click="toFolder" alt="" />
-    <div class="more" :tabindex="1">
+    <div class="more" :tabindex="-2" v-if="showEdit">
       <div class="box-more">
         <i class="el-icon-edit" @click="handleEdit"></i>
         <i class="el-icon-delete" @click="handleDelete"></i>
@@ -17,7 +17,11 @@ export default {
   components: {},
   props: {
     src: String, // 图片地址
-    name: String // 文件夹名称
+    name: String, // 文件夹名称
+    showEdit:{
+        type: Boolean,
+        default: false
+    }
   },
 
   data() {
@@ -63,7 +67,8 @@ export default {
   height: 80px;
   margin: 5px;
   position: relative;
-  .svg-folder {
+  -webkit-tap-highlight-color: transparent;
+   .svg-folder {
     width: 76px;
     height: 70px;
   }
