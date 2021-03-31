@@ -46,6 +46,13 @@
             <el-button type="text" @click="isCheck = false" v-if="isCheck"
               >取消</el-button
             >
+            <el-button
+              class="text-btn"
+              type="text"
+              icon="el-icon-star-off"
+              @click="folderDia = !folderDia"
+              >目录</el-button
+            >
           </div>
           <el-tabs
             class="m-tab"
@@ -83,8 +90,17 @@
                 </div>
               </div>
               <div class="m-content">
-                <div class="m-folders">
-                  <div
+                <div class="m-folders pc">
+                  <folder
+                    v-for="(f, i) in materialFolderList"
+                    :key="i"
+                    :tabindex="f.mlid"
+                    :name="f.name"
+                    @folder-click="toFolder(f)"
+                    @edit="updateMaterialFolder(f)"
+                    @delete="deleteMaterialFolder(f)"
+                  ></folder>
+                  <!-- <div
                     class="folder"
                     v-for="(f, i) in materialFolderList"
                     :key="i"
@@ -114,7 +130,7 @@
                       />
                     </div>
                     <span class="folder-name">{{ f.name }}</span>
-                  </div>
+                  </div> -->
                 </div>
                 <hr class="pc" />
                 <el-checkbox-group
@@ -557,6 +573,18 @@
         >
       </div>
     </el-dialog>
+    <div class="folders" v-if="folderDia">
+      <folder
+        v-for="(f, i) in materialFolderList"
+        :key="i"
+        :name="f.name"
+        @folder-click="toFolder(f)"
+        @edit="updateMaterialFolder(f)"
+        @delete="deleteMaterialFolder(f)"
+      >
+        <div class="triangle"></div>
+      </folder>
+    </div>
   </div>
 </template>
 <script>
@@ -564,7 +592,11 @@ import inobounce from "inobounce";
 import Fastclick from "fastclick";
 import { fabric } from "fabric";
 import material from "@/api/material.js";
+import Folder from "./components/folder.vue";
 export default {
+  components: {
+    Folder
+  },
   data() {
     return {
       uid: 0, // 当前用户id
@@ -668,7 +700,8 @@ export default {
       // Dialog
       paintDia: false, // 绘画popover
       sortDia: false,
-      reviewDia: false
+      reviewDia: false,
+      folderDia: false
     };
   },
 
@@ -1022,6 +1055,9 @@ export default {
       this.dragObject = obj;
     },
     /**
+     * common
+     */
+    /**
      * 素材
      */
     showMoreTool(e) {
@@ -1060,6 +1096,7 @@ export default {
       });
     },
     updateMaterialFolder(f) {
+      console.log('更新相册');
       this.$prompt("请输入新的目录名", "修改名称", {
         confirmButtonText: "确定",
         cancelButtonText: "取消"
@@ -1975,64 +2012,6 @@ export default {
       min-width: 220px;
       text-align: left;
       .m-folders {
-        .folder {
-          display: inline-block;
-          cursor: pointer;
-          width: 76px;
-          height: 80px;
-          margin: 5px;
-          position: relative;
-          .svg-folder {
-            width: 76px;
-            height: 70px;
-          }
-          .more {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 99;
-            &:active,
-            &:hover {
-              .box-more {
-                display: inline-block;
-              }
-            }
-            .box-more {
-              position: relative;
-              bottom: 3px;
-              margin-right: 5px;
-              background-color: rgba(255, 199, 199, 1);
-              display: none;
-              i {
-                &:active,
-                &:hover {
-                  outline: tomato solid 1px;
-                }
-              }
-            }
-            .svg-more {
-              width: 18px;
-              height: 18px;
-              opacity: 0.5;
-              &:active {
-                opacity: 1;
-              }
-              &:hover {
-                opacity: 1;
-              }
-            }
-          }
-          span {
-            font-size: 12px;
-            position: absolute;
-            left: 50%;
-            bottom: 0;
-            transform: translateX(-50%);
-          }
-          &:focus {
-            outline: #ffc5c5 2px solid;
-          }
-        }
       }
       .m-checkbox {
         & >>> .el-checkbox {
@@ -2308,6 +2287,7 @@ export default {
   position: fixed;
   right: 0;
   bottom: 7rem;
+  z-index: 2021;
   img {
     pointer-events: none;
     display: inline-block;
@@ -2366,6 +2346,21 @@ export default {
   }
   .el-dialog__body {
     padding: 0;
+  }
+}
+.folders {
+  width: 80vw;
+  height: 40vh;
+  position: absolute;
+  bottom: 7rem;
+  right: 0;
+  margin-bottom: 5px;
+  background-color: rgba(249, 224, 233, 0.6);
+  text-align: left;
+  overflow-y: auto;
+  .folders {
+    width: 100%;
+    height: 100%;
   }
 }
 .h5 {
@@ -2476,6 +2471,9 @@ export default {
         img {
           display: inline-block;
           vertical-align: top;
+        }
+        .text-btn {
+          padding: 0;
         }
       }
       .head-tool {
