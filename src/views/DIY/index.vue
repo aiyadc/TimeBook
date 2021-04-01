@@ -60,7 +60,7 @@
           <el-tabs
             class="m-tab"
             v-model="tab"
-            :tab-position="plateform === 'pc' ? 'left' : 'top'"
+            :tab-position="platform === 'pc' ? 'left' : 'top'"
             @tab-click="handleTabClick"
           >
             <!-- 系统素材 -->
@@ -721,8 +721,8 @@ export default {
   },
 
   computed: {
-    plateform() {
-      let service = this.$store.state.plateform;
+    platform() {
+      let service = this.$store.state.platform;
       this.service = service;
       return service;
     },
@@ -733,7 +733,7 @@ export default {
     }
   },
   watch: {
-    plateform(val) {
+    platform(val) {
       location.reload();
     }
   },
@@ -779,7 +779,7 @@ export default {
     let height = draw.clientHeight;
     let width = draw.clientWidth - 45;
     let canvasW, canvasH;
-    let scale = this.plateform === "pc" ? 0.8 : 1;
+    let scale = this.platform === "pc" ? 0.8 : 1;
     // console.log(draw);
     if (height * 0.7 >= width) {
       canvasW = +width * scale;
@@ -2480,10 +2480,10 @@ export default {
     }
   }
   .svg-left {
-    left: -20px;
+    left: 0px;
   }
   .svg-right {
-    right: -20px;
+    right: 0px;
   }
   .page-index {
     position: absolute;

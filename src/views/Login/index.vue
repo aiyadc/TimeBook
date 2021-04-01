@@ -32,7 +32,7 @@ export default {
 
   computed: {
     platform() {
-      let service = this.$store.state.plateform;
+      let service = this.$store.state.platform;
       this.service = service;
       console.log("service:", this.service);
       return service;

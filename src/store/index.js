@@ -6,12 +6,12 @@ Vue.use(Vuex);
 export default new Vuex.Store({
     state: {
         uid: 2,
-        plateform: '',
+        platform: '',
         TStack: [] // 画布复制对象暂存区
     },
     mutations: {
         SET_PLATEFORM(state, val) {
-            state.plateform = val
+            state.platform = val
         },
         Push_TStack(stack, obj) {
             stack.TStack = []
