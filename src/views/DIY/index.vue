@@ -559,10 +559,10 @@
           class="svg svg-right"
           src="./icons/right.svg"
           @click="toNextPage"
-          v-show="reviewImg.pageIndex < myAlbum.num - 1"
+          v-show="reviewImg.pageIndex < myAlbum.count - 1"
         />
         <span class="page-index"
-          >{{ reviewImg.pageIndex + 1 || 0 }}/{{ myAlbum.num || 0 }}</span
+          >{{ reviewImg.pageIndex + 1 || 0 }}/{{ myAlbum.count || 0 }}</span
         >
       </div>
     </el-dialog>
@@ -611,11 +611,12 @@ export default {
       canvasInfo: {},
       album: [],
       myAlbum: {
-        id: 0,
-        num: 10,
-        name: "tony",
+        aid: 1,
+        tid:1,
+        cover_url:'',
+        count: 10,
+        name: "秦时明月",
         data: [],
-        account: 123456
       }, // 用户的设计数据
       showLayer: true,
       dragObject: null,
@@ -811,7 +812,7 @@ export default {
     if (this.myAlbum.data.length === 0) {
       let json = this.canvas.toJSON();
       // let cvs = new fabric.Canvas('cvs')
-      for (let i = 0; i < this.myAlbum.num; i++) {
+      for (let i = 0; i < this.myAlbum.count; i++) {
         let page = {};
         page.pageIndex = i;
         page.canvas = json;
