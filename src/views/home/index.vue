@@ -7,11 +7,14 @@
           class="search"
           v-model="search"
           placeholder="请输入关键字进行搜索"
-        ></el-input>
+        >
+        </el-input>
+        <i class="el-icon-search left40" @click="queryByName"></i>
         <el-button
           class="create"
           :type="service == 'h5' ? 'text' : 'primary'"
           icon="el-icon-plus"
+          @click="handleAddClick"
           >新建</el-button
         >
       </div>
@@ -86,7 +89,7 @@
         >
       </div>
     </el-dialog>
-    <el-dialog title="创建">
+    <el-dialog title="创建" :visible.sync="createDia">
       <el-form :model="albumForm">
         <el-form-item label="相册名称">
           <el-input
@@ -95,32 +98,52 @@
           ></el-input>
         </el-form-item>
         <el-form-item label="主题">
-          <el-select v-model="albumForm.theme" placeholder="与相册相关的主题">
-            <el-option v-for="(t, i) in themeOptions" :key="i"></el-option>
+          <el-select v-model="albumForm.tid" placeholder="与相册相关的主题">
+            <el-option v-for="(t, i) in themeOptions" :key="i" :label="t.name" :value="t.tid"></el-option>
           </el-select>
         </el-form-item>
+        <el-form-item label="页数：">
+          <el-input
+            v-model="albumForm.count"
+            placeholder="非vip用户默认10页（待验证）"
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="备注：">
+          <el-input v-model="albumForm.remark" placeholder="备注"></el-input>
+        </el-form-item>
       </el-form>
+      <div slot="footer">
+        <el-button type="primary" @click="addAlbum">确定</el-button>
+        <el-button type="default">取消</el-button>
+      </div>
     </el-dialog>
     <el-button type="primary" plain @click="goDIY">设计</el-button>
   </div>
 </template>
 
 <script>
+import themeRequest from "@/api/theme.js";
+import albumRequest from "@/api/album.js";
 export default {
   data() {
     return {
       search: "",
       themeList: [],
+      themeOptions:[],
       albumList: [],
       favorite: [],
       reviewingAlbum: {}, // count,data:[{src,pageIndex}],
       reviewIndex: 0,
-      reviewDia: false,
       albumForm: {
         name: "",
-        theme: ""
+        tid: "",
+        count: 10,
+        remark: ""
       },
-      themeOptions: []
+      themeOptions: [],
+      // Dialog
+      reviewDia: false,
+      createDia: false
     };
   },
 
@@ -132,38 +155,17 @@ export default {
     },
     reviewingPage() {
       return this.reviewingAlbum[this.reviewIndex] || {};
+    },
+    uid() {
+      return this.$store.state.uid;
     }
   },
-
+  created() {
+    this.init();
+  },
   mounted() {
+          console.log('this.$store.state.uid :>> ', this.$store.state.uid,this.uid);
     console.log("this.service :>> ", this.service);
-    this.themeList = [
-      {
-        tid: 0,
-        name: "全部",
-        count: 300
-      },
-      {
-        tid: 1,
-        name: "宝贝/亲子",
-        count: 100
-      },
-      {
-        tid: 2,
-        name: "恋爱/写真",
-        count: 100
-      },
-      {
-        tid: 3,
-        name: "青春/校园",
-        count: 70
-      },
-      {
-        tid: 4,
-        name: "风景/自然",
-        count: 30
-      }
-    ];
     this.albumList = [
       {
         uid: 1,
@@ -195,9 +197,38 @@ export default {
       this.$router.push("/diy");
     },
     // 初始化页面
-    init() {},
+    init() {
+      this.getThemeList();
+    },
     // 获取主题列表:
-    getThemeList() {},
+    getThemeList() {
+      themeRequest.getThemeList().then(res => {
+        this.themeOptions = res.data;
+        console.log('themeOptions :>> ', this.themeOptions);
+        this.themeList = Array.from(res.data);
+        let count = res.data.reduce((pre, cur) => {
+          return pre + cur.count;
+        }, 0);
+        this.themeList.unshift({
+          tid: 0,
+          name: "全部",
+          count: count
+        });
+      });
+    },
+    // 搜索
+    queryByName() {
+      // todo
+    },
+    // 处理新建事件
+    handleAddClick() {
+      this.createDia = true;
+    },
+    addAlbum() {
+      console.log('创建相册啦');
+      console.log('this.uid :>> ', this.uid);
+      albumRequest.createAlbum(this.albumForm, this.uid).then(res => {});
+    },
     // 添加收藏
     addToFavorite(aid) {},
     // 取消收藏
@@ -225,6 +256,11 @@ export default {
     .search {
       width: 24rem;
       display: inline-block;
+    }
+    .left40 {
+      position: relative;
+      right: 40px;
+      cursor: pointer;
     }
     .create {
       float: right;

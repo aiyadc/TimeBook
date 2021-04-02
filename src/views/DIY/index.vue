@@ -8,13 +8,13 @@
         <el-button type="text" size="small" circle>
           <i class="el-icon-share"></i><span>分享</span>
         </el-button>
-        <el-button type="text" size="small" circle @click="reviewAlbum">
+        <el-button type="text" size="small" circle @click="reviewAlbum" v-loading="saveAlbumLoading">
           <i class="el-icon-view"></i><span>预览</span></el-button
         >
         <el-button type="text" size="small" @click="toSort" circle>
           <i class="el-icon-sort"></i><span>排序</span></el-button
         >
-        <el-button type="text" size="small" circle>
+        <el-button type="text" size="small" @click="saveMyAlbum" circle>
           <i class="el-icon-finished"></i><span>保存</span></el-button
         >
         <el-button type="text" size="small" circle>
@@ -596,6 +596,7 @@ import Fastclick from "fastclick";
 import { fabric } from "fabric";
 import material from "@/api/material.js";
 import decorationRequest from "@/api/decoration.js";
+import albumRequest from "@/api/album.js";
 import Folder from "./components/folder.vue";
 export default {
   components: {
@@ -612,11 +613,11 @@ export default {
       album: [],
       myAlbum: {
         aid: 1,
-        tid:1,
-        cover_url:'',
+        tid: 1,
+        cover_url: "",
         count: 10,
         name: "秦时明月",
-        data: [],
+        data: []
       }, // 用户的设计数据
       showLayer: true,
       dragObject: null,
@@ -717,7 +718,9 @@ export default {
       // 折叠面板
       mCollapse: ["1"],
       dCollapse: ["1"],
-      tCollapse: ["1"]
+      tCollapse: ["1"],
+      // Loading
+      saveAlbumLoading: false
     };
   },
 
@@ -1418,6 +1421,22 @@ export default {
     toNextPage() {
       this.reviewIndex += 1;
     },
+    /**
+     * 保存相册
+     */
+    saveMyAlbum() {
+      this.saveAlbumLoading = true;
+      albumRequest
+        .saveAlbum(this.myAlbum)
+        .then(res => {
+          this.$message.success("保存成功");
+          this.saveAlbumLoading = false;
+        })
+        .catch(() => {
+          this.saveAlbumLoading = false;
+        });
+    },
+
     /**
      * 工具栏
      */
