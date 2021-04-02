@@ -89,7 +89,7 @@
         >
       </div>
     </el-dialog>
-    <el-dialog title="创建" :visible.sync="createDia">
+    <el-dialog title="创建" :visible.sync="createDia" v-loading="loading1">
       <el-form :model="albumForm">
         <el-form-item label="相册名称">
           <el-input
@@ -99,7 +99,12 @@
         </el-form-item>
         <el-form-item label="主题">
           <el-select v-model="albumForm.tid" placeholder="与相册相关的主题">
-            <el-option v-for="(t, i) in themeOptions" :key="i" :label="t.name" :value="t.tid"></el-option>
+            <el-option
+              v-for="(t, i) in themeOptions"
+              :key="i"
+              :label="t.name"
+              :value="t.tid"
+            ></el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="页数：">
@@ -113,7 +118,7 @@
         </el-form-item>
       </el-form>
       <div slot="footer">
-        <el-button type="primary" @click="addAlbum">确定</el-button>
+        <el-button type="primary" @click="createAlbum">确定</el-button>
         <el-button type="default">取消</el-button>
       </div>
     </el-dialog>
@@ -129,7 +134,7 @@ export default {
     return {
       search: "",
       themeList: [],
-      themeOptions:[],
+      themeOptions: [],
       albumList: [],
       favorite: [],
       reviewingAlbum: {}, // count,data:[{src,pageIndex}],
@@ -143,7 +148,9 @@ export default {
       themeOptions: [],
       // Dialog
       reviewDia: false,
-      createDia: false
+      createDia: false,
+      // Loading
+      loading1: false
     };
   },
 
@@ -164,7 +171,7 @@ export default {
     this.init();
   },
   mounted() {
-          console.log('this.$store.state.uid :>> ', this.$store.state.uid,this.uid);
+    console.log("this.$store.state.uid :>> ", this.$store.state.uid, this.uid);
     console.log("this.service :>> ", this.service);
     this.albumList = [
       {
@@ -204,7 +211,7 @@ export default {
     getThemeList() {
       themeRequest.getThemeList().then(res => {
         this.themeOptions = res.data;
-        console.log('themeOptions :>> ', this.themeOptions);
+        console.log("themeOptions :>> ", this.themeOptions);
         this.themeList = Array.from(res.data);
         let count = res.data.reduce((pre, cur) => {
           return pre + cur.count;
@@ -224,10 +231,17 @@ export default {
     handleAddClick() {
       this.createDia = true;
     },
-    addAlbum() {
-      console.log('创建相册啦');
-      console.log('this.uid :>> ', this.uid);
-      albumRequest.createAlbum(this.albumForm, this.uid).then(res => {});
+    // 创建相册
+    createAlbum() {
+      console.log("创建相册啦");
+      this.loading1 = true;
+      albumRequest.createAlbum(this.albumForm, this.uid).then(res => {
+        this.loading1 = false;
+        this.$router.push({
+          name: "diy",
+          params: { aid: res.data.aid }
+        });
+      });
     },
     // 添加收藏
     addToFavorite(aid) {},

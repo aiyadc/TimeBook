@@ -10,10 +10,10 @@ export default new Router({
                 import ("@/views/home/index.vue"),
         },
         {
-            path: '/diy',
+            path: '/diy/:aid',
+            name:'diy',
             meta:{
                 title:'相册DIY',
-                // content:" width=device-width, initial-scale=1.0, user-scalable=no"
             },
             component: () =>
                 import ('@/views/DIY/index')

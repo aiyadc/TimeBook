@@ -8,7 +8,13 @@
         <el-button type="text" size="small" circle>
           <i class="el-icon-share"></i><span>分享</span>
         </el-button>
-        <el-button type="text" size="small" circle @click="reviewAlbum" v-loading="saveAlbumLoading">
+        <el-button
+          type="text"
+          size="small"
+          circle
+          @click="reviewAlbum"
+          v-loading="saveAlbumLoading"
+        >
           <i class="el-icon-view"></i><span>预览</span></el-button
         >
         <el-button type="text" size="small" @click="toSort" circle>
@@ -17,7 +23,7 @@
         <el-button type="text" size="small" @click="saveMyAlbum" circle>
           <i class="el-icon-finished"></i><span>保存</span></el-button
         >
-        <el-button type="text" size="small" circle>
+        <el-button type="text" size="small" circle @click="resetSize">
           <i class="el-icon-position"></i><span>提交</span></el-button
         >
       </div>
@@ -197,7 +203,7 @@
               <div class="my-album-h5">
                 <div class="page" v-for="(ctx, i) in myAlbum.data" :key="i">
                   <img :src="ctx.src" draggable @click="togglePage(ctx)" />
-                  <span>{{ ctx.pageIndex }}</span>
+                  <span>{{ ctx.index }}</span>
                 </div>
               </div>
             </el-tab-pane>
@@ -536,7 +542,7 @@
             @dragstart="getPageInfo(ctx)"
             @dragover="handleDragOver($event, i)"
           />
-          <span class="order-number">{{ ctx.pageIndex }}</span>
+          <span class="order-number">{{ ctx.index }}</span>
           <img class="svg-apple" src="./icons/apple.svg" />
         </div>
       </div>
@@ -553,16 +559,16 @@
           class="svg svg-left"
           src="./icons/left.svg"
           @click="toPastPage"
-          v-show="reviewImg.pageIndex > 0"
+          v-show="reviewImg.index > 0"
         />
         <img
           class="svg svg-right"
           src="./icons/right.svg"
           @click="toNextPage"
-          v-show="reviewImg.pageIndex < myAlbum.count - 1"
+          v-show="reviewImg.index < myAlbum.count - 1"
         />
         <span class="page-index"
-          >{{ reviewImg.pageIndex + 1 || 0 }}/{{ myAlbum.count || 0 }}</span
+          >{{ reviewImg.index + 1 || 0 }}/{{ myAlbum.count || 0 }}</span
         >
       </div>
     </el-dialog>
@@ -605,6 +611,7 @@ export default {
   data() {
     return {
       uid: 0, // 当前用户id
+      aid: 0, // 当前相册本id
       service: "", // 当前操作平台
       tab: "decoration", // 当前tab栏
       mode: "default", // 当前设计模式['default','crop','paint','featureshow']
@@ -614,6 +621,8 @@ export default {
       myAlbum: {
         aid: 1,
         tid: 1,
+        width: 0,
+        height: 0,
         cover_url: "",
         count: 10,
         name: "秦时明月",
@@ -742,7 +751,8 @@ export default {
     }
   },
   created() {
-    this.initDIY();
+    this.aid = this.$route.params.aid;
+    console.log("this.aid :>> ", this.aid);
     this.uid = this.$store.state.uid;
     this.uploadURL = process.env.BASE_API + "/decoration/upload";
     let u = navigator.userAgent;
@@ -811,26 +821,7 @@ export default {
       uniformScaling: false,
       uniScaleKey: "ctrlKey"
     });
-    // 拉取用户的相册本
-    if (this.myAlbum.data.length === 0) {
-      let json = this.canvas.toJSON();
-      // let cvs = new fabric.Canvas('cvs')
-      for (let i = 0; i < this.myAlbum.count; i++) {
-        let page = {};
-        page.pageIndex = i;
-        page.canvas = json;
-        // 图片展示
-        this.canvas.loadFromJSON(json, function() {});
-        page.src = this.canvas.toDataURL();
-        this.myAlbum.data[i] = page;
-      }
-      this.currentPage = 0;
-    } else {
-      // 加载拉取的数据
-    }
-    this.updateCanvasState();
-    // console.log(this._config);
-    // console.log("this.canvas", this.canvas.on);
+    this.initDIY();
     this.canvas.on("drop", e => {
       console.log("drop:", e);
       let offsetX = e.e.offsetX;
@@ -1063,9 +1054,41 @@ export default {
     });
   },
   methods: {
+    // 重置canvas大小
+    resetSize() {
+      console.log("重置大小");
+      this.canvas.setZoom(0.5);
+      this.canvas.renderAll();
+    },
     // 初始化界面
-    initDIY() {
+    async initDIY() {
       this.getDecorationFloders(); // 获取系统素材目录
+      //   获取相册信息
+      console.log("初始化：this.aid :>> ", this.aid);
+      await albumRequest.getAlbumInfo(this.aid).then(res => {
+        console.log("res :>> ", res);
+        this.myAlbum = res.data;
+        // 如果该相册没有数据，则创建空白相册
+        if (!this.myAlbum.data.length) {
+          let json = this.canvas.toJSON();
+          // let cvs = new fabric.Canvas('cvs')
+          for (let i = 0; i < this.myAlbum.count; i++) {
+            let page = {};
+            page.index = i;
+            page.canvas = json;
+            // 图片展示
+            this.canvas.loadFromJSON(json, function() {});
+            page.src = this.canvas.toDataURL();
+            this.myAlbum.data[i] = page;
+          }
+          this.currentPage = 0;
+        }
+        // 使画布整体按一定比例缩放
+        let scale = res.data.width !== 0 ?this.canvas.width / res.data.width : 1;
+        console.log("res.data.width :>> ", scale);
+        this.canvas.setZoom(scale);
+        this.updateCanvasState();
+      });
     },
     // 处理Tab标签点击事件
     handleTabClick(tab) {
@@ -1353,12 +1376,12 @@ export default {
     handleDragOver(e, i) {
       e.preventDefault();
       this.pageIndex = i;
-      if (this.pageIndex == this.pageOnDrag.pageIndex) return;
+      if (this.pageIndex == this.pageOnDrag.index) return;
       this.swap();
     },
     swap() {
       console.log("进入到交换环节");
-      let indexNow = this.pageOnDrag.pageIndex;
+      let indexNow = this.pageOnDrag.index;
       let indexNext = this.pageIndex;
       let len = Math.abs(indexNow - indexNext);
       let albums = this.myAlbum.data;
@@ -1366,11 +1389,11 @@ export default {
       albums.splice(indexNow, 1, albums[indexNext]);
       albums.splice(indexNext, 1, p);
       if (indexNow > indexNext) {
-        albums[indexNow].pageIndex += len;
-        albums[indexNext].pageIndex -= len;
+        albums[indexNow].index += len;
+        albums[indexNext].index -= len;
       } else if (indexNow < indexNext) {
-        albums[indexNow].pageIndex -= len;
-        albums[indexNext].pageIndex += len;
+        albums[indexNow].index -= len;
+        albums[indexNext].index += len;
       }
       this.pageOnDrag = albums[indexNext];
       this.currentPage = indexNext; //更新页码
@@ -1426,8 +1449,11 @@ export default {
      */
     saveMyAlbum() {
       this.saveAlbumLoading = true;
+      this.myAlbum.width = this.canvas.width;
+      this.myAlbum.height = this.canvas.height;
+      console.log("this.myAlbum :>> ", this.myAlbum);
       albumRequest
-        .saveAlbum(this.myAlbum)
+        .updateAlbum(this.myAlbum, this.aid)
         .then(res => {
           this.$message.success("保存成功");
           this.saveAlbumLoading = false;
@@ -1501,7 +1527,7 @@ export default {
       let page = this.myAlbum.data[this.currentPage];
       page.canvas = this.canvas.toJSON();
       page.src = this.canvas.toDataURL();
-      page.pageIndex = this.currentPage;
+      page.index = this.currentPage;
       this.myAlbum.data.splice(this.currentPage, 1, page);
     },
     // 取出画布现有对象
@@ -1521,7 +1547,7 @@ export default {
           console.log("page :>> ", page);
           page.canvas = this.canvas.toJSON();
           page.src = this.canvas.toDataURL();
-          page.pageIndex = this.currentPage;
+          page.index = this.currentPage;
           this.myAlbum.data.splice(this.currentPage, 1, page);
         });
       }
@@ -1719,10 +1745,10 @@ export default {
       console.log(
         "this.currentPage :>> ",
         this.currentPage,
-        ctx.pageIndex,
-        this.myAlbum.data[ctx.pageIndex]
+        ctx.index,
+        this.myAlbum.data[ctx.index]
       );
-      if (this.currentPage === ctx.pageIndex) return;
+      if (this.currentPage === ctx.index) return;
       console.log("换页");
       // 重置状态，由于在创建画布的时候初始化了一个状态，所以所以回到这个状态
       this._config.canvasState = this._config.canvasState.slice(0, 1);
@@ -1731,7 +1757,7 @@ export default {
       }
       this.myAlbum.data[this.currentPage].canvas = this.canvas.toJSON();
       let canvasJSON = ctx.canvas;
-      this.currentPage = ctx.pageIndex;
+      this.currentPage = ctx.index;
       console.log("this.currentPage :>> ", this.currentPage);
       this.$nextTick(() => {
         this.canvas.loadFromJSON(canvasJSON, () => {

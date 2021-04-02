@@ -9,14 +9,20 @@ const album = {
         });
     },
     // 更新我的设计相册
-    updateAlbum(data, uid) {
+    updateAlbum(data, aid) {
         return request({
-            url: `/album?uid=${uid}`,
-            method: "post",
+            url: `/album?aid=${aid}`,
+            method: "patch",
             data
         });
+    },
+    // 获取相册信息
+    getAlbumInfo(aid){
+        return request({
+            url:`/album?aid=${aid}`,
+            method:'get'
+        })
     }
-    // 获取我的设计相册
     // 修改我的设计相册
     // 删除我的设计相册
 };
