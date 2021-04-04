@@ -11,9 +11,9 @@ export default new Router({
         },
         {
             path: '/diy/:aid',
-            name:'diy',
-            meta:{
-                title:'相册DIY',
+            name: 'diy',
+            meta: {
+                title: '相册DIY',
             },
             component: () =>
                 import ('@/views/DIY/index')
@@ -42,8 +42,14 @@ export default new Router({
                 import ('@/test/worker.vue')
         },
         {
-            path:'/album',
-            component:()=> import('@/test/cameras-and-albums')
+            path: '/album',
+            component: () =>
+                import ('@/test/cameras-and-albums')
+        }, {
+            path: '/mine',
+            component: () =>
+                import ('@/views/mine/index.vue')
+
         }
     ]
 })

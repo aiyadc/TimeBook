@@ -26,69 +26,30 @@
       </ul>
     </div>
     <div class="album-list">
-      <div class="album" v-for="(album, i) in albumList" :key="i">
-        <div class="cover-container">
-          <img
-            class="cover-pic"
-            :src="album.cover_url"
-            @click="toDesign(album.aid)"
-          />
-        </div>
-        <div class="row1">
-          <span class="name ellipsis">{{ album.name }}</span>
-          <img
-            class="heart"
-            src="./icons/heart_white.svg"
-            @click="addToFavorite"
-            v-if="favorite.indexOf(album.aid) === -1"
-          />
-          <img
-            class="heart"
-            src="./icons/heart_pink.svg"
-            @click="popFromFavorite(album.aid)"
-            alt=""
-            v-else
-          />
-        </div>
-        <div class="row2">
-          <span class="theme-name ellipsis">主题:{{ album.theme }}</span>
-        </div>
-        <el-button
-          class="review"
-          type="text"
-          icon="el-icon-view"
-          @click="toReview(album.aid)"
-          >预览</el-button
-        >
-      </div>
+      <template v-for="(album, i) in albumList">
+        <album
+          :src="album.cover_url"
+          :name="album.name"
+          :aid="album.aid"
+          :theme="themeOptions.find(tid => album.tid).name"
+          :count="album.count"
+          :isfaovr="favorList.includes(album.aid)"
+          :ish5="service === 'h5'"
+          :key="i"
+          @heartclick="handleFavor(album.aid)"
+          @review="toReview(album.aid)"
+          @todesign="toDesign(album.aid)"
+        ></album>
+      </template>
     </div>
-    <el-dialog
-      custom-class="dia-review"
-      :visible.sync="reviewDia"
-      :fullscreen="service == 'h5'"
-    >
-      <span slot="title">My Album</span>
-      <div class="review-pc">
-        <img class="review-page" :src="reviewingPage.src" alt="" />
-        <img
-          class="svg svg-left"
-          src="./icons/left.svg"
-          @click="toPastPage"
-          v-show="reviewingPage.pageIndex > 0"
-        />
-        <img
-          class="svg svg-right"
-          src="./icons/right.svg"
-          @click="toNextPage"
-          v-show="reviewingPage.pageIndex < reviewingAlbum.count - 1"
-        />
-        <span class="page-index"
-          >{{ reviewingPage.pageIndex + 1 || 0 }}/{{
-            reviewingAlbum.count || 0
-          }}</span
-        >
-      </div>
-    </el-dialog>
+    <!-- 预览相册弹窗 -->
+    <review
+      :data-list="reviewList"
+      :visible="reviewDia"
+      :ish5="service == 'h5'"
+      :total="reviewList.length || 0"
+    ></review>
+    <!-- 创建相册 -->
     <el-dialog title="创建" :visible.sync="createDia" v-loading="loading1">
       <el-form :model="albumForm">
         <el-form-item label="相册名称">
@@ -107,7 +68,7 @@
             ></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="页数：">
+        <el-form-item label="页数：" v-if="createMode == 'empty'">
           <el-input
             v-model="albumForm.count"
             placeholder="非vip用户默认10页（待验证）"
@@ -118,7 +79,11 @@
         </el-form-item>
       </el-form>
       <div slot="footer">
-        <el-button type="primary" @click="createAlbum">确定</el-button>
+        <el-button
+          type="primary"
+          @click="createMode == 'empty' ? createAlbum() : createByTemplate()"
+          >确定</el-button
+        >
         <el-button type="default">取消</el-button>
       </div>
     </el-dialog>
@@ -129,16 +94,24 @@
 <script>
 import themeRequest from "@/api/theme.js";
 import albumRequest from "@/api/album.js";
+import favorRequest from "@/api/favor.js";
+import Album from "@/components/Album/index.vue";
+import Review from "@/components/Review/index.vue";
 export default {
+  components: {
+    Album,
+    Review
+  },
   data() {
     return {
       search: "",
-      themeList: [],
-      themeOptions: [],
-      albumList: [],
-      favorite: [],
-      reviewingAlbum: {}, // count,data:[{src,pageIndex}],
-      reviewIndex: 0,
+      themeList: [], // 主题列表
+      themeOptions: [], //主题展示列表
+      albumList: [], // 相册列表
+      favorList: [], // 收藏列表
+      reviewList: [], // 预览列表
+      createMode: "empty", // 创建方式，‘template’/‘empty’
+      templateID: 0, // 借鉴的模板ID
       albumForm: {
         name: "",
         tid: "",
@@ -154,14 +127,11 @@ export default {
     };
   },
 
-  components: {},
+  components: { Album },
 
   computed: {
     service() {
       return this.$store.state.platform;
-    },
-    reviewingPage() {
-      return this.reviewingAlbum[this.reviewIndex] || {};
     },
     uid() {
       return this.$store.state.uid;
@@ -169,34 +139,11 @@ export default {
   },
   created() {
     this.init();
+    console.log("review :>> ", Review);
   },
   mounted() {
     console.log("this.$store.state.uid :>> ", this.$store.state.uid, this.uid);
     console.log("this.service :>> ", this.service);
-    this.albumList = [
-      {
-        uid: 1,
-        aid: 1,
-        theme: "明月几时有",
-        name: "秦时明月",
-        cover_url: "http://localhost:7001/public/lg6.png",
-        page_count: 33,
-        create_at: new Date(),
-        remark: "啊啊啊",
-        popularity: 66
-      },
-      {
-        uid: 1,
-        aid: 1,
-        theme: "明月几时有",
-        name: "秦时明月",
-        cover_url: "http://localhost:7001/public/yangtai.png",
-        page_count: 33,
-        create_at: new Date(),
-        remark: "啊啊啊",
-        popularity: 66
-      }
-    ];
   },
 
   methods: {
@@ -205,7 +152,12 @@ export default {
     },
     // 初始化页面
     init() {
+      // 拉取主题列表
       this.getThemeList();
+      // 拉取模板相册列表
+      this.getAlbumTemplateList(0);
+      // 拉取收藏列表
+      this.getFavorList();
     },
     // 获取主题列表:
     getThemeList() {
@@ -223,18 +175,32 @@ export default {
         });
       });
     },
+    // 获取模板相册列表
+    getAlbumTemplateList(tid) {
+      albumRequest.getAlbumTemplateList(tid).then(res => {
+        this.albumList = res.data;
+      });
+    },
+    // 获取收藏列表
+    getFavorList() {
+      favorRequest.getFavorList(this.uid).then(res => {
+        this.favorList = res.data;
+      });
+    },
     // 搜索
     queryByName() {
       // todo
     },
     // 处理新建事件
     handleAddClick() {
+      this.createMode = "empty";
       this.createDia = true;
     },
     // 创建相册
     createAlbum() {
-      console.log("创建相册啦");
       this.loading1 = true;
+      console.log('this.albumForm :>> ', this.albumForm);
+      console.log('this.uid :>> ', this.uid);
       albumRequest.createAlbum(this.albumForm, this.uid).then(res => {
         this.loading1 = false;
         this.$router.push({
@@ -244,20 +210,50 @@ export default {
       });
     },
     // 添加收藏
-    addToFavorite(aid) {},
-    // 取消收藏
-    popFromFavorite(aid) {},
-    // 预览相册
-    toReview(aid) {},
-    // 以模板样式进入设计页面
-    toDesign(aid) {},
-    // 预览上一页
-    toPastPage() {
-      this.reviewIndex -= 1;
+    handleFavor(bool, aid) {
+      if (bool) {
+        favorRequest.addFavor(this.uid, aid).then(res => {
+          console.log("res :>> ", res);
+        });
+      } else {
+        favorRequest.deleteFavor(this.uid, aid).then(res => {
+          console.log("res :>> ", res);
+        });
+      }
     },
-    // 预览下一页
-    toNextPage() {
-      this.reviewIndex += 1;
+    // 获取相册预览列表
+    toReview(aid) {
+      albumRequest.getReviewInfo(aid).then(res => {
+        this.reviewList = res.data.map(item => {
+          return item.src;
+        });
+        console.log("this.reviewList :>> ", this.reviewList);
+        this.reviewDia = true;
+      });
+    },
+    // 以模板样式进入设计页面
+    toDesign(aid) {
+      this.createMode = "template";
+      this.createDia = true;
+      this.templateID = aid;
+    },
+    //以模板方式创建相册
+    createByTemplate() {
+      this.loading1 = true;
+      let data = Object.assign({}, this.albumForm);
+      delete data.count;
+      console.log("data :>> ", data);
+      albumRequest
+        .createAlbum(data, this.uid,this.templateID)
+        .then(res => {
+          this.loading1 = false;
+          this.$router.push({
+            name: "diy",
+            params: { aid: res.data.aid }
+          });
+        }).catch(()=>{
+          this.loading1 = false;
+        })
     }
   }
 };
@@ -303,88 +299,6 @@ export default {
   padding: 10px;
   display: flex;
   justify-content: start;
-  .cover-container {
-    .cover-pic {
-      width: 4.2rem;
-      height: 6rem;
-      cursor: pointer;
-    }
-  }
-  .album {
-    width: fit-content;
-    padding: 5px;
-    border: 1px solid #bab7b7;
-    background-color: #d7ebfc;
-    position: relative;
-    margin: 10px;
-    .row1 {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      .name {
-        font-size: 12px;
-      }
-      img {
-        cursor: pointer;
-        display: inline-block;
-        width: 24px;
-      }
-    }
-    .row2 {
-      text-align: left;
-      .theme-name {
-        font-size: 8px;
-        color: #494343ee;
-      }
-    }
-    .review {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-    }
-  }
-}
-.home >>> .dia-review {
-  width: 56vh;
-  height: 80vh;
-  .review-pc {
-    height: 70vh;
-    width: 49vh;
-    border: 1px solid #c894f0;
-    margin: 0 auto;
-    position: relative;
-    box-shadow: 5px 5px 20px #f3b6cc;
-    .review-page {
-      width: 100%;
-      height: 100%;
-    }
-  }
-  .svg {
-    width: 36px;
-    height: 36px;
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    opacity: 0.3;
-    &:hover {
-      opacity: 1;
-    }
-  }
-  .svg-left {
-    left: 0px;
-  }
-  .svg-right {
-    right: 0px;
-  }
-  .page-index {
-    position: absolute;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-  }
-  .el-dialog__body {
-    padding: 0;
-  }
 }
 @media screen and (max-width: 700px) {
   .head {
@@ -400,12 +314,9 @@ export default {
     }
   }
   .album-list {
-    .album {
-      .cover-pic {
-        width: 35vw;
-        height: 50vw;
-      }
-    }
+    padding: 0;
+    display: flex;
+    justify-content: space-around;
   }
   .home >>> .dia-review {
     width: 100vw;

@@ -547,7 +547,14 @@
         </div>
       </div>
     </el-dialog>
-    <el-dialog
+    <!-- 预览弹窗 -->
+    <review
+      :dataList="reviewList"
+      :ish5="service == 'h5'"
+      :total="myAlbum.count"
+      :visible="reviewDia"
+    ></review>
+    <!-- <el-dialog
       custom-class="dia-review"
       :visible.sync="reviewDia"
       :fullscreen="service == 'h5'"
@@ -558,7 +565,7 @@
         <img
           class="svg svg-left"
           src="./icons/left.svg"
-          @click="toPastPage"
+          @click="toPrePage"
           v-show="reviewImg.index > 0"
         />
         <img
@@ -571,7 +578,7 @@
           >{{ reviewImg.index + 1 || 0 }}/{{ myAlbum.count || 0 }}</span
         >
       </div>
-    </el-dialog>
+    </el-dialog> -->
     <div class="folders" v-if="folderDia">
       <template v-if="tab === 'material'">
         <folder
@@ -604,9 +611,11 @@ import material from "@/api/material.js";
 import decorationRequest from "@/api/decoration.js";
 import albumRequest from "@/api/album.js";
 import Folder from "./components/folder.vue";
+import Review from "@/components/Review/index.vue";
 export default {
   components: {
-    Folder
+    Folder,
+    Review
   },
   data() {
     return {
@@ -716,9 +725,7 @@ export default {
       AppleShow: false,
       swapFirst: null,
       // 相册预览
-      showLeft: false,
-      showRight: false,
-      reviewIndex: 0,
+      reviewList: [],
       // Dialog
       paintDia: false, // 绘画popover
       sortDia: false,
@@ -739,11 +746,6 @@ export default {
       this.service = service;
       return service;
     },
-    reviewImg() {
-      return this.myAlbum.data.length
-        ? this.myAlbum.data[this.reviewIndex]
-        : {};
-    }
   },
   watch: {
     platform(val) {
@@ -1082,9 +1084,13 @@ export default {
             this.myAlbum.data[i] = page;
           }
           this.currentPage = 0;
+        } else {
+          // 将第一页的canvas赋给画布呈现出来
+          this.canvas.loadFromJSON(this.myAlbum.data[0].canvas);
         }
         // 使画布整体按一定比例缩放
-        let scale = res.data.width !== 0 ?this.canvas.width / res.data.width : 1;
+        let scale =
+          res.data.width !== 0 ? this.canvas.width / res.data.width : 1;
         console.log("res.data.width :>> ", scale);
         this.canvas.setZoom(scale);
         this.updateCanvasState();
@@ -1271,18 +1277,6 @@ export default {
     UploadToService() {
       //todo
       if (this.fileList.length !== 0) {
-        // console.log("this.fileList", this.fileList);
-        // this.fileList.forEach((img, index, fileList) => {
-        //   let obj = {};
-        //   obj.mid = index;
-        //   obj.theme = "unknow";
-        //   obj.name = img.name;
-        //   obj.width = 94;
-        //   obj.height = 90;
-        //   obj.src = img.url;
-        //   this.materialList.push(obj);
-        // });
-        // console.log('this.materialList', this.materialList)
         let canvas = document.createElement("canvas");
         canvas.id = "materialCanvas";
         canvas = new fabric.Canvas("materialCanvas");
@@ -1437,8 +1431,12 @@ export default {
      */
     reviewAlbum() {
       this.reviewDia = true;
+      this.reviewList = this.myAlbum.data.map(page => {
+        return page.src;
+      });
+      console.log("this.reviewList :>> ", this.reviewList);
     },
-    toPastPage() {
+    toPrePage() {
       this.reviewIndex -= 1;
     },
     toNextPage() {
@@ -2499,48 +2497,48 @@ export default {
 .h5 {
   display: none;
 }
-.diy >>> .dia-review {
-  width: 56vh;
-  height: 80vh;
-  .review-pc {
-    height: 70vh;
-    width: 49vh;
-    border: 1px solid #c894f0;
-    margin: 0 auto;
-    position: relative;
-    box-shadow: 5px 5px 20px #f3b6cc;
-    .review-page {
-      width: 100%;
-      height: 100%;
-    }
-  }
-  .svg {
-    width: 36px;
-    height: 36px;
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    opacity: 0.3;
-    &:hover {
-      opacity: 1;
-    }
-  }
-  .svg-left {
-    left: 0px;
-  }
-  .svg-right {
-    right: 0px;
-  }
-  .page-index {
-    position: absolute;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-  }
-  .el-dialog__body {
-    padding: 0;
-  }
-}
+// .diy >>> .dia-review {
+//   width: 56vh;
+//   height: 80vh;
+//   .review-pc {
+//     height: 70vh;
+//     width: 49vh;
+//     border: 1px solid #c894f0;
+//     margin: 0 auto;
+//     position: relative;
+//     box-shadow: 5px 5px 20px #f3b6cc;
+//     .review-page {
+//       width: 100%;
+//       height: 100%;
+//     }
+//   }
+//   .svg {
+//     width: 36px;
+//     height: 36px;
+//     position: absolute;
+//     top: 50%;
+//     transform: translateY(-50%);
+//     opacity: 0.3;
+//     &:hover {
+//       opacity: 1;
+//     }
+//   }
+//   .svg-left {
+//     left: 0px;
+//   }
+//   .svg-right {
+//     right: 0px;
+//   }
+//   .page-index {
+//     position: absolute;
+//     bottom: 10px;
+//     left: 50%;
+//     transform: translateX(-50%);
+//   }
+//   .el-dialog__body {
+//     padding: 0;
+//   }
+// }
 @media screen and (max-width: 700px) {
   .diy {
     .h5 {
