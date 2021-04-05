@@ -18,20 +18,20 @@
           >新建</el-button
         >
       </div>
-
       <ul class="theme-list">
-        <li v-for="(theme, i) in themeList" :key="i">
+        <span v-if="service == 'pc'">分类：</span>
+        <li v-for="(theme, i) in themeList" :key="i" :tabindex="i">
           {{ theme.name }}({{ theme.count }})
         </li>
       </ul>
     </div>
-    <div class="album-list">
-      <template v-for="(album, i) in albumList">
+    <div class="album-list" @scroll="handleScroll">
         <album
+          v-for="(album, i) in albumList"
           :src="album.cover_url"
           :name="album.name"
           :aid="album.aid"
-          :theme="themeOptions.find(tid => album.tid).name"
+          :theme="getThemeName(album.tid)"
           :count="album.count"
           :isfaovr="favorList.includes(album.aid)"
           :ish5="service === 'h5'"
@@ -40,14 +40,24 @@
           @review="toReview(album.aid)"
           @todesign="toDesign(album.aid)"
         ></album>
-      </template>
     </div>
+    <el-pagination
+      class="pagination pc"
+      prev-text="上一页"
+      next-text="下一页"
+      :current-page.sync="pagination.currentPage"
+      :page-size="100"
+      layout="prev, pager, next, jumper"
+      :total="pagination.total"
+      @current-change="changePage"
+    >
+    </el-pagination>
     <!-- 预览相册弹窗 -->
     <review
       :data-list="reviewList"
       :visible="reviewDia"
       :ish5="service == 'h5'"
-      :total="reviewList.length || 0"
+      @close="closeReview"
     ></review>
     <!-- 创建相册 -->
     <el-dialog title="创建" :visible.sync="createDia" v-loading="loading1">
@@ -87,7 +97,7 @@
         <el-button type="default">取消</el-button>
       </div>
     </el-dialog>
-    <el-button type="primary" plain @click="goDIY">设计</el-button>
+    <!-- <el-button type="primary" plain @click="goDIY">设计</el-button> -->
   </div>
 </template>
 
@@ -108,6 +118,7 @@ export default {
       themeList: [], // 主题列表
       themeOptions: [], //主题展示列表
       albumList: [], // 相册列表
+      lastAlbum:null, // 最后一个相册，用于监听滚动
       favorList: [], // 收藏列表
       reviewList: [], // 预览列表
       createMode: "empty", // 创建方式，‘template’/‘empty’
@@ -123,12 +134,14 @@ export default {
       reviewDia: false,
       createDia: false,
       // Loading
-      loading1: false
+      loading1: false,
+      pagination: {
+        currentPage: 1,
+        pageSize: 20,
+        total: 0
+      }
     };
   },
-
-  components: { Album },
-
   computed: {
     service() {
       return this.$store.state.platform;
@@ -177,8 +190,13 @@ export default {
     },
     // 获取模板相册列表
     getAlbumTemplateList(tid) {
-      albumRequest.getAlbumTemplateList(tid).then(res => {
+      let params = {};
+      params.tid = tid;
+      params.currentPage = this.pagination.currentPage;
+      albumRequest.getAlbumTemplateList(params).then(res => {
         this.albumList = res.data;
+        let len = res.data.length;
+        this.lastAlbum = len?res.data[len-1]:null;
       });
     },
     // 获取收藏列表
@@ -199,8 +217,8 @@ export default {
     // 创建相册
     createAlbum() {
       this.loading1 = true;
-      console.log('this.albumForm :>> ', this.albumForm);
-      console.log('this.uid :>> ', this.uid);
+      console.log("this.albumForm :>> ", this.albumForm);
+      console.log("this.uid :>> ", this.uid);
       albumRequest.createAlbum(this.albumForm, this.uid).then(res => {
         this.loading1 = false;
         this.$router.push({
@@ -231,6 +249,10 @@ export default {
         this.reviewDia = true;
       });
     },
+    // 关闭预览弹框
+    closeReview() {
+      this.reviewDia = false;
+    },
     // 以模板样式进入设计页面
     toDesign(aid) {
       this.createMode = "template";
@@ -244,25 +266,44 @@ export default {
       delete data.count;
       console.log("data :>> ", data);
       albumRequest
-        .createAlbum(data, this.uid,this.templateID)
+        .createAlbum(data, this.uid, this.templateID)
         .then(res => {
           this.loading1 = false;
           this.$router.push({
             name: "diy",
             params: { aid: res.data.aid }
           });
-        }).catch(()=>{
-          this.loading1 = false;
         })
+        .catch(() => {
+          this.loading1 = false;
+        });
+    },
+
+    // 获取主题名字
+    getThemeName(tid) {
+      let theme = this.themeOptions.find(theme => theme.tid == tid) || {};
+      return theme.name;
+    },
+    // 页面改变时触发
+    changePage(val) {
+      console.log(val);
+      this.currentPage = val;
+    },
+    // 监听滚动事件
+    handleScroll(e) {
+      console.log("滚动", e);
+
     }
   }
 };
 </script>
 <style lang="scss" scoped>
 .head {
-  background-color: rgb(238, 206, 211);
-  padding: 10px;
+  background-color: #f9c8df;
   .tool {
+    padding: 10px;
+    background-color: #f9c8df;
+    white-space: nowrap;
     .search {
       width: 24rem;
       display: inline-block;
@@ -277,20 +318,28 @@ export default {
     }
   }
   .theme-list {
+    width: 100vw;
+    margin: 0;
+    overflow-x: auto;
+    white-space: nowrap;
     list-style-type: none;
+    font-size: 14px;
     text-align: left;
+    span {
+      font-weight: 700px;
+    }
     li {
       display: inline-block;
       margin: 5px 10px;
       cursor: pointer;
-      border: 1px solid white;
       border-radius: 8px;
       padding: 5px;
-      color: white;
       &:active,
       &:hover,
       &:focus {
-        background-color: rgb(224, 160, 233);
+        //border: 1px solid white;
+        background-color: #d176de7a;
+        outline: none;
       }
     }
   }
@@ -299,14 +348,21 @@ export default {
   padding: 10px;
   display: flex;
   justify-content: start;
+  flex-wrap: wrap;
+  height: calc(100vh - 128px);
+  overflow-y: auto;
+}
+.pagination {
+  margin-top: 20px;
 }
 @media screen and (max-width: 700px) {
   .head {
+    background-color: #fff;
     text-align: left;
     font-size: 14px;
     .tool {
       .search {
-        width: calc(100vw - 80px);
+        width: calc(100vw - 100px);
       }
     }
     .theme-list {
@@ -314,6 +370,8 @@ export default {
     }
   }
   .album-list {
+    width: 100vw;
+    // height: ;
     padding: 0;
     display: flex;
     justify-content: space-around;

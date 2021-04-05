@@ -1,3 +1,17 @@
+// PC端可见或H5端可见,700px为界
+.pc {
+    @media screen and (max-width: 700px) {
+        display: none;
+    }
+}
+
+.h5 {
+    @media screen and (min-width: 700px) {
+        display: none;
+    }
+}
+
+// Margin
 .mr10 {
     margin: 10px;
 }
@@ -5,12 +19,15 @@
 .mr10-x {
     margin: 0 10px;
 }
-.mr0{
+
+.mr0 {
     margin: 0;
 }
-.inline-block{
+
+.inline-block {
     display: inline-block
 }
+
 // flex
 // flex-space-between
 .flex-sb {
@@ -36,8 +53,9 @@
 .cursor-pointer {
     cursor: pointer;
 }
+
 // 垂直居中对齐
-.center-center{
+.center-center {
     position: absolute;
     left: 50%;
     top: 50%;

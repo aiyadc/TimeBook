@@ -551,7 +551,6 @@
     <review
       :dataList="reviewList"
       :ish5="service == 'h5'"
-      :total="myAlbum.count"
       :visible="reviewDia"
     ></review>
     <!-- <el-dialog

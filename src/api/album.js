@@ -3,7 +3,7 @@ const album = {
     // 新建我的相册
     createAlbum(data, uid, aid = 0) {
         return request({
-            url: `/album/${uid}`,
+            url: `/album/user/${uid}`,
             method: "post",
             data,
             params: { aid }
@@ -12,7 +12,7 @@ const album = {
     // 获取我的相册
     getMyAlbums(uid) {
         return request({
-            url: `/album/${uid}`,
+            url: `/album/user/${uid}`,
             method: "get"
         });
     },
@@ -27,7 +27,7 @@ const album = {
     // 删除我的相册
     deleteAlbum(uid, aid) {
         return request({
-            url: `/album/${uid}`,
+            url: `/album/user/${uid}`,
             method: "delete",
             params: { aid }
         });
@@ -47,10 +47,11 @@ const album = {
         });
     },
     // 获取模板相册
-    getAlbumTemplateList(tid) {
+    getAlbumTemplateList(params) {
         return request({
-            url: `/album/template?tid=${tid}`,
-            method: "get"
+            url: `/album/template`,
+            method: "get",
+            params // tid,currentPage,pageSize
         });
     }
     // 修改我的设计相册

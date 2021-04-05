@@ -1,8 +1,9 @@
 <template>
   <el-dialog
     custom-class="dia-review"
-    :visible.sync="visible"
+    :visible.sync="isShow"
     :fullscreen="ish5"
+    :before-close="handleClose"
   >
     <span slot="title">{{ title }}</span>
     <div class="review">
@@ -17,16 +18,16 @@
         class="svg svg-right"
         src="./icons/right.svg"
         @click="toNext"
-        v-show="index < total"
+        v-show="index < dataList.length"
       />
-      <span class="page-index">{{ index }}/{{ total || 0 }}</span>
+      <span class="page-index">{{ index }}/{{ dataList.length || 0 }}</span>
     </div>
   </el-dialog>
 </template>
 
 <script>
 export default {
-  name:'review',
+  name: "review",
   components: {},
   props: {
     // 弹框是否可见
@@ -44,8 +45,6 @@ export default {
       type: String,
       default: "My Album"
     },
-    // 总页数
-    total: Number,
     dataList: {
       type: Array,
       default: () => []
@@ -53,23 +52,36 @@ export default {
   },
   data() {
     return {
-      index: 1
+      index: 1,
+      isShow: false
     };
   },
-  watch: {},
+  watch: {
+    visible: {
+      handler(val) {
+        console.log("val :>> ", val);
+        this.isShow = val;
+      },
+      // immediate: true
+    }
+  },
   methods: {
     toPre() {
       this.index -= 1;
     },
     toNext() {
       this.index += 1;
+    },
+    handleClose(){
+      this.index = 1;
+      this.$emit('close')
     }
   }
 };
 </script>
 
 <style scoped lang="scss">
->>>.dia-review {
+>>> .dia-review {
   width: 56vh;
   height: 80vh;
   margin-top: 0 !important;

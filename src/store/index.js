@@ -9,6 +9,9 @@ export default new Vuex.Store({
         platform: '',
         TStack: [] // 画布复制对象暂存区
     },
+    getters: {
+
+    },
     mutations: {
         SET_PLATEFORM(state, val) {
             state.platform = val
@@ -24,10 +27,10 @@ export default new Vuex.Store({
         Pop_TStack(stack) {
             stack.TStack = []
         },
-        SET_UID(state, val){
+        SET_UID(state, val) {
             state.uid = val
         },
-        CLEAR_UID(state){
+        CLEAR_UID(state) {
             state.uid = null
         }
     },

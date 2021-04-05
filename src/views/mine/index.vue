@@ -11,38 +11,60 @@
         </div>
       </div>
     </div>
-    <div class="content">
-      <el-tabs v-model="tab" @click="handleTabClick">
-        <el-tab-pane label="我的设计" name="design"
-          >
+    <div class="content" v-loading="reviewLoading">
+      <el-tabs v-model="tab" @tab-click="handleTabClick">
+        <el-tab-pane label="我的设计" name="design">
           <div class="album-list">
             <album
               v-for="(album, i) in albumList"
               :src="album.cover_url"
               :name="album.name"
-              :theme="album.theme"
+              :theme="getThemeName(album.tid)"
               :count="album.count"
-              :isfavor="isfavor"
+              :has-delete="true"
+              :isfavor="favorAids && favorAids.includes(album.aid)"
               :ish5="service === 'h5'"
               :key="i"
               @review="toReview(album.aid)"
               @todesign="toDesign(album.aid)"
-              @heartclick="handleHeartClick(album.aid)"
+              @heartclick="handleHeartClick($event, album.aid)"
+              @delete="deleteAlbum(album.aid)"
             ></album>
           </div>
         </el-tab-pane>
-        <el-tab-pane label="喜欢" name="favorite"
-          >喜欢
-          <!-- 放入相册本组件 -->
+        <el-tab-pane label="喜欢" name="favor">
+          <div class="album-list">
+            <album
+              v-for="(album, i) in favorList"
+              :src="album.cover_url"
+              :name="album.name"
+              :theme="getThemeName(album.tid)"
+              :count="album.count"
+              :isfavor="favorAids.includes(album.aid)"
+              :ish5="service === 'h5'"
+              :key="i"
+              @review="toReview(album.aid)"
+              @todesign="toDesign(album.aid)"
+              @heartclick="handleHeartClick($event, album.aid)"
+            ></album>
+          </div>
         </el-tab-pane>
       </el-tabs>
     </div>
     <!-- 预览弹窗 -->
+    <review
+      :data-list="reviewList"
+      :visible="reviewDia"
+      :ish5="service == 'h5'"
+      @close="closeReview"
+    ></review>
   </div>
 </template>
 
 <script>
 import albumRequest from "@/api/album.js";
+import favorRequest from "@/api/favor.js";
+import themeRequest from "@/api/theme.js";
 import Album from "@/components/Album/index.vue";
 import Review from "@/components/Review/index.vue";
 export default {
@@ -56,41 +78,131 @@ export default {
       userInfo: {},
       tab: "design",
       isfavor: true,
-      albumList: []
+      albumList: [], // 相册列表
+      favorList: [], // 收藏列表
+      favorAids: [], // 收藏的相册的aid列表
+      themeList: [], // 主题列表
+      reviewDia: false,
+      reviewList: [], // 预览相册页列表
+      reviewLoading: false,
+      pagination: {
+        currentPage: 1,
+        pageSize: 20,
+        total: 0
+      }
     };
   },
 
   computed: {
     uid() {
       return this.$store.state.uid;
+    },
+    service() {
+      return this.$store.state.platform;
     }
   },
   created() {
-    this.uid = this.$store.state.uid; //同步用户id
+    console.log("Review :>> ", Review);
+    // this.uid = this.$store.state.uid; //同步用户id
     this.init();
   },
   mounted() {},
 
   methods: {
-    handleTabClick(val) {
-      console.log("tab:", val);
+    handleTabClick(tab) {
+      if (tab.name == "favor") {
+      }
     },
     init() {
       // 拉取我的设计
       this.getMyAlbums();
+      // 拉取收藏列表
+      this.getFavorList();
+      // 拉取主题列表
+      this.getThemeList();
     },
     // 获取我的相册本
     getMyAlbums() {
       albumRequest.getMyAlbums(this.uid).then(res => {
         this.albumList = res.data;
+        this.favorAids = res.data.aidList;
       });
     },
-    // 预览相册
+    // 获取相册预览列表
     toReview(aid) {
-      // todo
+      this.reviewLoading = true;
+      albumRequest.getReviewInfo(aid).then(res => {
+        this.reviewList = res.data.map(item => {
+          return item.src;
+        });
+        this.reviewDia = true;
+        this.reviewLoading = false;
+      });
     },
-    // 点击收藏或取消收藏
-    handleHeartClick(aid) {}
+    // 关闭预览弹框
+    closeReview() {
+      this.reviewDia = false;
+    },
+    // 获取主题列表:
+    getThemeList() {
+      themeRequest.getThemeList().then(res => {
+        this.themeList = res.data;
+      });
+    },
+    // 获取主题名字
+    getThemeName(tid) {
+      let theme = this.themeList.find(theme => theme.tid == tid);
+      return theme && theme.name;
+    },
+    // 获取收藏列表
+    getFavorList() {
+      favorRequest.getFavorList(this.uid).then(res => {
+        this.favorList = res.data;
+        this.favorAids = res.data.map(album => {
+          return album.aid;
+        });
+        this.favorAids = this.favorAids || [];
+        console.log("this.favorAids :>> ", this.favorAids);
+      });
+    },
+    // 进入设计
+    toDesign(aid) {
+      this.$router.push({
+        name: "diy",
+        params: { aid }
+      });
+    },
+    // 收藏或取消收藏
+    handleHeartClick(isfavor, aid) {
+      if (isfavor) {
+        this.favorAids.forEach((aid, i, list) => {
+          if (aid == aid) {
+            list.splice(i, 1);
+          }
+        });
+      } else {
+        this.favorAids.push(aid);
+      }
+      favorRequest.handleFavor(this.uid, isfavor, aid);
+    },
+    // 删除相册
+    deleteAlbum() {
+      this.$confirm("确定要删除相册吗", "提示", {
+        type: "warning",
+        cancelButtonText: "害，是的",
+        confirmButtonText: "再想想"
+      }).catch(() => {
+        console.log("删除");
+        albumRequest.deleteAlbum(this.uid, aid).then(res => {
+          this.$message.success(res.message);
+        });
+      });
+    },
+    // 页面改变时触发
+    changePage(val) {
+      console.log(val);
+      this.currentPage = val
+    }
   }
 };
 </script>
@@ -113,6 +225,7 @@ export default {
       .avatar {
         width: 4rem;
         height: 4rem;
+        border-radius: 50%;
         vertical-align: middle;
         display: inline-block;
       }
@@ -125,7 +238,6 @@ export default {
     }
   }
   .content {
-
     .album-list {
       padding: 10px;
       display: flex;

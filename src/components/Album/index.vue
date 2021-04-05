@@ -4,14 +4,24 @@
       <img :src="src" />
       <div class="mask">
         <span class="review" @click="handleReview">预览</span>
-        <el-button
+        <div class="handler">
+          <div @click="toDesign">
+            <img src="./icons/draw.svg" />
+            <span>设计</span>
+          </div>
+          <div @click="toDelete" v-if="hasDelete">
+            <img src="./icons/delete.svg" alt="" />
+            <span>删除</span>
+          </div>
+        </div>
+        <!-- <el-button
           class="design"
           type="primary"
           size="small"
           @click="toDesign"
         >
           进入设计
-        </el-button>
+        </el-button> -->
       </div>
     </div>
     <div class="info">
@@ -20,20 +30,20 @@
         <img
           class="heart"
           src="./icons/heart_white.svg"
-          @click="handleHeartClick(true)"
-          v-if="isfavor"
+          @click="handleHeartClick(0)"
+          v-if="!isfavor"
         />
         <img
           class="heart"
           src="./icons/heart_pink.svg"
-          @click="handleHeartClick(false)"
+          @click="handleHeartClick(1)"
           alt=""
           v-else
         />
       </div>
       <div class="row2">
         <span class="theme ellipsis">主题:{{ theme }}</span>
-        <span class="count">照片数：{{ count || 0 }}</span>
+        <span class="count">{{ count || 0 }}页</span>
       </div>
     </div>
   </div>
@@ -51,14 +61,17 @@ export default {
       type: Boolean,
       default: false
     },
+    hasDelete:{
+      type: Boolean,
+      default: false
+    },
     ish5: {
       type: Boolean,
       default: false
     }
   },
   data() {
-    return {
-    };
+    return {};
   },
   watch: {},
   computed: {},
@@ -66,14 +79,16 @@ export default {
   mounted() {},
   methods: {
     handleHeartClick(bool) {
-      this.isfavor = !this.isfavor;
-      this.$emit("heartclick",bool);
+      this.$emit("heartclick", bool);
     },
     handleReview() {
       this.$emit("review");
     },
     toDesign() {
       this.$emit("todesign");
+    },
+    toDelete(){
+      this.$emit('delete')
     }
   }
 };
@@ -82,6 +97,7 @@ export default {
 <style scoped lang="scss">
 .album {
   width: 6rem;
+  height: calc(6rem + 44px);
   border: 1px solid #bab7b7;
   text-align: left;
   background-color: #d7ebfc;
@@ -104,18 +120,35 @@ export default {
       top: 0;
       // z-index: 99;
       display: none;
-      background-color: rgba(0, 0, 0, 0.6);
+      background-color: rgba(96, 92, 92, 0.6);
     }
     img {
       width: 4.2rem;
       height: 100%;
     }
-    .design {
+    .handler {
       position: absolute;
       left: 50%;
       top: 50%;
       transform: translate(-50%, -50%);
       display: none;
+      div {
+        width: 50px;
+        vertical-align: middle;
+        cursor: pointer;
+        img {
+          display: block;
+          margin: auto;
+          width: 24px;
+        }
+        span{
+          font-size: 12px;
+        }
+        &:active,
+        &:hover {
+          transform: scale(1.2);
+        }
+      }
     }
     .review {
       display: inline-block;
@@ -138,9 +171,12 @@ export default {
     }
     &:active,
     &:hover {
-      .design,
       .review {
-        display: block;
+        display: inline-block;
+      }
+      .handler {
+        display: flex;
+        justify-content: space-around;
       }
       .mask {
         display: block;
@@ -165,6 +201,8 @@ export default {
     }
     .row2 {
       padding: 3px 5px 0 3px;
+      display: flex;
+      justify-content: space-between;
       .theme,
       .count {
         display: inline-block;
@@ -181,9 +219,10 @@ export default {
 @media screen and (max-width: 700px) {
   .album {
     width: 42vw;
+    height: calc(60vw + 44px);
     .cover {
       width: 42vw;
-      height: 70vw;
+      height: 60vw;
       img {
         width: 100%;
         height: 100%;
