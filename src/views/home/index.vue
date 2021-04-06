@@ -20,26 +20,33 @@
       </div>
       <ul class="theme-list">
         <span v-if="service == 'pc'">分类：</span>
-        <li v-for="(theme, i) in themeList" :key="i" :tabindex="i">
+        <li
+          v-for="(theme, i) in themeList"
+          :key="i"
+          :tabindex="i"
+          @click="handleThemeClick(theme.tid)"
+        >
           {{ theme.name }}({{ theme.count }})
         </li>
       </ul>
     </div>
-    <div class="album-list" @scroll="handleScroll">
-        <album
-          v-for="(album, i) in albumList"
-          :src="album.cover_url"
-          :name="album.name"
-          :aid="album.aid"
-          :theme="getThemeName(album.tid)"
-          :count="album.count"
-          :isfaovr="favorList.includes(album.aid)"
-          :ish5="service === 'h5'"
-          :key="i"
-          @heartclick="handleFavor(album.aid)"
-          @review="toReview(album.aid)"
-          @todesign="toDesign(album.aid)"
-        ></album>
+    <div class="album-list" @scroll="handleScroll" v-loading="getTempLoading">
+      <album
+        class="album"
+        v-for="(album, i) in albumList"
+        :src="album.cover_url"
+        :name="album.name"
+        :aid="album.aid"
+        :theme="getThemeName(album.tid)"
+        :count="album.count"
+        :isfaovr="favorList.includes(album.aid)"
+        :ish5="service === 'h5'"
+        :key="i"
+        @heartclick="handleFavor(album.aid)"
+        @review="toReview(album.aid)"
+        @todesign="toDesign(album.aid)"
+      ></album>
+      <div v-if="getTempLoading">加载中...</div>
     </div>
     <el-pagination
       class="pagination pc"
@@ -60,7 +67,13 @@
       @close="closeReview"
     ></review>
     <!-- 创建相册 -->
-    <el-dialog title="创建" :visible.sync="createDia" v-loading="loading1">
+    <el-dialog
+      custom-class="dia-create"
+      title="创建"
+      :visible.sync="createDia"
+      v-loading="createLoading"
+      center
+    >
       <el-form :model="albumForm">
         <el-form-item label="相册名称">
           <el-input
@@ -102,6 +115,7 @@
 </template>
 
 <script>
+import dom from "@/utils/dom.js";
 import themeRequest from "@/api/theme.js";
 import albumRequest from "@/api/album.js";
 import favorRequest from "@/api/favor.js";
@@ -115,10 +129,11 @@ export default {
   data() {
     return {
       search: "",
+      tid: 0, // 当前选择的主题
       themeList: [], // 主题列表
       themeOptions: [], //主题展示列表
       albumList: [], // 相册列表
-      lastAlbum:null, // 最后一个相册，用于监听滚动
+      lastAlbum: null, // 最后一个相册，用于监听滚动
       favorList: [], // 收藏列表
       reviewList: [], // 预览列表
       createMode: "empty", // 创建方式，‘template’/‘empty’
@@ -130,15 +145,18 @@ export default {
         remark: ""
       },
       themeOptions: [],
+      debounce: null,
       // Dialog
       reviewDia: false,
       createDia: false,
       // Loading
-      loading1: false,
+      createLoading: false,
+      getTempLoading: false,
       pagination: {
         currentPage: 1,
         pageSize: 20,
-        total: 0
+        total: 0,
+        tpid: 0
       }
     };
   },
@@ -152,9 +170,10 @@ export default {
   },
   created() {
     this.init();
-    console.log("review :>> ", Review);
+    console.log("dom.debounce :>> ", this.getNextPage());
   },
   mounted() {
+    this.debounce = dom.debounce(this.getNextPage, 50);
     console.log("this.$store.state.uid :>> ", this.$store.state.uid, this.uid);
     console.log("this.service :>> ", this.service);
   },
@@ -168,7 +187,12 @@ export default {
       // 拉取主题列表
       this.getThemeList();
       // 拉取模板相册列表
-      this.getAlbumTemplateList(0);
+      if (this.service == "h5") {
+        this.getTemplateListH5(0);
+      } else {
+        this.getTemplateListPC(0);
+      }
+
       // 拉取收藏列表
       this.getFavorList();
     },
@@ -188,16 +212,44 @@ export default {
         });
       });
     },
-    // 获取模板相册列表
-    getAlbumTemplateList(tid) {
+    // PC端：根据页数获取模板相册列表
+    async getTemplateListPC(tid) {
       let params = {};
       params.tid = tid;
       params.currentPage = this.pagination.currentPage;
-      albumRequest.getAlbumTemplateList(params).then(res => {
-        this.albumList = res.data;
-        let len = res.data.length;
-        this.lastAlbum = len?res.data[len-1]:null;
-      });
+      this.getTempLoading = true;
+      await albumRequest
+        .getTemplateList(params)
+        .then(res => {
+          this.albumList = res.data;
+          this.getTempLoading = false;
+        })
+        .catch(() => {
+          this.getTempLoading = false;
+        });
+    },
+    // 移动端：滚动加载，根据最后一条tpid来获取
+    async getTemplateListH5(tid, tpid = 0) {
+      let params = {};
+      params.tid = tid;
+      params.tpid = tpid;
+      this.getTempLoading = true;
+      await albumRequest
+        .getTemplateList(params)
+        .then(res => {
+          this.albumList = this.albumList.concat(res.data);
+          this.getTempLoading = false;
+          this.pagination.tpid = this.albumList[this.albumList.length - 1].tpid;
+          console.log("this.tpid :>> ", this.tpid);
+          this.$nextTick(() => {
+            let albumEleList = document.getElementsByClassName("album");
+            this.lastAlbum = albumEleList[albumEleList.length - 1] || null;
+            console.log("this.lastAlbum :>> ", this.lastAlbum);
+          });
+        })
+        .catch(() => {
+          this.getTempLoading = false;
+        });
     },
     // 获取收藏列表
     getFavorList() {
@@ -216,16 +268,21 @@ export default {
     },
     // 创建相册
     createAlbum() {
-      this.loading1 = true;
+      this.createLoading = true;
       console.log("this.albumForm :>> ", this.albumForm);
       console.log("this.uid :>> ", this.uid);
-      albumRequest.createAlbum(this.albumForm, this.uid).then(res => {
-        this.loading1 = false;
-        this.$router.push({
-          name: "diy",
-          params: { aid: res.data.aid }
+      albumRequest
+        .createAlbum(this.albumForm, this.uid)
+        .then(res => {
+          this.createLoading = false;
+          this.$router.push({
+            name: "diy",
+            params: { aid: res.data.aid }
+          });
+        })
+        .catch(() => {
+          this.createLoading = false;
         });
-      });
     },
     // 添加收藏
     handleFavor(bool, aid) {
@@ -261,21 +318,21 @@ export default {
     },
     //以模板方式创建相册
     createByTemplate() {
-      this.loading1 = true;
+      this.createLoading = true;
       let data = Object.assign({}, this.albumForm);
       delete data.count;
       console.log("data :>> ", data);
       albumRequest
         .createAlbum(data, this.uid, this.templateID)
         .then(res => {
-          this.loading1 = false;
+          this.createLoading = false;
           this.$router.push({
             name: "diy",
             params: { aid: res.data.aid }
           });
         })
         .catch(() => {
-          this.loading1 = false;
+          this.createLoading = false;
         });
     },
 
@@ -284,15 +341,58 @@ export default {
       let theme = this.themeOptions.find(theme => theme.tid == tid) || {};
       return theme.name;
     },
+    // 处理点击主题事件
+    handleThemeClick(tid) {
+      this.tid = tid;
+      this.albumList = [];
+      if (this.service == "h5") {
+        this.getTemplateListH5(tid, 0);
+      } else {
+        this.getTemplateListPC(tid);
+      }
+    },
     // 页面改变时触发
     changePage(val) {
       console.log(val);
       this.currentPage = val;
+      this.getTemplateListPC(this.tid, val);
+    },
+    // 检测最后一本相册的位置，如果到达了边界就拉取下一页的内容
+    getNextPage(bottom) {
+      console.log("bottom :>> ", bottom);
+      if (bottom > -20 && bottom < 10) {
+        console.log("bottom > -100 了");
+        this.pagination.currentPage += 1;
+        let params = {};
+        params.tid = this.tid;
+        params.tpid = this.pagination.tpid;
+        this.getTempLoading = true;
+        albumRequest.getTemplateList(params);
+      }
     },
     // 监听滚动事件
     handleScroll(e) {
-      console.log("滚动", e);
-
+      const albumList = document.getElementsByClassName("album-list")[0];
+      let bottom =
+        this.lastAlbum.getBoundingClientRect().bottom -
+        albumList.clientHeight -
+        100;
+      //   console.log("bottom :>> ", bottom);
+      const res = this.debounce(bottom)
+        .then(res => {
+          console.log("res.data :>> ", res.data);
+          this.albumList = this.albumList.concat(res.data);
+          this.pagination.tpid = res.data.tpid;
+          this.getTempLoading = false;
+          this.$nextTick(() => {
+            let albumEleList = document.getElementsByClassName("album");
+            this.lastAlbum = albumEleList[albumEleList.length - 1] || null;
+            console.log("this.lastAlbum :>> ", this.lastAlbum);
+          });
+        })
+        .catch(() => {
+          this.getTempLoading = false;
+        });
     }
   }
 };
@@ -349,11 +449,10 @@ export default {
   display: flex;
   justify-content: start;
   flex-wrap: wrap;
-  height: calc(100vh - 128px);
   overflow-y: auto;
 }
 .pagination {
-  margin-top: 20px;
+  //   margin-top: 20px;
 }
 @media screen and (max-width: 700px) {
   .head {
@@ -371,7 +470,7 @@ export default {
   }
   .album-list {
     width: 100vw;
-    // height: ;
+    height: calc(100vh - 128px);
     padding: 0;
     display: flex;
     justify-content: space-around;
@@ -379,6 +478,14 @@ export default {
   .home >>> .dia-review {
     width: 100vw;
     height: 100vh;
+  }
+  .home >>> .dia-create {
+    margin-top: 0 !important;
+    width: calc(100vw - 40px);
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
   }
 }
 </style>

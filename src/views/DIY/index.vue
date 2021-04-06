@@ -744,7 +744,7 @@ export default {
       let service = this.$store.state.platform;
       this.service = service;
       return service;
-    },
+    }
   },
   watch: {
     platform(val) {
@@ -1084,6 +1084,9 @@ export default {
           }
           this.currentPage = 0;
         } else {
+          this.myAlbum.data.forEach(album => {
+            album.canvas = JSON.parse(album.canvas);
+          });
           // 将第一页的canvas赋给画布呈现出来
           this.canvas.loadFromJSON(this.myAlbum.data[0].canvas);
         }
@@ -1449,6 +1452,10 @@ export default {
       this.myAlbum.width = this.canvas.width;
       this.myAlbum.height = this.canvas.height;
       console.log("this.myAlbum :>> ", this.myAlbum);
+      this.myAlbum.data.forEach(album => {
+        if (typeof album.canvas !== "string")
+          album.canvas = JSON.stringify(album.canvas);
+      });
       albumRequest
         .updateAlbum(this.myAlbum, this.aid)
         .then(res => {
@@ -2252,6 +2259,20 @@ export default {
             outline: tomato solid 1px;
           }
         }
+        & >>> .el-color-picker {
+          display: inline-block;
+          margin: 5px auto !important;
+          width: 36px !important;
+          .el-color-picker__trigger {
+            border: none;
+            width: 24px;
+            height: 24px;
+            &:hover,
+            &:active {
+              outline: tomato solid 1px;
+            }
+          }
+        }
         .text-tool {
           div,
           span {
@@ -2642,32 +2663,5 @@ export default {
 }
 .no-display {
   display: none;
-}
-</style>
-<style lang="scss">
-.el-message-box__wrapper {
-  @media screen and (max-width: 700px) {
-    .el-message-box {
-      width: 100vw;
-    }
-  }
-}
-.el-color-picker {
-  display: inline-block;
-  .el-color-picker__trigger {
-    border: none;
-    width: 24px;
-    height: 24px;
-    &:hover,
-    &:active {
-      outline: tomato solid 1px;
-    }
-  }
-}
-.color-container {
-  width: 24px;
-  vertical-align: middle;
-  margin: 0;
-  vertical-align: middle;
 }
 </style>

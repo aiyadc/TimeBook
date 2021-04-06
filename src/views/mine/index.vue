@@ -2,12 +2,12 @@
 <template>
   <div class="mine">
     <div class="head">
-      <img class="banner" src="" alt="" />
+      <img class="banner" :src="userInfo.bg_url" alt="" />
       <div class="info">
-        <el-image class="avatar" src=""></el-image>
-        <div style="display:inline-block;">
-          <span class="nickname">林一畅</span> <br />
-          <span class="signature">要做最好看的页面</span>
+        <el-image class="avatar" :src="userInfo.avatar_url"></el-image>
+        <div class="words">
+          <span class="nickname">{{ userInfo.nickname }}</span> <br />
+          <span class="signature">{{ userInfo.signature }}</span>
         </div>
       </div>
     </div>
@@ -65,6 +65,7 @@
 import albumRequest from "@/api/album.js";
 import favorRequest from "@/api/favor.js";
 import themeRequest from "@/api/theme.js";
+import userRequest from "@/api/user.js";
 import Album from "@/components/Album/index.vue";
 import Review from "@/components/Review/index.vue";
 export default {
@@ -111,15 +112,26 @@ export default {
   methods: {
     handleTabClick(tab) {
       if (tab.name == "favor") {
+        this.getFavorList();
+      } else if (tab.name == "design") {
+        this.getMyAlbums();
       }
     },
     init() {
+      // 拉取我的信息
+      this.getUserInfo();
       // 拉取我的设计
       this.getMyAlbums();
       // 拉取收藏列表
       this.getFavorList();
       // 拉取主题列表
       this.getThemeList();
+    },
+    // 拉取用户信息
+    getUserInfo() {
+      userRequest.getUserInfo(this.uid).then(res => {
+        this.userInfo = res.data;
+      });
     },
     // 获取我的相册本
     getMyAlbums() {
@@ -174,19 +186,21 @@ export default {
     },
     // 收藏或取消收藏
     handleHeartClick(isfavor, aid) {
+      console.log("isfavor :>> ", isfavor, Array.from(this.favorAids));
       if (isfavor) {
-        this.favorAids.forEach((aid, i, list) => {
-          if (aid == aid) {
+        this.favorAids.forEach((val, i, list) => {
+          if (val == aid) {
             list.splice(i, 1);
           }
         });
       } else {
         this.favorAids.push(aid);
+        this.favorAids.sort();
       }
       favorRequest.handleFavor(this.uid, isfavor, aid);
     },
     // 删除相册
-    deleteAlbum() {
+    deleteAlbum(aid) {
       this.$confirm("确定要删除相册吗", "提示", {
         type: "warning",
         cancelButtonText: "害，是的",
@@ -195,13 +209,18 @@ export default {
         console.log("删除");
         albumRequest.deleteAlbum(this.uid, aid).then(res => {
           this.$message.success(res.message);
+          this.albumList.forEach((album, i, list) => {
+            if (album.aid == aid) {
+              list.splice(i, 1);
+            }
+          });
         });
       });
     },
     // 页面改变时触发
     changePage(val) {
       console.log(val);
-      this.currentPage = val
+      this.currentPage = val;
     }
   }
 };
@@ -222,6 +241,9 @@ export default {
       position: absolute;
       left: 20px;
       bottom: 20px;
+      display: flex;
+      align-items: center;
+      text-align: left;
       .avatar {
         width: 4rem;
         height: 4rem;
@@ -229,11 +251,16 @@ export default {
         vertical-align: middle;
         display: inline-block;
       }
-      .nickname {
-        font-size: 14px;
-      }
-      .signature {
-        font-size: 10px;
+      .words {
+        display: inline-block;
+        margin-left: 10px;
+        text-align: left;
+        .nickname {
+          font-size: 14px;
+        }
+        .signature {
+          font-size: 10px;
+        }
       }
     }
   }
@@ -244,6 +271,9 @@ export default {
       justify-content: start;
       flex-wrap: wrap;
     }
+  }
+  & >>> .el-tabs__header {
+    margin: 0 10px 15px;
   }
 }
 @media screen and (max-width: 700px) {

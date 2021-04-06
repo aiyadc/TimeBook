@@ -207,7 +207,7 @@ export default {
       .count {
         display: inline-block;
         vertical-align: middle;
-        font-size: 8px;
+        font-size: 10px;
         color: #494343ee;
       }
       .theme {

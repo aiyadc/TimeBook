@@ -2,3 +2,12 @@
 .ppo-mw100 {
     min-width: 100px;
 }
+// el-message-box
+.el-message-box__wrapper {
+    @media screen and (max-width: 700px) {
+      .el-message-box {
+        width: 100vw;
+      }
+    }
+  }
+// Dialog

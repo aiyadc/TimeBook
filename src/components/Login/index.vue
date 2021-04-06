@@ -403,6 +403,7 @@ export default {
   border-radius: 6px;
   @media screen and (max-width: 600px) {
     width: 100vw;
+    height: 100vh;
   }
   .valid-code {
     width: 180px;

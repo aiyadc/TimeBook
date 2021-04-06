@@ -47,11 +47,11 @@ const album = {
         });
     },
     // 获取模板相册
-    getAlbumTemplateList(params) {
+    getTemplateList(params) {
         return request({
             url: `/album/template`,
             method: "get",
-            params // tid,currentPage,pageSize
+            params // tid,currentPage,pageSize,tpid
         });
     }
     // 修改我的设计相册
