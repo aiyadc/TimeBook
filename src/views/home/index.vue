@@ -2,21 +2,36 @@
 <template>
   <div class="home">
     <div class="head">
-      <div class="tool">
-        <el-input
-          class="search"
-          v-model="search"
-          placeholder="请输入关键字进行搜索"
-        >
-        </el-input>
-        <i class="el-icon-search left40" @click="queryByName"></i>
-        <el-button
-          class="create"
-          :type="service == 'h5' ? 'text' : 'primary'"
-          icon="el-icon-plus"
-          @click="handleAddClick"
-          >新建</el-button
-        >
+      <div class="header">
+        <img class="logo" src="@/assets/logo.png" />
+        <!-- <span class="logo">DIY</span> -->
+        <span>模板</span>
+        <!-- <i class="el-icon-plus create" @click="handleAddClick"></i> -->
+        <div class="right">
+          <div style="display: inline-block;">
+            <el-input
+              class="search"
+              v-model="search"
+              placeholder="请输入关键字进行搜索"
+            >
+            </el-input>
+            <i
+              class="el-icon-search left40"
+              @click="
+                service == 'h5'
+                  ? getTemplateListH5(tid)
+                  : getTemplateListPC(tid)
+              "
+            ></i>
+          </div>
+          <el-button
+            class="create"
+            :type="service == 'h5' ? 'text' : 'default'"
+            icon="el-icon-plus"
+            @click="handleAddClick"
+          ></el-button>
+          <el-avatar class="avatar" :size="30"></el-avatar>
+        </div>
       </div>
       <ul class="theme-list">
         <span v-if="service == 'pc'">分类：</span>
@@ -24,13 +39,14 @@
           v-for="(theme, i) in themeList"
           :key="i"
           :tabindex="i"
-          @click="handleThemeClick(theme.tid)"
+          @click="handleThemeClick(theme.tid, i)"
         >
           {{ theme.name }}({{ theme.count }})
         </li>
       </ul>
     </div>
     <div class="album-list" @scroll="handleScroll" v-loading="getTempLoading">
+      <p class="loading-show" v-if="getTempLoading">加载中...</p>
       <album
         class="album"
         v-for="(album, i) in albumList"
@@ -46,7 +62,6 @@
         @review="toReview(album.aid)"
         @todesign="toDesign(album.aid)"
       ></album>
-      <div v-if="getTempLoading">加载中...</div>
     </div>
     <el-pagination
       class="pagination pc"
@@ -129,7 +144,7 @@ export default {
   data() {
     return {
       search: "",
-      tid: 0, // 当前选择的主题
+      tid: null, // 当前选择的主题
       themeList: [], // 主题列表
       themeOptions: [], //主题展示列表
       albumList: [], // 相册列表
@@ -187,11 +202,7 @@ export default {
       // 拉取主题列表
       this.getThemeList();
       // 拉取模板相册列表
-      if (this.service == "h5") {
-        this.getTemplateListH5(0);
-      } else {
-        this.getTemplateListPC(0);
-      }
+      this.handleThemeClick(0, 0);
 
       // 拉取收藏列表
       this.getFavorList();
@@ -217,6 +228,7 @@ export default {
       let params = {};
       params.tid = tid;
       params.currentPage = this.pagination.currentPage;
+      params.search = this.search;
       this.getTempLoading = true;
       await albumRequest
         .getTemplateList(params)
@@ -233,6 +245,7 @@ export default {
       let params = {};
       params.tid = tid;
       params.tpid = tpid;
+      params.search = this.search;
       this.getTempLoading = true;
       await albumRequest
         .getTemplateList(params)
@@ -259,7 +272,9 @@ export default {
     },
     // 搜索
     queryByName() {
-      // todo
+      albumRequest.searchTemplate(this.search).then(res => {
+        this.albumList = res.data;
+      });
     },
     // 处理新建事件
     handleAddClick() {
@@ -342,13 +357,21 @@ export default {
       return theme.name;
     },
     // 处理点击主题事件
-    handleThemeClick(tid) {
+    async handleThemeClick(tid, index) {
+      if (this.tid == tid) return;
       this.tid = tid;
       this.albumList = [];
       if (this.service == "h5") {
-        this.getTemplateListH5(tid, 0);
+        await this.getTemplateListH5(tid, 0);
       } else {
-        this.getTemplateListPC(tid);
+        await this.getTemplateListPC(tid);
+      }
+      let themeList = document.getElementsByClassName("theme-list")[0];
+      let liList = document.getElementsByTagName("li");
+      console.log("liList :>> ", liList);
+      for (let i = 0; i < liList.length; i++) {
+        liList[i].classList.remove("selected");
+        if (i == index) liList[i].classList.add("selected");
       }
     },
     // 页面改变时触发
@@ -400,10 +423,17 @@ export default {
 <style lang="scss" scoped>
 .head {
   background-color: #f9c8df;
-  .tool {
+  text-align: left;
+  .header {
     padding: 10px;
     background-color: #f9c8df;
     white-space: nowrap;
+    position: relative;
+    .logo {
+      font-size: 32px;
+      vertical-align: middle;
+      color: #f1a895;
+    }
     .search {
       width: 24rem;
       display: inline-block;
@@ -413,8 +443,20 @@ export default {
       right: 40px;
       cursor: pointer;
     }
-    .create {
-      float: right;
+    .right {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      .create {
+        padding: 8px;
+        background-color: #8adc97bf;
+        border-radius: 50%;
+        vertical-align: middle;
+      }
+      .avatar {
+        vertical-align: middle;
+      }
     }
   }
   .theme-list {
@@ -442,6 +484,10 @@ export default {
         outline: none;
       }
     }
+    .selected {
+      background-color: #d176de7a;
+      outline: none;
+    }
   }
 }
 .album-list {
@@ -450,6 +496,9 @@ export default {
   justify-content: start;
   flex-wrap: wrap;
   overflow-y: auto;
+  .loading-show {
+    width: 100vw;
+  }
 }
 .pagination {
   //   margin-top: 20px;
@@ -459,7 +508,7 @@ export default {
     background-color: #fff;
     text-align: left;
     font-size: 14px;
-    .tool {
+    .header {
       .search {
         width: calc(100vw - 100px);
       }

@@ -874,6 +874,7 @@ export default {
         this.activeType = "Textbox";
       else this.activeType = "image";
       this.selectedObject = e.target;
+      console.log("selection :>> ", e.target);
     });
     this.canvas.on("selection:updated", e => {
       if (this.canvas.getActiveObject() instanceof fabric.Textbox)
@@ -1084,17 +1085,17 @@ export default {
           }
           this.currentPage = 0;
         } else {
+          // 使画布整体按一定比例缩放
+          let scale =
+            res.data.width !== 0 ? this.canvas.width / res.data.width : 1;
+          console.log("res.data.width :>> ", scale);
+          this.canvas.setZoom(scale);
           this.myAlbum.data.forEach(album => {
             album.canvas = JSON.parse(album.canvas);
           });
           // 将第一页的canvas赋给画布呈现出来
           this.canvas.loadFromJSON(this.myAlbum.data[0].canvas);
         }
-        // 使画布整体按一定比例缩放
-        let scale =
-          res.data.width !== 0 ? this.canvas.width / res.data.width : 1;
-        console.log("res.data.width :>> ", scale);
-        this.canvas.setZoom(scale);
         this.updateCanvasState();
       });
     },
