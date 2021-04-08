@@ -18,6 +18,7 @@
 <script>
 import Login from "@/components/Login";
 import user from "@/api/user.js";
+import Cookie from '@/utils/cookie.js';
 export default {
   components: { Login },
   data() {
@@ -90,7 +91,10 @@ export default {
         .login(form)
         .then(res => {
           console.log("res", res);
-          this.$store.commit('SET_UID',res.data.uid)
+          this.$store.commit('SET_UID',res.data.userInfo.uid)
+          console.log('res.data.token :>> ', res.data.token);
+          Cookie.setToken(res.data.token);
+          console.log('Cooke.setToken :>> ', Cookie.setToken);
           this.$router.push("/");
         })
         .catch(err => {

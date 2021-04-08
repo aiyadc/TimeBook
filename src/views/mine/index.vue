@@ -40,7 +40,7 @@
               :name="album.name"
               :theme="getThemeName(album.tid)"
               :count="album.count"
-              :isfavor="favorAids.includes(album.aid)"
+              :isfavor="favorAids && favorAids.includes(album.aid)"
               :ish5="service === 'h5'"
               :key="i"
               @review="toReview(album.aid)"
@@ -137,7 +137,6 @@ export default {
     getMyAlbums() {
       albumRequest.getMyAlbums(this.uid).then(res => {
         this.albumList = res.data;
-        this.favorAids = res.data.aidList;
       });
     },
     // 获取相册预览列表
@@ -174,7 +173,6 @@ export default {
           return album.aid;
         });
         this.favorAids = this.favorAids || [];
-        console.log("this.favorAids :>> ", this.favorAids);
       });
     },
     // 进入设计
@@ -186,7 +184,6 @@ export default {
     },
     // 收藏或取消收藏
     handleHeartClick(isfavor, aid) {
-      console.log("isfavor :>> ", isfavor, Array.from(this.favorAids));
       if (isfavor) {
         this.favorAids.forEach((val, i, list) => {
           if (val == aid) {

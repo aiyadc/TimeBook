@@ -98,7 +98,7 @@
                 <div class="about-login">
                   <el-checkbox
                     v-model="ifRememberMe"
-                    style="float: left; margin: 10px 5px"
+                    style="float: left; margin: 10px 5px;"
                     v-if="features.indexOf('rememberMe') !== -1"
                     >记住我</el-checkbox
                   >
