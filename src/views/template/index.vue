@@ -30,7 +30,14 @@
             icon="el-icon-plus"
             @click="handleAddClick"
           ></el-button>
-          <el-avatar class="avatar" :size="30"></el-avatar>
+          <!-- 头像 -->
+          <el-dropdown @command="handleCommand">
+            <img class="avatar" src="@/assets/cc.jpg" />
+            <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item command="mine">我的信息</el-dropdown-item>
+              <el-dropdown-item command="homepage">个人中心</el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
         </div>
       </div>
       <ul class="theme-list">
@@ -203,7 +210,6 @@ export default {
       this.getThemeList();
       // 拉取模板相册列表
       this.handleThemeClick(0, 0);
-
       // 拉取收藏列表
       this.getFavorList();
     },
@@ -350,7 +356,22 @@ export default {
           this.createLoading = false;
         });
     },
-
+    // 处理头像下拉框事件
+    // todo
+    handleCommand(command) {
+      console.log("command :>> ", command);
+      switch (command) {
+        case "mine":
+          this.$router.push("mine");
+          break;
+        case "homepage":
+          this.$router.push("mine");
+          break;
+        default:
+          this.$router.push("mine");
+          break;
+      }
+    },
     // 获取主题名字
     getThemeName(tid) {
       let theme = this.themeOptions.find(theme => theme.tid == tid) || {};
@@ -456,6 +477,9 @@ export default {
       }
       .avatar {
         vertical-align: middle;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
       }
     }
   }
@@ -479,7 +503,6 @@ export default {
       &:active,
       &:hover,
       &:focus {
-        //border: 1px solid white;
         background-color: #d176de7a;
         outline: none;
       }

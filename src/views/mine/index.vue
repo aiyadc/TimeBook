@@ -137,7 +137,6 @@ export default {
     getMyAlbums() {
       albumRequest.getMyAlbums(this.uid).then(res => {
         this.albumList = res.data;
-        this.favorAids = res.data.aidList;
       });
     },
     // 获取相册预览列表
