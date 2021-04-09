@@ -1,6 +1,7 @@
 import Vue from "vue";
 import Vuex from "vuex";
-
+import Cookies from "@/utils/cookie.js";
+import router from "@/router";
 Vue.use(Vuex);
 
 export default new Vuex.Store({
@@ -32,5 +33,11 @@ export default new Vuex.Store({
       state.uid = null;
     }
   },
-  actions: {}
+  actions: {
+    LOGOUT({ commit }) {
+      router.push("/login");
+      Cookies.removeToken();
+      commit("SET_UID", "");
+    }
+  }
 });

@@ -3,20 +3,21 @@
   <div class="home">
     <div class="head">
       <div class="header">
-        <img class="logo" src="@/assets/logo.png" />
+        <img class="logo" src="@/assets/logo.png" v-if="service == 'pc'" />
         <!-- <span class="logo">DIY</span> -->
-        <span>模板</span>
+        <span v-else>模板</span>
         <!-- <i class="el-icon-plus create" @click="handleAddClick"></i> -->
         <div class="right">
-          <div style="display: inline-block;">
+          <div class="search">
             <el-input
-              class="search"
+              class="content"
+              size="small"
               v-model="search"
               placeholder="请输入关键字进行搜索"
             >
             </el-input>
             <i
-              class="el-icon-search left40"
+              class="el-icon-search search-icon"
               @click="
                 service == 'h5'
                   ? getTemplateListH5(tid)
@@ -26,16 +27,22 @@
           </div>
           <el-button
             class="create"
-            :type="service == 'h5' ? 'text' : 'default'"
+            size="small"
             icon="el-icon-plus"
             @click="handleAddClick"
-          ></el-button>
+            v-if="service == 'pc'"
+          >
+            新建
+          </el-button>
+
+          <i class="el-icon-plus create" @click="handleAddClick" v-else> </i>
           <!-- 头像 -->
           <el-dropdown @command="handleCommand">
             <img class="avatar" src="@/assets/cc.jpg" />
             <el-dropdown-menu slot="dropdown">
               <el-dropdown-item command="mine">我的信息</el-dropdown-item>
               <el-dropdown-item command="homepage">个人中心</el-dropdown-item>
+              <el-dropdown-item command="logout">登出</el-dropdown-item>
             </el-dropdown-menu>
           </el-dropdown>
         </div>
@@ -187,11 +194,13 @@ export default {
       return this.$store.state.platform;
     },
     uid() {
+      console.log("this.$store.state.uid :>> ", this.$store.state.uid);
       return this.$store.state.uid;
     }
   },
   created() {
     this.init();
+    console.log("this.$store.state.uid :>> ", this.$store.state.uid);
     console.log("dom.debounce :>> ", this.getNextPage());
   },
   mounted() {
@@ -367,8 +376,8 @@ export default {
         case "homepage":
           this.$router.push("mine");
           break;
-        default:
-          this.$router.push("mine");
+        case "logout":
+          this.$store.dispatch("LOGOUT");
           break;
       }
     },
@@ -455,30 +464,36 @@ export default {
       vertical-align: middle;
       color: #f1a895;
     }
-    .search {
-      width: 24rem;
-      display: inline-block;
-    }
-    .left40 {
-      position: relative;
-      right: 40px;
-      cursor: pointer;
-    }
+
     .right {
       position: absolute;
       right: 10px;
       top: 50%;
       transform: translateY(-50%);
+      .search {
+        display: inline-block;
+        .content {
+          width: 7rem;
+          min-width: 200px;
+          display: inline-block;
+        }
+
+        .search-icon {
+          position: relative;
+          right: 40px;
+          vertical-align: middle;
+          cursor: pointer;
+        }
+      }
       .create {
-        padding: 8px;
         background-color: #8adc97bf;
-        border-radius: 50%;
         vertical-align: middle;
       }
       .avatar {
         vertical-align: middle;
-        width: 30px;
-        height: 30px;
+        margin-left: 10px;
+        width: 1rem;
+        height: 1rem;
         border-radius: 50%;
       }
     }
@@ -532,8 +547,18 @@ export default {
     text-align: left;
     font-size: 14px;
     .header {
-      .search {
-        width: calc(100vw - 100px);
+      .right {
+        .search {
+        }
+        .create {
+          padding: 8px;
+          border-radius: 50%;
+        }
+        .avatar {
+          margin-left: 0;
+          width: 30px;
+          height: 30px;
+        }
       }
     }
     .theme-list {

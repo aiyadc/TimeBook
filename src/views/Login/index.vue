@@ -18,7 +18,7 @@
 <script>
 import Login from "@/components/Login";
 import user from "@/api/user.js";
-import Cookie from '@/utils/cookie.js';
+import Cookie from "@/utils/cookie.js";
 export default {
   components: { Login },
   data() {
@@ -91,14 +91,14 @@ export default {
         .login(form)
         .then(res => {
           console.log("res", res);
-          this.$store.commit('SET_UID',res.data.userInfo.uid)
-          console.log('res.data.token :>> ', res.data.token);
+          this.$store.commit("SET_UID", res.data.userInfo.uid);
+          console.log("res.data.token :>> ", res.data.token);
           Cookie.setToken(res.data.token);
-          console.log('Cooke.setToken :>> ', Cookie.setToken);
+          console.log("Cooke.setToken :>> ", Cookie.setToken);
           this.$router.push("/");
         })
         .catch(err => {
-          // console.log(err)
+          console.log(err);
           this.errInfo = err.data.message;
           this.$refs["login"].$refs[ref][0].validateField("account");
           this.errInfo = null;

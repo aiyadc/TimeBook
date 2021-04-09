@@ -1,6 +1,27 @@
 <!-- 我的 -->
 <template>
   <div class="mine">
+    <div class="nav ">
+      <el-input
+        class="search"
+        v-model="search"
+        placeholder="输入相册名搜索"
+        prefix-icon="el-icon-search"
+      ></el-input>
+      <div>
+        <el-button class="to-template" type="text" @click="$router.push('/')">
+          模板页</el-button
+        >
+        <el-dropdown @command="handleCommand">
+          <img class="avatar" src="@/assets/cc.jpg" />
+          <el-dropdown-menu slot="dropdown">
+            <el-dropdown-item command="mine">我的信息</el-dropdown-item>
+            <el-dropdown-item command="homepage">个人中心</el-dropdown-item>
+            <el-dropdown-item command="logout">登出</el-dropdown-item>
+          </el-dropdown-menu>
+        </el-dropdown>
+      </div>
+    </div>
     <div class="head">
       <img class="banner" :src="userInfo.bg_url" alt="" />
       <div class="info">
@@ -16,7 +37,7 @@
         <el-tab-pane label="我的设计" name="design">
           <div class="album-list">
             <album
-              v-for="(album, i) in albumList"
+              v-for="(album, i) in albumListFilter"
               :src="album.cover_url"
               :name="album.name"
               :theme="getThemeName(album.tid)"
@@ -86,6 +107,7 @@ export default {
       reviewDia: false,
       reviewList: [], // 预览相册页列表
       reviewLoading: false,
+      search: "",
       pagination: {
         currentPage: 1,
         pageSize: 20,
@@ -100,6 +122,15 @@ export default {
     },
     service() {
       return this.$store.state.platform;
+    },
+    albumListFilter() {
+      return this.albumList.filter(album => {
+        let theme = this.themeList.find(theme => theme.tid == album.tid);
+        return (
+          album.name.toLowerCase().includes(this.search.trim()) ||
+          (theme && theme.name).toLowerCase().includes(this.search)
+        );
+      });
     }
   },
   created() {
@@ -107,7 +138,6 @@ export default {
     // this.uid = this.$store.state.uid; //同步用户id
     this.init();
   },
-  mounted() {},
 
   methods: {
     handleTabClick(tab) {
@@ -175,6 +205,20 @@ export default {
         this.favorAids = this.favorAids || [];
       });
     },
+    // 处理头像下拉项点击事件
+    handleCommand(command) {
+      console.log("command :>> ", command);
+      switch (command) {
+        case "mine":
+          this.$router.push("mine");
+          break;
+        case "homepage":
+          this.$router.push("mine");
+          break;
+        case "logout":
+          this.$store.dispatch("LOGOUT");
+      }
+    },
     // 进入设计
     toDesign(aid) {
       this.$router.push({
@@ -226,6 +270,28 @@ export default {
 .mine {
   width: 100vw;
   height: 100vh;
+  padding: 20px 4.2rem;
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    & >>> .search {
+      flex: 1;
+      border: none;
+      input {
+        border: none;
+      }
+    }
+    .to-template {
+      color: #dd8cbb;
+    }
+    .avatar {
+      vertical-align: middle;
+      margin-left: 10px;
+      width: 1rem;
+      height: 1rem;
+      border-radius: 50%;
+    }
+  }
   .head {
     width: 100%;
     height: 7rem;
@@ -276,6 +342,13 @@ export default {
 @media screen and (max-width: 700px) {
   .mine {
     padding: 0;
+    .nav {
+      .avatar {
+        margin-left: 0;
+        width: 30px;
+        height: 30px;
+      }
+    }
     .content {
       .album-list {
         padding: 0;
