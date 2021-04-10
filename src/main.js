@@ -8,17 +8,17 @@ import "./styles/index.scss";
 import router from "./router";
 import VConsole from "vconsole";
 
-new VConsole();
+// new VConsole();
 
 Vue.use(ElementUI);
 Vue.config.productionTip = false;
 /* eslint-disable no-new */
 new Vue({
-  el: "#app",
-  router,
-  store,
-  render: h => h(App),
-  created() {
-    setRem(375, 1200);
-  }
+    el: "#app",
+    router,
+    store,
+    render: h => h(App),
+    created() {
+        setRem(375, 1200);
+    }
 });

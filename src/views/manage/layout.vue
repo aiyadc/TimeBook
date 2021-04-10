@@ -1,11 +1,13 @@
 <!-- layout -->
 <template>
   <div>
-    <el-row class="layout">
-      <el-col class="nav" :span="4">
+    <div class="layout">
+      <div class="menu-container">
         <el-menu
+          class="catalog"
           :default-active="curTab"
-          class="el-menu-vertical-demo"
+          :collapse="isCollapse"
+          :router="true"
           @select="handleSelect"
           @close="handleClose"
         >
@@ -13,13 +15,17 @@
             v-for="tab in tabList"
             :index="tab.name"
             :key="tab.name"
-            >{{ tab.label }}</el-menu-item
           >
+            <i :class="tab.icon"></i>
+            <span>{{ tab.label }}</span>
+          </el-menu-item>
         </el-menu>
-      </el-col>
-      <el-col class="main" :span="20">
+      </div>
+      <div class="main">
+        <!-- 右侧头部部分 -->
         <div class="header">
           <div>
+            <i class="el-icon-menu" @click="handleCollapse"></i>
             <span>{{ getCurrentTab() }}</span>
           </div>
           <div>
@@ -32,11 +38,12 @@
             </el-dropdown>
           </div>
         </div>
-        <el-row class="content">
+        <!-- 右侧内容部分，对接各子页面 -->
+        <div class="content">
           <router-view />
-        </el-row>
-      </el-col>
-    </el-row>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -46,8 +53,9 @@ export default {
 
   data() {
     return {
-      curTab: "user",
-      tabList: []
+      curTab: "/diy-manage/user",
+      tabList: [],
+      isCollapse: false
     };
   },
 
@@ -56,27 +64,38 @@ export default {
   mounted() {
     this.tabList = [
       {
-        name: "user",
+        icon: "el-icon-house",
+        name: "/diy-manage/home",
+        label: "HOME"
+      },
+      {
+        icon: "el-icon-apple",
+        name: "/diy-manage/user",
         label: "用户管理"
       },
       {
-        name: "template",
+        icon: "el-icon-apple",
+        name: "/diy-manage/template",
         label: "模板管理"
       },
       {
-        name: "decoration",
+        icon: "el-icon-apple",
+        name: "/diy-manage/decoration",
         label: "装饰管理"
       },
       {
-        name: "sentence",
+        icon: "el-icon-apple",
+        name: "/diy-manage/sentence",
         label: "文案管理"
       },
       {
-        name: "theme",
+        icon: "el-icon-apple",
+        name: "/diy-manage/theme",
         label: "主题管理"
       },
       {
-        name: "font",
+        icon: "el-icon-apple",
+        name: "/diy-manage/font",
         label: "字体管理"
       }
     ];
@@ -98,8 +117,11 @@ export default {
     getCurrentTab() {
       let tab = this.tabList.find(tab => tab.name == this.curTab);
       let label = tab && tab.label;
-      console.log("tab :>> ", tab);
       return label;
+    },
+    // 处理导航栏缩放
+    handleCollapse() {
+      this.isCollapse = !this.isCollapse;
     },
     // 处理头像下拉项点击事件
     handleCommand(command) {
@@ -117,12 +139,16 @@ export default {
 </script>
 <style lang="scss" scoped>
 .layout {
-  .nav {
-    ul {
+  display: flex;
+  width: 100vw;
+  .menu-container {
+    .catalog:not(.el-menu--collapse) {
+      width: 15vw;
       height: 100vh;
     }
   }
   .main {
+    flex: 1;
     height: 100vh;
     display: flex;
     flex-direction: column;
@@ -145,7 +171,6 @@ export default {
     }
     .content {
       flex: 1;
-      background-color: #eeee;
     }
   }
 }

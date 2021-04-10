@@ -1,9 +1,28 @@
-// 输入宽等长 250px
-.form-equal250 {
+// 输入宽等长 350px
+.form-equal350 {
     .el-input {
         width: 350px;
     }
     .el-select .el-input {
         width: 350px;
+    }
+}
+
+// 输入宽等长 500px
+.form-equal500 {
+    .el-input {
+        width: 500px;
+    }
+    .el-select .el-input {
+        width: 500px;
+    }
+}
+
+.form-search {
+    .el-input {
+        width: 150px;
+    }
+    .el-select .el-input {
+        width: 150px;
     }
 }

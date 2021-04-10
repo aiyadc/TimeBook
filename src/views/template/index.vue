@@ -243,6 +243,7 @@ export default {
       let params = {};
       params.tid = tid;
       params.currentPage = this.pagination.currentPage;
+      params.pageSize = this.pagination.pageSize;
       params.search = this.search;
       this.getTempLoading = true;
       await albumRequest
@@ -260,6 +261,7 @@ export default {
       let params = {};
       params.tid = tid;
       params.tpid = tpid;
+      params.pageSize = this.pagination.pageSize;
       params.search = this.search;
       this.getTempLoading = true;
       await albumRequest
@@ -419,6 +421,7 @@ export default {
         let params = {};
         params.tid = this.tid;
         params.tpid = this.pagination.tpid;
+        params.pageSize = this.pagination.pageSize;
         this.getTempLoading = true;
         albumRequest.getTemplateList(params);
       }
