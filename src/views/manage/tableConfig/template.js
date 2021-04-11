@@ -1,5 +1,4 @@
 import reverse from '@/utils/reverse.js';
-console.log(reverse.parseDatetime)
 export default [{
         label: '',
         width: '50',

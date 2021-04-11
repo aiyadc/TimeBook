@@ -86,9 +86,9 @@
                     <folder
                       v-for="(d, i) in decorationFolderList"
                       :key="i"
-                      :tabindex="d.dlid"
+                      :tabindex="d.folderid"
                       :name="d.name"
-                      @folder-click="toDFolder(d.dlid)"
+                      @folder-click="toDFolder(d.folderid)"
                     ></folder>
                   </el-collapse-item>
                 </el-collapse>
@@ -479,10 +479,9 @@
     <el-dialog
       custom-class="upload-dia"
       title="上传照片"
-      :visible="uploadDia"
+      :visible.sync="uploadDia"
       center
       :width="service === 'pc' ? '420px' : '100vw'"
-      @close="closeUploadDia"
     >
       <el-upload
         class="upload"
@@ -595,7 +594,7 @@
           v-for="(d, i) in decorationFolderList"
           :key="i"
           :name="d.name"
-          @folder-click="toDFolder(d.dlid)"
+          @folder-click="toDFolder(d.folderid)"
         >
         </folder>
       </template>
@@ -699,7 +698,7 @@ export default {
       checkedMaterial: null,
       // 文本
       // 装饰
-      dlid: 0, // 用户当前点击的装饰目录id
+      folderid: 0, // 用户当前点击的装饰目录id
       decorationList: [],
       decorationFolderList: [],
       // 上传
@@ -1260,7 +1259,6 @@ export default {
     },
     // 更新添加的素材图片
     updateUploadList(file, fileList) {
-      // console.log("fileList", fileList);
       this.fileList = fileList;
     },
     // 处理上传框中的图片删除
@@ -1336,10 +1334,6 @@ export default {
         this.$message.warning("请先上传照片");
       }
     },
-    // 关闭上传弹框
-    closeUploadDia() {
-      this.uploadDia = false;
-    },
 
     /**
      * 装饰
@@ -1349,12 +1343,12 @@ export default {
         this.decorationFolderList = res.data;
       });
     },
-    toDFolder(dlid) {
-      if (this.dlid == dlid) {
+    toDFolder(folderid) {
+      if (this.folderid == folderid) {
         return;
       } else {
-        this.dlid = dlid;
-        decorationRequest.getDecorations(dlid).then(res => {
+        this.folderid = folderid;
+        decorationRequest.getDecorations({folderid}).then(res => {
           this.decorationList = res.data;
         });
       }

@@ -11,14 +11,26 @@
           @select="handleSelect"
           @close="handleClose"
         >
-          <el-menu-item
-            v-for="tab in tabList"
-            :index="tab.name"
-            :key="tab.name"
-          >
-            <i :class="tab.icon"></i>
-            <span>{{ tab.label }}</span>
-          </el-menu-item>
+          <template v-for="tab in tabList">
+            <el-submenu :index="tab.name" :key="tab.name" v-if="tab.children">
+              <template slot="title">
+                <i class="el-icon-location"></i>
+                <span slot="title">{{tab.label}}</span>
+              </template>
+              <el-menu-item
+                v-for="tabChild in tab.children"
+                :key="tabChild.name"
+                :index="tabChild.name"
+              >
+                <i :class="tabChild.icon"></i>
+                <span>{{ tabChild.label }}</span>
+              </el-menu-item>
+            </el-submenu>
+            <el-menu-item :index="tab.name" :key="tab.name" v-else>
+              <i :class="tab.icon"></i>
+              <span>{{ tab.label }}</span>
+            </el-menu-item>
+          </template>
         </el-menu>
       </div>
       <div class="main">
@@ -53,7 +65,7 @@ export default {
 
   data() {
     return {
-      curTab: "/diy-manage/user",
+      curTab: "/diy-manage/home",
       tabList: [],
       isCollapse: false
     };
@@ -71,32 +83,56 @@ export default {
       {
         icon: "el-icon-apple",
         name: "/diy-manage/user",
-        label: "用户管理"
+        label: "用户"
       },
       {
         icon: "el-icon-apple",
         name: "/diy-manage/template",
-        label: "模板管理"
+        label: "模板"
       },
       {
         icon: "el-icon-apple",
         name: "/diy-manage/decoration",
-        label: "装饰管理"
+        label: "装饰",
+        children: [
+          {
+            icon: "el-icon-apple",
+            name: "/diy-manage/decoration/material",
+            label: "素材"
+          },
+          {
+            icon: "el-icon-apple",
+            name: "/diy-manage/decoration/sort",
+            label: "分类"
+          }
+        ]
       },
       {
         icon: "el-icon-apple",
         name: "/diy-manage/sentence",
-        label: "文案管理"
+        label: "文案",
+        children: [
+          {
+            icon: "el-icon-apple",
+            name: "/diy-manage/sentence/material",
+            label: "素材"
+          },
+          {
+            icon: "el-icon-apple",
+            name: "/diy-manage/sentence/sort",
+            label: "分类"
+          }
+        ]
       },
       {
         icon: "el-icon-apple",
         name: "/diy-manage/theme",
-        label: "主题管理"
+        label: "主题"
       },
       {
         icon: "el-icon-apple",
         name: "/diy-manage/font",
-        label: "字体管理"
+        label: "字体"
       }
     ];
   },

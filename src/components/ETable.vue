@@ -23,7 +23,7 @@
           :show-overflow-tooltip="item.hasTooltip"
           :fixed="item.fixed"
           :key="index"
-          :formatter="item.formatter || formatText()"
+          :formatter="item.formatter"
           v-if="item.type === 'text'"/>
         <!-- 多选 -->
         <el-table-column :width="item.width" :align="item.align || 'center'" :key="index" v-if="item.type === 'selection'" type="selection"/>
@@ -122,9 +122,9 @@ export default {
       this.multipleSelection = val;
       this.$emit('selection-change',val)
     },
-    formatText(row){
-      return row && (row.keyName || '--')
-    }
+    // formatText(row){
+    //   return row.keyName || '--'
+    // }
     // rowStyle ({ row, rowIndex}) {
     //   return 'color:#333;';
     // },

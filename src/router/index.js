@@ -47,9 +47,14 @@ const router = new Router({
                         import ('@/views/manage/home.vue')
                 },
                 {
-                    path: "decoration",
+                    path: "decoration/material",
                     component: () =>
                         import ("@/views/manage/decoration.vue")
+                },
+                {
+                    path: 'decoration/sort',
+                    component: () =>
+                        import ('@/views/manage/decorationFolder')
                 },
                 {
                     path: "font",
@@ -62,9 +67,14 @@ const router = new Router({
                         import ("@/views/manage/template.vue")
                 },
                 {
-                    path: 'sentence',
+                    path: 'sentence/material',
                     component: () =>
-                        import ('@/views/manage/sentence')
+                        import ('@/views/manage/text')
+                },
+                {
+                    path: 'sentence/sort',
+                    component: () =>
+                        import ('@/views/manage/textFolder')
                 },
                 {
                     path: "theme",
@@ -80,19 +90,7 @@ const router = new Router({
         }
     ]
 });
-// router.beforeEach((to, from, next) => {
-//   const publicURL = ["/login"];
-//   console.log("store.state.uid :>> ", store.state.uid);
-//   if (!publicURL.includes(to.path)) {
-//     if (store.state.uid == 0) {
-//       next("/login");
-//     } else {
-//       next();
-//     }
-//   } else {
-//     next();
-//   }
-// });
+
 router.beforeEach((to, from, next) => {
     const publicURL = ["/login"];
     console.log("store.state.uid :>> ", store.state.uid);
@@ -115,6 +113,7 @@ router.beforeEach((to, from, next) => {
                     .catch(err => {
                         console.log("err :>> ", err);
                         next("/login");
+                        Cookies.remove('access_token')
                     });
             } else {
                 next("/login");
