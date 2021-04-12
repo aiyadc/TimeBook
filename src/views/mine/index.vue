@@ -186,7 +186,7 @@ export default {
     },
     // 获取主题列表:
     getThemeList() {
-      themeRequest.getThemeList().then(res => {
+      themeRequest.fetchThemes().then(res => {
         this.themeList = res.data;
       });
     },

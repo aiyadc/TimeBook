@@ -94,7 +94,51 @@
         </el-table-column>
       </e-table>
     </div>
-
+    <!-- 编辑弹窗 -->
+    <el-dialog title="编辑" :visible="editDia" center width="700px">
+      <el-form class="form-equal500" :model="editForm" label-position="right">
+        <el-form-item label="目录：" prop="folderid" required>
+          <el-select v-model="editForm.folderid" placeholder="请选择放置目录">
+            <el-option
+              v-for="(folder, i) in folderList"
+              :key="i"
+              :label="folder.name"
+              :value="folder.folderid"
+            ></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="名称：" prop="name" required>
+          <el-input v-model="editForm.name" placeholder="名称"></el-input>
+        </el-form-item>
+        <el-form-item label="路径：" prop="src" required>
+          <el-input v-model="editForm.src" placeholder="素材路径"></el-input>
+        </el-form-item>
+        <el-form-item label="宽度：" prop="width" required>
+          <el-input
+            v-model="editForm.width"
+            placeholder="图片的初始宽度"
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="高度：" prop="height" required>
+          <el-input
+            v-model="editForm.height"
+            placeholder="图片的初始高度"
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="来源：" prop="origin" required>
+          <el-input
+            v-model="editForm.origin"
+            placeholder="图片的来源"
+          ></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer">
+        <el-button type="primary" size="small" @click="updateDecoration"
+          >确定</el-button
+        >
+        <el-button type="default" size="small">取消</el-button>
+      </div>
+    </el-dialog>
     <!-- 上传素材弹窗 -->
     <el-dialog
       custom-class="upload-dia"
@@ -108,14 +152,11 @@
           class="form-equal350"
           :model="uploadForm"
           inline
+          ref="uploadForm"
           v-if="step == 0"
         >
           <el-form-item label="目录：" prop="folderid" required>
-            <el-select
-              v-model="uploadForm.folderid"
-              placeholder="请选择目录"
-              @change="showChange"
-            >
+            <el-select v-model="uploadForm.folderid" placeholder="请选择目录">
               <el-option
                 v-for="(folder, i) in folderList"
                 :key="i"
@@ -148,7 +189,7 @@
       </div>
 
       <div slot="footer">
-        <el-button type="primary" @click="step = 1" v-if="step == 0"
+        <el-button type="primary" @click="toNext" v-if="step == 0"
           >下一步</el-button
         >
         <el-button type="success" @click="UploadToService" v-if="step == 1"
@@ -183,7 +224,14 @@ export default {
         folderid: "",
         origin: ""
       },
-      editForm: {},
+      editForm: {
+        folderid: null,
+        name: "",
+        src: "",
+        width: null,
+        height: null,
+        origin: ""
+      },
       pagination: {
         currentPage: 1,
         size: 10,
@@ -227,7 +275,7 @@ export default {
         this.pagination.totalCount = res.pagination.totalCount;
       });
     },
-    // 拉取所有装饰种类
+    // 拉取所有装饰目录
     async fetchFolders() {
       await decorationRequest.getFolders().then(res => {
         this.folderList = res.data;
@@ -242,7 +290,30 @@ export default {
       this.selected = selected;
     },
     // 处理编辑
-    handleEdit() {},
+    handleEdit(row) {
+      this.editForm = row;
+      this.editDia = true;
+    },
+    // 更新装饰信息
+    updateDecoration() {
+      let data = {};
+      for (let key in this.editForm) {
+        if (key !== "did") {
+          data[key] = this.editForm[key];
+        }
+      }
+      this.updateLoading = true;
+      decorationRequest
+        .updateDecoration(this.editForm.did, data)
+        .then(res => {
+          this.$message.success("更新成功");
+          this.updateLoading = false;
+          this.editDia = false;
+        })
+        .catch(() => {
+          this.updateLoading = false;
+        });
+    },
     // 处理删除
     handleDelete(did) {
       if (did > 0) {
@@ -251,6 +322,10 @@ export default {
         if (!this.selected.length) {
           this.$message.warning("请先选择要删除的选项");
           return;
+        } else {
+          this.selected = this.selected.map(d => {
+            return d.did;
+          });
         }
       }
       this.$confirm("确定要删除吗，删除之后不可恢复噢", "提示", {
@@ -268,9 +343,22 @@ export default {
     updateUploadList(file, fileList) {
       this.uploadList = fileList;
     },
+    toNext() {
+      this.$refs.uploadForm.validate(valid => {
+        if (valid) {
+          this.step = 1;
+        } else {
+          return;
+        }
+      });
+    },
     // 上传到服务器
     UploadToService() {
       // console.log('this.uploadList :>> ', this.uploadList);
+      if (!this.uploadList.length) {
+        this.$message.warning("请先上传素材");
+        return;
+      }
       new Promise((res, rej) => {
         let data = [];
         this.uploadList.forEach((item, i, list) => {

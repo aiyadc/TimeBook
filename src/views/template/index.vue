@@ -55,7 +55,7 @@
           :tabindex="i"
           @click="handleThemeClick(theme.tid, i)"
         >
-          {{ theme.name }}({{ theme.count }})
+          {{ theme.name }}
         </li>
       </ul>
     </div>
@@ -224,17 +224,18 @@ export default {
     },
     // 获取主题列表:
     getThemeList() {
-      themeRequest.getThemeList().then(res => {
+      themeRequest.fetchThemes().then(res => {
         this.themeOptions = res.data;
         console.log("themeOptions :>> ", this.themeOptions);
         this.themeList = Array.from(res.data);
-        let count = res.data.reduce((pre, cur) => {
-          return pre + cur.count;
-        }, 0);
+        this.themeList.forEach();
+        // let count = res.data.reduce((pre, cur) => {
+        //   return pre + cur.count;
+        // }, 0);
         this.themeList.unshift({
           tid: 0,
-          name: "全部",
-          count: count
+          name: "全部"
+          //   count: count
         });
       });
     },

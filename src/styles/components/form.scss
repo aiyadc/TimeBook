@@ -6,6 +6,9 @@
     .el-select .el-input {
         width: 350px;
     }
+    .el-textarea{
+        width: 350px;
+    }
 }
 
 // 输入宽等长 500px
@@ -16,6 +19,9 @@
     .el-select .el-input {
         width: 500px;
     }
+    .el-textarea{
+        width: 500px;
+    }
 }
 
 .form-search {
@@ -23,6 +29,9 @@
         width: 150px;
     }
     .el-select .el-input {
+        width: 150px;
+    }
+    .el-textarea{
         width: 150px;
     }
 }

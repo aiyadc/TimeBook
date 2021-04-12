@@ -203,7 +203,7 @@ export default {
     },
     // 获取主题列表:
     getThemeList() {
-      themeRequest.getThemeList().then(res => {
+      themeRequest.fetchThemes().then(res => {
         this.themeOptions = res.data;
         console.log("themeOptions :>> ", this.themeOptions);
         // let count = res.data.reduce((pre, cur) => {
