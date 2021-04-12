@@ -103,14 +103,14 @@
       v-loading="createLoading"
       center
     >
-      <el-form :model="albumForm">
-        <el-form-item label="相册名称">
+      <el-form :model="albumForm" label-width="80px" ref="createForm">
+        <el-form-item label="名称：" prop="name" required>
           <el-input
             v-model="albumForm.name"
             placeholder="为你的相册取一个好听的名称吧~"
           ></el-input>
         </el-form-item>
-        <el-form-item label="主题">
+        <el-form-item label="主题：" prop="tid" required>
           <el-select v-model="albumForm.tid" placeholder="与相册相关的主题">
             <el-option
               v-for="(t, i) in themeOptions"
@@ -120,11 +120,19 @@
             ></el-option>
           </el-select>
         </el-form-item>
-        <el-form-item label="页数：" v-if="createMode == 'empty'">
+        <el-form-item
+          label="页数："
+          prop="count"
+          required
+          v-if="createMode == 'empty'"
+          :rules="[{ type: 'number', message: '页数必须为10~100的数字' }]"
+        >
           <el-input
-            v-model="albumForm.count"
-            placeholder="非vip用户默认10页（待验证）"
+            v-model.number="albumForm.count"
+            placeholder="请输入相册的页数"
+            :disabled="isvip == 0"
           ></el-input>
+          <span class="tips" v-if="isvip===0"> *非vip用户默认10页</span>
         </el-form-item>
         <el-form-item label="备注：">
           <el-input v-model="albumForm.remark" placeholder="备注"></el-input>
@@ -194,8 +202,10 @@ export default {
       return this.$store.state.platform;
     },
     uid() {
-      console.log("this.$store.state.uid :>> ", this.$store.state.uid);
       return this.$store.state.uid;
+    },
+    isvip() {
+      return this.$store.state.isvip;
     }
   },
   created() {
@@ -228,7 +238,7 @@ export default {
         this.themeOptions = res.data;
         console.log("themeOptions :>> ", this.themeOptions);
         this.themeList = Array.from(res.data);
-        this.themeList.forEach();
+        // this.themeList.forEach();
         // let count = res.data.reduce((pre, cur) => {
         //   return pre + cur.count;
         // }, 0);
@@ -301,21 +311,31 @@ export default {
     },
     // 创建相册
     createAlbum() {
-      this.createLoading = true;
-      console.log("this.albumForm :>> ", this.albumForm);
-      console.log("this.uid :>> ", this.uid);
-      albumRequest
-        .createAlbum(this.albumForm, this.uid)
-        .then(res => {
-          this.createLoading = false;
-          this.$router.push({
-            name: "diy",
-            params: { aid: res.data.aid }
-          });
-        })
-        .catch(() => {
-          this.createLoading = false;
-        });
+      this.$refs.createForm.validate(valid => {
+        if (valid) {
+          if(this.albumForm.count<10 || this.albumForm.count > 100){
+            this.$message.error('页数的范围为10~100噢');
+            return;
+          }
+          this.createLoading = true;
+          console.log("this.albumForm :>> ", this.albumForm);
+          console.log("this.uid :>> ", this.uid);
+          albumRequest
+            .createAlbum(this.albumForm, this.uid)
+            .then(res => {
+              this.createLoading = false;
+              this.$router.push({
+                name: "diy",
+                params: { aid: res.data.aid }
+              });
+            })
+            .catch(() => {
+              this.createLoading = false;
+            });
+        } else {
+          return;
+        }
+      });
     },
     // 添加收藏
     handleFavor(bool, aid) {
@@ -399,9 +419,8 @@ export default {
       } else {
         await this.getTemplateListPC(tid);
       }
-      let themeList = document.getElementsByClassName("theme-list")[0];
+      // let themeList = document.getElementsByClassName("theme-list")[0];
       let liList = document.getElementsByTagName("li");
-      console.log("liList :>> ", liList);
       for (let i = 0; i < liList.length; i++) {
         liList[i].classList.remove("selected");
         if (i == index) liList[i].classList.add("selected");
@@ -542,8 +561,9 @@ export default {
     width: 100vw;
   }
 }
-.pagination {
-  //   margin-top: 20px;
+.tips {
+  font-size: 12px;
+  color: #7d8c87;
 }
 @media screen and (max-width: 700px) {
   .head {

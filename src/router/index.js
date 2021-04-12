@@ -107,6 +107,7 @@ router.beforeEach((to, from, next) => {
                     .getUserInfo(token)
                     .then(res => {
                         store.commit("SET_UID", res.data.uid);
+                        store.commit("SET_ISVIP", res.data.isvip);
                         console.log("store.state.uid :>> ", store.state.uid);
                         next();
                     })

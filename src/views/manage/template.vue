@@ -80,14 +80,18 @@
           min-width="200px"
         >
           <template slot-scope="{ row }">
-            <el-button
-              type="primary"
-              plain
-              icon="el-icon-edit"
-              size="small"
-              @click="handleEdit(row)"
-              >编辑</el-button
-            >
+            <el-dropdown trigger="click" @command="handleCommand($event, row)">
+              <el-button type="primary" plain icon="el-icon-edit" size="small"
+                >编辑</el-button
+              >
+              <el-dropdown-menu slot="dropdown">
+                <el-dropdown-item command="editinfo">信息编辑</el-dropdown-item>
+                <el-dropdown-item command="editalbum"
+                  >相册编辑</el-dropdown-item
+                >
+              </el-dropdown-menu>
+            </el-dropdown>
+
             <el-button type="primary" plain icon="el-icon-zoom-in" size="small"
               >预览</el-button
             >
@@ -141,6 +145,55 @@
         >
       </div>
     </el-dialog>
+    <!-- 创建相册 -->
+    <el-dialog
+      custom-class="dia-create"
+      title="创建"
+      :visible.sync="createDia"
+      v-loading="createLoading"
+      center
+    >
+      <el-form :model="createForm" label-width="80px" ref="createForm">
+        <el-form-item label="名称：" prop="name" required>
+          <el-input
+            v-model="createForm.name"
+            placeholder="为你的相册取一个好听的名称吧~"
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="主题：" prop="tid" required>
+          <el-select v-model="createForm.tid" placeholder="与相册相关的主题">
+            <el-option
+              v-for="(t, i) in themeOptions"
+              :key="i"
+              :label="t.name"
+              :value="t.tid"
+            ></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item
+          label="页数："
+          prop="count"
+          required
+          :rules="[{ type: 'number', message: '页数必须为10~100的数字' }]"
+        >
+          <el-input
+            v-model.number="createForm.count"
+            placeholder="请输入相册的页数"
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="备注：">
+          <el-input v-model="createForm.remark" placeholder="备注"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer">
+        <el-button
+          type="primary"
+          @click="createTemplate()"
+          >确定</el-button
+        >
+        <el-button type="default">取消</el-button>
+      </div>
+    </el-dialog>
     <!-- <review :visible="reviewDia" ></review> -->
   </div>
 </template>
@@ -172,6 +225,12 @@ export default {
         cover_url: "",
         remark: ""
       },
+      createForm: {
+        name: "",
+        tid: "",
+        count: 10,
+        remark: ""
+      },
       themeOptions: [],
       row: null, // 过渡更新
       pagination: {
@@ -182,7 +241,9 @@ export default {
       selected: [],
       fetchTemplateLoading: false,
       updateLoading: false,
+      createLoading: false,
       // Dia
+      createDia: false,
       reviewDia: false,
       editDia: false
     };
@@ -238,6 +299,17 @@ export default {
           this.fetchTemplateLoading = false;
         });
     },
+    handleCommand(command, row) {
+      console.log("处理command", command);
+      switch (command) {
+        case "editinfo":
+          this.handleEdit(row);
+          break;
+        case "editalbum":
+          this.toDesign();
+          break;
+      }
+    },
     // 处理编辑事件
     handleEdit(row) {
       console.log("编辑");
@@ -247,6 +319,30 @@ export default {
       }
       this.editDia = true;
     },
+    // 添加模板相册
+    createTemplate(){
+      this.createLoading = true;
+      albumRequest.addTemplate(this.createForm).then(res=>{
+        // console.log('res :>> ', res);
+        this.createLoading = false;
+        const aid = res.data.aid
+        this.$confirm('创建成功','提示',{
+          confirmButtonText:'现在就去',
+          cancelButtonText: "稍后",
+          type:'success'
+        }).then(()=>{
+          this.$router.push({
+            name:'diy',
+            params:{aid}
+          })
+        })
+      }).catch(()=>{
+        this.createLoading = false;
+        this.createDia = false;
+      })
+    },
+    // 编辑模板相册
+    toDesign() {},
     // 更新模板
     updateTemplate() {
       let data = {};
@@ -281,7 +377,9 @@ export default {
         }
       });
     },
-    showAddDia() {},
+    showAddDia() {
+      this.createDia = true;
+    },
     handleSelectionChange(selected) {
       // console.log("selected :>> ", selected);
       this.selected = selected.map(item => {

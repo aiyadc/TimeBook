@@ -5,39 +5,43 @@ import router from "@/router";
 Vue.use(Vuex);
 
 export default new Vuex.Store({
-  state: {
-    uid: 0,
-    platform: "",
-    TStack: [] // 画布复制对象暂存区
-  },
-  getters: {},
-  mutations: {
-    SET_PLATEFORM(state, val) {
-      state.platform = val;
+    state: {
+        uid: 0,
+        isvip: 0,
+        platform: "",
+        TStack: [] // 画布复制对象暂存区
     },
-    Push_TStack(stack, obj) {
-      stack.TStack = [];
-      if (Object.prototype.toString.call(obj) === "[object Object]") {
-        stack.TStack.push(obj);
-      } else {
-        stack.TStack.push(...obj);
-      }
+    getters: {},
+    mutations: {
+        SET_PLATEFORM(state, val) {
+            state.platform = val;
+        },
+        Push_TStack(stack, obj) {
+            stack.TStack = [];
+            if (Object.prototype.toString.call(obj) === "[object Object]") {
+                stack.TStack.push(obj);
+            } else {
+                stack.TStack.push(...obj);
+            }
+        },
+        Pop_TStack(stack) {
+            stack.TStack = [];
+        },
+        SET_UID(state, val) {
+            state.uid = val;
+        },
+        SET_ISVIP(state, val) {
+            state.isvip = val;
+        },
+        CLEAR_UID(state) {
+            state.uid = null;
+        }
     },
-    Pop_TStack(stack) {
-      stack.TStack = [];
-    },
-    SET_UID(state, val) {
-      state.uid = val;
-    },
-    CLEAR_UID(state) {
-      state.uid = null;
+    actions: {
+        LOGOUT({ commit }) {
+            router.push("/login");
+            Cookies.removeToken();
+            commit("SET_UID", "");
+        }
     }
-  },
-  actions: {
-    LOGOUT({ commit }) {
-      router.push("/login");
-      Cookies.removeToken();
-      commit("SET_UID", "");
-    }
-  }
 });

@@ -61,6 +61,13 @@ const album = {
             method: "get"
         });
     },
+    addTemplate(data) {
+        return request({
+            url: '/template',
+            method: 'post',
+            data
+        })
+    },
     // 更新模板
     updateTemplate(tpid, data) {
         return request({

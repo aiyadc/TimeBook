@@ -1313,9 +1313,7 @@ export default {
               imgData.push(obj);
               canvas.clear();
               if (index == this.fileList.length - 1) {
-                // console.log("this.materialList :>> ", this.imgData);
               }
-              //   console.log("compare:", index, fileList.length, imgData);
               if (index == fileList.length - 1) {
                 resolve(imgData);
               }
@@ -2512,48 +2510,6 @@ export default {
 .h5 {
   display: none;
 }
-// .diy >>> .dia-review {
-//   width: 56vh;
-//   height: 80vh;
-//   .review-pc {
-//     height: 70vh;
-//     width: 49vh;
-//     border: 1px solid #c894f0;
-//     margin: 0 auto;
-//     position: relative;
-//     box-shadow: 5px 5px 20px #f3b6cc;
-//     .review-page {
-//       width: 100%;
-//       height: 100%;
-//     }
-//   }
-//   .svg {
-//     width: 36px;
-//     height: 36px;
-//     position: absolute;
-//     top: 50%;
-//     transform: translateY(-50%);
-//     opacity: 0.3;
-//     &:hover {
-//       opacity: 1;
-//     }
-//   }
-//   .svg-left {
-//     left: 0px;
-//   }
-//   .svg-right {
-//     right: 0px;
-//   }
-//   .page-index {
-//     position: absolute;
-//     bottom: 10px;
-//     left: 50%;
-//     transform: translateX(-50%);
-//   }
-//   .el-dialog__body {
-//     padding: 0;
-//   }
-// }
 @media screen and (max-width: 700px) {
   .diy {
     .h5 {
