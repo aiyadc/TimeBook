@@ -551,31 +551,6 @@
       :ish5="service == 'h5'"
       :visible="reviewDia"
     ></review>
-    <!-- <el-dialog
-      custom-class="dia-review"
-      :visible.sync="reviewDia"
-      :fullscreen="service == 'h5'"
-    >
-      <span slot="title">My Album</span>
-      <div class="review-pc">
-        <img class="review-page" :src="reviewImg.src" alt="" />
-        <img
-          class="svg svg-left"
-          src="./icons/left.svg"
-          @click="toPrePage"
-          v-show="reviewImg.index > 0"
-        />
-        <img
-          class="svg svg-right"
-          src="./icons/right.svg"
-          @click="toNextPage"
-          v-show="reviewImg.index < myAlbum.count - 1"
-        />
-        <span class="page-index"
-          >{{ reviewImg.index + 1 || 0 }}/{{ myAlbum.count || 0 }}</span
-        >
-      </div>
-    </el-dialog> -->
     <div class="folders" v-if="folderDia">
       <template v-if="tab === 'material'">
         <folder
@@ -818,7 +793,8 @@ export default {
       stateful: true,
       stopContextMenu: true,
       uniformScaling: false,
-      uniScaleKey: "ctrlKey"
+      uniScaleKey: "ctrlKey",
+      enableRetinaScaling: true
     });
     // 拉取相册信息
     if (this.aid) {
@@ -1064,20 +1040,21 @@ export default {
       let h = this.canvas.height * 0.8;
       let w1 = this.canvas.width / 0.8;
       let h1 = this.canvas.height / 0.8;
+      // this.canvas.setZoom(0.8);
+      console.log("this.canvas.width :>> ", this.canvas.width);
       this.canvas.setDimensions(
-        { width: w, height: h },
-        { backstoreOnly: true }
+        { width: w, height: h }
       );
       this.canvas.renderAll();
       this.$nextTick(() => {
-        this.canvas.setDimensions(
-          { width: w1, height: w1 },
-          {
-            backstoreOnly: true
-          }
-        );
-        this.canvas.renderAll();
+        console.log("this.canvas.width :>> ", this.canvas.width);
       });
+      // this.$nextTick(() => {
+      //   this.canvas.setDimensions(
+      //     { width: w, height: h }
+      //   );
+      //   this.canvas.renderAll();
+      // });
     },
     // 初始化界面
     async initDIY() {
@@ -1107,7 +1084,13 @@ export default {
             res.data.width !== 0 ? this.canvas.width / res.data.width : 1;
           console.log("res.data.width :>> ", scale);
           console.log("this.canvas.width :>> ", this.canvas.width);
-          this.canvas.setZoom(scale);
+          // this.canvas.setZoom(scale);
+          let w = this.canvas.width / scale;
+          let h = this.canvas.height / scale;
+          this.canvas.setDimensions(
+            { width: w, height: h },
+            { backstoreOnly: true }
+          );
           console.log("this.canvas.width :>> ", this.canvas.width);
           this.myAlbum.data.forEach(album => {
             album.canvas = JSON.parse(album.canvas);
