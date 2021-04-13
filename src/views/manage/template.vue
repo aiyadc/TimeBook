@@ -100,7 +100,7 @@
               plain
               icon="el-icon-edit"
               size="small"
-              @click="deleteTemplates(row.tpid)"
+              @click="deleteTemplates(row.aid)"
               >删除</el-button
             >
           </template>
@@ -186,11 +186,7 @@
         </el-form-item>
       </el-form>
       <div slot="footer">
-        <el-button
-          type="primary"
-          @click="createTemplate()"
-          >确定</el-button
-        >
+        <el-button type="primary" @click="createTemplate()">确定</el-button>
         <el-button type="default">取消</el-button>
       </div>
     </el-dialog>
@@ -306,7 +302,7 @@ export default {
           this.handleEdit(row);
           break;
         case "editalbum":
-          this.toDesign();
+          this.toDesign(row);
           break;
       }
     },
@@ -314,49 +310,53 @@ export default {
     handleEdit(row) {
       console.log("编辑");
       this.row = row;
-      for (let i in this.editForm) {
-        this.editForm[i] = row[i];
-      }
+      this.editForm = row;
       this.editDia = true;
     },
     // 添加模板相册
-    createTemplate(){
+    createTemplate() {
       this.createLoading = true;
-      albumRequest.addTemplate(this.createForm).then(res=>{
-        // console.log('res :>> ', res);
-        this.createLoading = false;
-        const aid = res.data.aid
-        this.$confirm('创建成功','提示',{
-          confirmButtonText:'现在就去',
-          cancelButtonText: "稍后",
-          type:'success'
-        }).then(()=>{
-          this.$router.push({
-            name:'diy',
-            params:{aid}
-          })
+      albumRequest
+        .addTemplate(this.createForm)
+        .then(res => {
+          // console.log('res :>> ', res);
+          this.createLoading = false;
+          const aid = res.data.aid;
+          this.$confirm("创建成功", "提示", {
+            confirmButtonText: "现在就去",
+            cancelButtonText: "稍后",
+            type: "success"
+          }).then(() => {
+            this.$router.push({
+              name: "diy",
+              params: { aid }
+            });
+          });
         })
-      }).catch(()=>{
-        this.createLoading = false;
-        this.createDia = false;
-      })
+        .catch(() => {
+          this.createLoading = false;
+          this.createDia = false;
+        });
     },
     // 编辑模板相册
-    toDesign() {},
+    toDesign(row) {
+      this.$router.push({
+        name: "diy",
+        params: { aid: row.aid }
+      });
+    },
     // 更新模板
     updateTemplate() {
       let data = {};
-      let tpid = this.editForm.tpid;
+      let aid = this.editForm.aid;
       for (let i in this.editForm) {
-        if (i !== "tpid") data[i] = this.editForm[i];
+        if (["tid", "name", "cover_url", "remark"].includes(i))
+          data[i] = this.editForm[i];
       }
       this.updateLoading = true;
       albumRequest
-        .updateTemplate(tpid, data)
-        .then(async res => {
-          for (let i in this.editForm) {
-            if (i !== "tpid") this.row[i] = this.editForm[i];
-          }
+        .updateTemplate(aid, data)
+        .then(res => {
           this.$message.success("修改成功");
           this.updateLoading = false;
           this.editDia = false;
@@ -383,14 +383,13 @@ export default {
     handleSelectionChange(selected) {
       // console.log("selected :>> ", selected);
       this.selected = selected.map(item => {
-        return item.tpid;
+        return item.aid;
       });
     },
     // 删除模板
-    deleteTemplates(tpid) {
-      console.log("tpid :>> ", tpid);
-      if (tpid > 0) {
-        this.selected = [tpid];
+    deleteTemplates(aid) {
+      if (aid > 0) {
+        this.selected = [aid];
       } else {
         console.log("this.selected.length :>> ", this.selected.length);
         if (!this.selected.length) {
@@ -404,7 +403,7 @@ export default {
         type: "warning"
       }).then(() => {
         this.templateList = this.templateList.filter(template => {
-          return !this.selected.includes(template.tpid);
+          return !this.selected.includes(template.aid);
         });
         albumRequest
           .deleteTemplates({ selected: this.selected })
@@ -425,6 +424,7 @@ export default {
 .header {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 5px 10px;
   & >>> .el-form-item {
     margin-bottom: 0;

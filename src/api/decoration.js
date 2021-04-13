@@ -1,7 +1,7 @@
 import request from "@/utils/request";
 const decoration = {
   // 获取装饰目录
-  getFolders(search) {
+  getFolders(search = "") {
     return request({
       url: `/decoration-folder?search=${search}`,
       method: "get"

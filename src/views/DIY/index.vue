@@ -355,7 +355,6 @@
                 class="tool-icon"
                 src="./icons/maxmize.svg"
                 @click="maxmize(canvas.getActiveObject())"
-                alt="maxmize"
               />
 
               <br />
@@ -821,7 +820,10 @@ export default {
       uniformScaling: false,
       uniScaleKey: "ctrlKey"
     });
-    this.initDIY();
+    // 拉取相册信息
+    if (this.aid) {
+      this.initDIY();
+    }
     this.canvas.on("drop", e => {
       console.log("drop:", e);
       let offsetX = e.e.offsetX;
@@ -1058,12 +1060,28 @@ export default {
     // 重置canvas大小
     resetSize() {
       console.log("重置大小");
-      this.canvas.setZoom(0.5);
+      let w = this.canvas.width * 0.8;
+      let h = this.canvas.height * 0.8;
+      let w1 = this.canvas.width / 0.8;
+      let h1 = this.canvas.height / 0.8;
+      this.canvas.setDimensions(
+        { width: w, height: h },
+        { backstoreOnly: true }
+      );
       this.canvas.renderAll();
+      this.$nextTick(() => {
+        this.canvas.setDimensions(
+          { width: w1, height: w1 },
+          {
+            backstoreOnly: true
+          }
+        );
+        this.canvas.renderAll();
+      });
     },
     // 初始化界面
     async initDIY() {
-      this.getDecorationFloders(); // 获取系统素材目录
+      this.getDecorationFolders(); // 获取系统素材目录
       //   获取相册信息
       console.log("初始化：this.aid :>> ", this.aid);
       await albumRequest.getAlbumInfo(this.aid).then(res => {
@@ -1088,7 +1106,9 @@ export default {
           let scale =
             res.data.width !== 0 ? this.canvas.width / res.data.width : 1;
           console.log("res.data.width :>> ", scale);
+          console.log("this.canvas.width :>> ", this.canvas.width);
           this.canvas.setZoom(scale);
+          console.log("this.canvas.width :>> ", this.canvas.width);
           this.myAlbum.data.forEach(album => {
             album.canvas = JSON.parse(album.canvas);
           });
@@ -1104,8 +1124,8 @@ export default {
         case "material":
           this.getMaterialFolders();
           break;
-        case "decotation":
-          this.getDecorationFloders();
+        case "decoration":
+          this.getDecorationFolders();
           break;
         case "text":
           this.getTextFolders();
@@ -1336,7 +1356,7 @@ export default {
     /**
      * 装饰
      */
-    getDecorationFloders() {
+    getDecorationFolders() {
       decorationRequest.getFolders().then(res => {
         this.decorationFolderList = res.data;
       });
@@ -1346,7 +1366,7 @@ export default {
         return;
       } else {
         this.folderid = folderid;
-        decorationRequest.getDecorations({folderid}).then(res => {
+        decorationRequest.getDecorations({ folderid }).then(res => {
           this.decorationList = res.data;
         });
       }
@@ -1442,6 +1462,8 @@ export default {
      */
     saveMyAlbum() {
       this.saveAlbumLoading = true;
+      console.log("this.canvas.width :>> ", this.canvas.width);
+      console.log("this.canvas.height :>> ", this.canvas.height);
       this.myAlbum.width = this.canvas.width;
       this.myAlbum.height = this.canvas.height;
       console.log("this.myAlbum :>> ", this.myAlbum);
@@ -1731,6 +1753,7 @@ export default {
       console.log("IH,IW :>> ", IH, IW);
       let CH = this.canvas.getHeight();
       let CW = this.canvas.getWidth();
+      console.log("CH,CW :>> ", CH, CW);
       // 长宽不得规定在画布的0.5倍之内，并优先长宽的较小比例
       let scaleX = IW / (0.5 * CW) > 1 ? (0.5 * CW) / IW : 1;
       let scaleY = IH / (0.5 * CH) > 1 ? (0.5 * CH) / IH : 1;

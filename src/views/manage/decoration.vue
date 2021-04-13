@@ -72,7 +72,12 @@
             ></el-image>
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" slot="action">
+        <el-table-column
+          label="操作"
+          align="center"
+          slot="action"
+          width="250px"
+        >
           <template slot-scope="{ row }">
             <el-button
               type="primary"
@@ -431,11 +436,13 @@ export default {
 .header {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 5px 10px;
   & >>> .el-form-item {
     margin-bottom: 0;
   }
 }
+
 // 上传组件
 >>> .upload-dia {
   .el-dialog__body {

@@ -208,6 +208,10 @@ export default {
     handleAdd() {
       this.editDia = true;
     },
+    // 处理多选
+    handleSelectionChange(selected) {
+      this.selected = selected;
+    },
     // 处理编辑
     handleEdit(row) {
       this.editForm = row;
@@ -268,6 +272,20 @@ export default {
     // 更新要上传的素材
     updateUploadList(file, fileList) {
       this.uploadList = fileList;
+    },
+    // 处理当前页改变事件
+    async handlePageChange(page) {
+      this.pagination.currentPage = page;
+      this.fetchLoading = true;
+      await this.fetchTexts();
+      this.fetchLoading = false;
+    },
+    // 处理页面尺寸发生改变事件
+    async handlePageSizeChange(size) {
+      this.pagination.size = size;
+      this.fetchLoading = true;
+      await this.fetchTexts();
+      this.fetchLoading = false;
     }
   }
 };
@@ -277,6 +295,7 @@ export default {
 .header {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 5px 10px;
   & >>> .el-form-item {
     margin-bottom: 0;

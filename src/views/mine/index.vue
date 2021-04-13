@@ -287,8 +287,8 @@ export default {
     .avatar {
       vertical-align: middle;
       margin-left: 10px;
-      width: 1rem;
-      height: 1rem;
+      width: 0.8rem;
+      height: 0.8rem;
       border-radius: 50%;
     }
   }

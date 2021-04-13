@@ -15,7 +15,7 @@
             <el-submenu :index="tab.name" :key="tab.name" v-if="tab.children">
               <template slot="title">
                 <i class="el-icon-location"></i>
-                <span slot="title">{{tab.label}}</span>
+                <span slot="title">{{ tab.label }}</span>
               </template>
               <el-menu-item
                 v-for="tabChild in tab.children"
@@ -37,8 +37,19 @@
         <!-- 右侧头部部分 -->
         <div class="header">
           <div>
-            <i class="el-icon-menu" @click="handleCollapse"></i>
-            <span>{{ getCurrentTab() }}</span>
+            <img
+              class="sidebar-icon"
+              src="./images/sidebar-left.svg"
+              @click="isCollapse = true"
+              v-if="!isCollapse"
+            />
+            <img
+              class="sidebar-icon"
+              src="./images/sidebar-right.svg"
+              @click="isCollapse = false"
+              v-else
+            />
+            <span class="title">{{ getCurrentTab() }}</span>
           </div>
           <div>
             <el-dropdown @command="handleCommand">
@@ -66,14 +77,14 @@ export default {
   data() {
     return {
       curTab: "/diy-manage/home",
+      indexPath: ["/diy-manage/home"],
       tabList: [],
       isCollapse: false
     };
   },
 
   computed: {},
-
-  mounted() {
+  created() {
     this.tabList = [
       {
         icon: "el-icon-house",
@@ -141,8 +152,9 @@ export default {
     // 处理子菜单打开事件
     handleSelect(index, indexPath) {
       // todo
-      //   console.log("index,indexPath :>> ", index, indexPath);
+      console.log("index,indexPath :>> ", index, indexPath);
       this.curTab = index;
+      this.indexPath = indexPath;
     },
     // 处理菜单关闭事件
     handleClose(index, indexPath) {
@@ -151,9 +163,21 @@ export default {
     },
     // 获取当前点击的tab的名字
     getCurrentTab() {
-      let tab = this.tabList.find(tab => tab.name == this.curTab);
-      let label = tab && tab.label;
-      return label;
+      let tabName = "";
+      this.indexPath.reduce((pre, cur) => {
+        if (pre.children) {
+          let tab = pre.children.find(tab => tab.name == cur);
+          tabName += " / " + tab.label;
+          return tab;
+        } else {
+          let tab = this.tabList.find(tab => tab.name == cur);
+          tabName += tab.label;
+          return tab;
+        }
+      }, {});
+      //   let tab = this.tabList.find(tab => tab.name == this.curTab);
+      //   let label = tab && tab.label;
+      return tabName;
     },
     // 处理导航栏缩放
     handleCollapse() {
@@ -175,14 +199,16 @@ export default {
 </script>
 <style lang="scss" scoped>
 .layout {
-  display: flex;
   width: 100vw;
+  text-align: left;
+  display: flex;
   .menu-container {
     .catalog:not(.el-menu--collapse) {
-      width: 15vw;
+      width: 200px;
       height: 100vh;
     }
   }
+
   .main {
     flex: 1;
     height: 100vh;
@@ -197,11 +223,20 @@ export default {
       height: 1rem;
       min-height: 50px;
       text-align: right;
+      .title {
+        vertical-align: middle;
+      }
+      .sidebar-icon {
+        display: inline-block;
+        width: 24px;
+        margin-right: 10px;
+        vertical-align: middle;
+      }
       .avatar {
         vertical-align: middle;
         margin-left: 10px;
-        width: 1rem;
-        height: 1rem;
+        width: 0.8rem;
+        height: 0.8rem;
         border-radius: 50%;
       }
     }

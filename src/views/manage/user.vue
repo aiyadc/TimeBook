@@ -3,7 +3,9 @@
   <div>
     <div class="header">
       <div class="left">
-        <el-button type="success" size="small" @click="createUser">添加用户</el-button>
+        <el-button type="success" size="small" @click="createUser"
+          >添加用户</el-button
+        >
       </div>
       <div class="right">
         <el-form class="form-search" :model="searchForm" inline>
@@ -43,13 +45,22 @@
             ></el-input>
           </el-form-item>
           <el-form-item label="">
-            <el-button type="primary" size="small" @click="fetchUserList">搜索</el-button>
+            <el-button type="primary" size="small" @click="fetchUserList"
+              >搜索</el-button
+            >
           </el-form-item>
         </el-form>
       </div>
     </div>
     <div class="content">
-      <e-table :list-data="userList" :headers="tableHeader" :pagination="pagination" @changesize="changePageSize" @changepage="changeCurrentPage" v-loading="fetchUserLoading">
+      <e-table
+        :list-data="userList"
+        :headers="tableHeader"
+        :pagination="pagination"
+        @changesize="changePageSize"
+        @changepage="changeCurrentPage"
+        v-loading="fetchUserLoading"
+      >
         <el-table-column label="状态" align="center" slot="status">
           <template slot-scope="{ row }">
             <el-switch v-model="row.status"></el-switch>
@@ -99,10 +110,10 @@ export default {
         mail: "",
         address: ""
       },
-      pagination:{
-        currentPage:1,
-        size:10,
-        totalCount:10
+      pagination: {
+        currentPage: 1,
+        size: 10,
+        totalCount: 10
       },
       fetchUserLoading: false
     };
@@ -126,7 +137,7 @@ export default {
     // 拉取用户列表
     fetchUserList() {
       this.fetchUserLoading = true;
-      let params= {};
+      let params = {};
       params.searchForm = this.searchForm;
       params.pagination = this.pagination;
       userRequest
@@ -165,22 +176,22 @@ export default {
       console.log("!!row.status :>> ", !!row.status);
       return !!row.status;
     },
-    toSearch(){
-        userRequest.searchUsers(this.searchForm).then(res=>{
-          this.userList = res.data
-        })
+    toSearch() {
+      userRequest.searchUsers(this.searchForm).then(res => {
+        this.userList = res.data;
+      });
     },
     // 添加用户
     createUser() {},
     // 处理页数改变
-    changeCurrentPage(val){
+    changeCurrentPage(val) {
       this.pagination.currentPage = val;
       this.fetchUserList();
     },
     // 处理页面显示项目尺寸改变
-    changePageSize(val){
+    changePageSize(val) {
       this.pagination.size = val;
-      this.fetchUserList()
+      this.fetchUserList();
     }
   }
 };
@@ -189,8 +200,9 @@ export default {
 .header {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 5px 10px;
-  &>>> .el-form-item{
+  & >>> .el-form-item {
     margin-bottom: 0;
   }
 }
