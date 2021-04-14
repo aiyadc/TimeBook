@@ -64,7 +64,17 @@
                 >
                 </el-input>
               </el-form-item>
-
+              <el-form-item
+                prop="mobile"
+                v-if="tab.components.indexOf('mobile') !== -1"
+              >
+                <el-input
+                  v-model="lgParams.mobile"
+                  :placeholder="formOptions.mobile.placeholder"
+                  prefix-icon="el-icon-mobile-phone"
+                >
+                </el-input>
+              </el-form-item>
               <el-form-item
                 prop="password"
                 v-if="tab.components.indexOf('password') !== -1"
@@ -122,7 +132,9 @@
           </el-tab-pane>
         </el-tabs>
         <div class="code-login" v-show="isQrcode">
-          <slot name="qrcode_tips" v-if="isQrcode"> </slot>
+          <div class="qrcode-tips">
+            <slot name="qrcode_tips" v-if="isQrcode"> </slot>
+          </div>
           <!--放置二维码-->
           <div
             id="qrcode"
@@ -274,6 +286,10 @@ export default {
             label: "账号：",
             placeholder: "请输入账号"
           },
+          mobile: {
+            label: "手机号：",
+            placeholder: "请输入手机号"
+          },
           password: {
             label: "密码：",
             placeholder: "请输入密码"
@@ -298,6 +314,7 @@ export default {
       lgParams: {
         identity: "",
         account: "",
+        mobile: "",
         password: "",
         validCode: "" // 表单验证码
       },
@@ -339,7 +356,7 @@ export default {
           }
           this.$emit("login", form, ref);
           if (this.features.indexOf("rememberMe")) {
-            this.$emit("storeme", this.ifRememberMe, this.lgParams);
+            this.$emit("storeme", this.ifRememberMe, form);
           }
         } else {
           console.log("error summit");
@@ -407,6 +424,7 @@ export default {
   }
   .valid-code {
     width: 180px;
+    margin-right: 10px;
   }
   .loginmode {
     position: absolute;
@@ -432,9 +450,14 @@ export default {
     .code-login {
       margin: 0 20px;
       min-height: 300px;
+      position: relative;
       #qrcode {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
         text-align: center;
-        width: 100%;
+        // width: 100%;
         max-height: 250px;
       }
       .under-code {

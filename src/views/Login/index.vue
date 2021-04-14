@@ -11,11 +11,15 @@
       <template v-slot:theme>
         <span class="login-title">登录</span>
       </template>
+      <template v-slot:qrcode_tips>
+          扫一扫二维码登陆更方便~
+      </template>
     </login>
   </div>
 </template>
 
 <script>
+import QRCode from "qrcodejs2";
 import Login from "@/components/Login";
 import user from "@/api/user.js";
 import Cookie from "@/utils/cookie.js";
@@ -55,7 +59,7 @@ export default {
       {
         tab: "phone_login",
         label: "手机号登录",
-        components: ["account", "validCode"]
+        components: ["mobile", "validCode"]
       }
     ];
     const checkLogin = (rule, value, callback) => {
@@ -81,7 +85,19 @@ export default {
       }
     };
   },
-
+  mounted() {
+    // new QRCode(
+    //   document.getElementById("qrcode"),
+    //   "http://www.baidu.com"
+    // );
+     new QRCode("qrcode", {
+      text:'http://www.baidu.com',
+      width: 200,
+      height: 200,
+    });
+    // qrcode.makeCode("www.baidu.com");
+    console.log("this.$refs.login :>> ", this.$refs.login);
+  },
   methods: {
     login(form, ref) {
       //   if (params.account == "eachan" && params.password == "123456")
