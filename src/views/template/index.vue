@@ -69,10 +69,10 @@
         :aid="album.aid"
         :theme="getThemeName(album.tid)"
         :count="album.count"
-        :isfaovr="favorList.includes(album.aid)"
+        :isfavor="favorList.includes(album.aid)"
         :ish5="service === 'h5'"
         :key="i"
-        @heartclick="handleFavor(album.aid)"
+        @heartclick="handleFavor($event, album.aid)"
         @review="toReview(album.aid)"
         @todesign="toDesign(album.aid)"
       ></album>
@@ -132,7 +132,7 @@
             placeholder="请输入相册的页数"
             :disabled="isvip == 0"
           ></el-input>
-          <span class="tips" v-if="isvip===0"> *非vip用户默认10页</span>
+          <span class="tips" v-if="isvip === 0"> *非vip用户默认10页</span>
         </el-form-item>
         <el-form-item label="备注：">
           <el-input v-model="albumForm.remark" placeholder="备注"></el-input>
@@ -313,8 +313,8 @@ export default {
     createAlbum() {
       this.$refs.createForm.validate(valid => {
         if (valid) {
-          if(this.albumForm.count<10 || this.albumForm.count > 100){
-            this.$message.error('页数的范围为10~100噢');
+          if (this.albumForm.count < 10 || this.albumForm.count > 100) {
+            this.$message.error("页数的范围为10~100噢");
             return;
           }
           this.createLoading = true;
@@ -338,16 +338,18 @@ export default {
       });
     },
     // 添加收藏
-    handleFavor(bool, aid) {
-      if (bool) {
-        favorRequest.addFavor(this.uid, aid).then(res => {
-          console.log("res :>> ", res);
+    handleFavor(isfavor, aid) {
+      if (isfavor) {
+        this.favorList.forEach((val, i, list) => {
+          if (val == aid) {
+            list.splice(i, 1);
+          }
         });
       } else {
-        favorRequest.deleteFavor(this.uid, aid).then(res => {
-          console.log("res :>> ", res);
-        });
+        this.favorList.push(aid);
+        this.favorList.sort();
       }
+      favorRequest.handleFavor(this.uid, isfavor, aid);
     },
     // 获取相册预览列表
     toReview(aid) {

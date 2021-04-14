@@ -97,6 +97,7 @@
     <el-dialog
       :title="type == 'edit' ? '编辑' : '添加'"
       :visible.sync="editDia"
+      :before-close="resetForm"
       center
       width="700px"
     >
@@ -124,12 +125,15 @@
             :rows="1"
           ></el-input>
         </el-form-item>
-        <el-form-item label="样式：" prop="style" required>
+        <el-form-item label="样式：" prop="style">
           <el-input v-model="editForm.style" placeholder="文案样式"></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer">
-        <el-button type="primary" size="small" @click="updateText"
+        <el-button
+          type="primary"
+          size="small"
+          @click="type == 'edit' ? updateText() : addText()"
           >确定</el-button
         >
         <el-button type="default" size="small">取消</el-button>
@@ -206,6 +210,7 @@ export default {
     },
     // 处理添加
     handleAdd() {
+      this.type = "add";
       this.editDia = true;
     },
     // 处理多选
@@ -214,10 +219,26 @@ export default {
     },
     // 处理编辑
     handleEdit(row) {
+      this.type = "edit";
       this.editForm = row;
       this.editDia = true;
     },
-    // 编辑/添加文案
+    // 添加文案
+    addText() {
+      console.log(" 添加文案");
+      this.$refs.editForm.validate(valid => {
+        if (valid) {
+          textRequest.addText(this.editForm).then(res => {
+            this.$message.success("添加成功");
+            this.editDia = false;
+            this.fetchTexts();
+          });
+        } else {
+          return false;
+        }
+      });
+    },
+    // 编辑文案
     updateText() {
       this.$refs.editForm.validate(valid => {
         if (valid) {
@@ -272,6 +293,14 @@ export default {
     // 更新要上传的素材
     updateUploadList(file, fileList) {
       this.uploadList = fileList;
+    },
+    // 重置表单
+    resetForm() {
+      this.editForm = {
+        folderid: null,
+        text: "",
+        style: ""
+      };
     },
     // 处理当前页改变事件
     async handlePageChange(page) {

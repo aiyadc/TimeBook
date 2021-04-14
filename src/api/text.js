@@ -1,7 +1,7 @@
 import request from "@/utils/request";
 const text = {
   // 获取文案目录
-  getFolders(search) {
+  getFolders(search = "") {
     return request({
       url: `/text-folder?search=${search}`,
       method: "get"
@@ -39,7 +39,7 @@ const text = {
     });
   },
   // 添加文案素材
-  addTexts(data) {
+  addText(data) {
     return request({
       url: `/text`,
       method: "post",

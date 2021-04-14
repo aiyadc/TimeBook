@@ -88,7 +88,8 @@
                       :key="i"
                       :tabindex="d.folderid"
                       :name="d.name"
-                      @folder-click="toDFolder(d.folderid)"
+                      :src="require('./icons/decoration_folder.svg')"
+                      @folder-click="toFolder(d.folderid, 'decoration')"
                     ></folder>
                   </el-collapse-item>
                 </el-collapse>
@@ -99,18 +100,20 @@
                     :key="i"
                     :tabindex="i"
                   >
-                    <img
+                    <el-image
                       crossOrigin="Anonymous"
                       :src="d.src"
-                      :alt="d.name"
-                      :width="service === 'pc' ? 94 : 76"
-                      :height="service === 'pc' ? 90 : 70"
+                      :preview-src-list="[d.src]"
+                      fit="content"
                       @dragstart="dragstart"
                       @touchend="setOnCanvas($event)"
                     />
                   </div>
                 </template>
-                <div class="empty-tips" v-else>未选择目录或此目录没有照片~</div>
+                <div class="empty-tips" v-else>
+                  <img src="./icons/empty.svg" />
+                  未选择目录或此目录没有照片~
+                </div>
               </div>
             </el-tab-pane>
             <!-- 我的素材 -->
@@ -152,8 +155,9 @@
                         :key="i"
                         :tabindex="f.mlid"
                         :name="f.name"
+                        :src="require('./icons/album.svg')"
                         :show-edit="true"
-                        @folder-click="toMFolder(f.mlid)"
+                        @folder-click="toFolder(f.mlid, 'material')"
                         @edit="updateMaterialFolder(f)"
                         @delete="deleteMaterialFolder(f)"
                       ></folder>
@@ -171,11 +175,9 @@
                     :key="i"
                     :tabindex="i"
                   >
-                    <img
+                    <el-image
                       :src="m.src"
-                      :alt="m.name"
-                      :width="service === 'pc' ? 94 : 76"
-                      :height="service === 'pc' ? 90 : 70"
+                      :preview-src-list="[m.src]"
                       :draggable="service == 'pc' ? true : false"
                       crossOrigin="Anonymous"
                       @dragstart="dragstart"
@@ -190,13 +192,32 @@
             </el-tab-pane>
             <!-- 文案选择 -->
             <el-tab-pane name="text" label="文本">
-              <a
-                href="javascript:void(0)"
-                :draggable="true"
-                @dragstart="dragstart"
-                @touchstart="setOnCanvas($event)"
-                >H1</a
-              >
+              <div class="t-content">
+                <el-collapse class="pc" v-model="dCollapse">
+                  <el-collapse-item name="1" title="我的装饰屋">
+                    <folder
+                      v-for="(t, i) in textFolderList"
+                      :key="i"
+                      :tabindex="t.folderid"
+                      :name="t.name"
+                      :src="require('./icons/text_folder.svg')"
+                      @folder-click="toFolder(t.folderid, 'text')"
+                    ></folder>
+                  </el-collapse-item>
+                </el-collapse>
+                <ul v-if="textList.length" style="overflow: auto;">
+                  <li
+                    v-for="(t, i) in textList"
+                    :draggable="service == 'pc' ? true : false"
+                    @dragstart="dragstart"
+                    @touchend="setOnCanvas($event)"
+                    :key="i"
+                  >
+                    {{ t.text }}
+                  </li>
+                </ul>
+                <div class="empty-tips" v-else>未选择目录或此目录没有照片~</div>
+              </div>
             </el-tab-pane>
             <!-- 我的相册，H5中才有显示 -->
             <el-tab-pane name="album" label="相册" v-if="service === 'h5'">
@@ -550,6 +571,7 @@
       :dataList="reviewList"
       :ish5="service == 'h5'"
       :visible="reviewDia"
+      @close="reviewDia = false"
     ></review>
     <div class="folders" v-if="folderDia">
       <template v-if="tab === 'material'">
@@ -557,7 +579,8 @@
           v-for="(f, i) in materialFolderList"
           :key="i"
           :name="f.name"
-          @folder-click="toMFolder(f.mlid)"
+          :src="require('./icons/album.svg')"
+          @folder-click="toFolder(f.mlid, 'material')"
           @edit="updateMaterialFolder(f)"
           @delete="deleteMaterialFolder(f)"
         >
@@ -568,7 +591,18 @@
           v-for="(d, i) in decorationFolderList"
           :key="i"
           :name="d.name"
-          @folder-click="toDFolder(d.folderid)"
+          :src="require('./icons/decoration_folder.svg')"
+          @folder-click="toFolder(d.folderid, 'decoration')"
+        >
+        </folder>
+      </template>
+      <template v-if="tab === 'text'">
+        <folder
+          v-for="(t, i) in textFolderList"
+          :key="i"
+          :name="t.name"
+          :src="require('./icons/text_folder.svg')"
+          @folder-click="toFolder(t.folderid, 'text')"
         >
         </folder>
       </template>
@@ -580,6 +614,7 @@ import inobounce from "inobounce";
 import Fastclick from "fastclick";
 import { fabric } from "fabric";
 import material from "@/api/material.js";
+import textRequest from "@/api/text.js";
 import decorationRequest from "@/api/decoration.js";
 import albumRequest from "@/api/album.js";
 import Folder from "./components/folder.vue";
@@ -597,6 +632,7 @@ export default {
       tab: "decoration", // 当前tab栏
       mode: "default", // 当前设计模式['default','crop','paint','featureshow']
       canvas: null,
+      scale: 1, // 不同容器的画布大小比例
       canvasInfo: {},
       album: [],
       myAlbum: {
@@ -662,6 +698,7 @@ export default {
       fontFamilyOptions: [],
       predefineColors: [],
       // tab板块
+      folderid: 0, // 用户当前点击目录id,只用来防止重复点击发送请求
       // 我的素材
       mlid: 0, // 用户当前点击的素材目录id
       checkMode: "singleCheck", // sigleCheck/multiCheck ：单选和多选
@@ -671,8 +708,9 @@ export default {
       checkedMaterials: [],
       checkedMaterial: null,
       // 文本
+      textList: [],
+      textFolderList: [],
       // 装饰
-      folderid: 0, // 用户当前点击的装饰目录id
       decorationList: [],
       decorationFolderList: [],
       // 上传
@@ -802,28 +840,27 @@ export default {
     }
     this.canvas.on("drop", e => {
       console.log("drop:", e);
+      console.log("object :>> ", this.dragObject.localName);
       let offsetX = e.e.offsetX;
       let offsetY = e.e.offsetY;
-      console.log(this.dragObject, offsetX, offsetY);
-      // console.log(this.dragObject, offsetX, offsetY);
       if (this.dragObject && offsetX > 0 && offsetY > 0) {
         if (this.dragObject.localName === "img") {
+          // 以下除以scale是因为不同比例间的画布适配，使用的是setDimensions，
           let img = new fabric.Image(this.dragObject, {
-            left: offsetX - this.draged.sourceOffsetX,
-            top: offsetY - this.draged.sourceOffsetY
+            left: (offsetX - this.draged.sourceOffsetX) / this.scale,
+            top: (offsetY - this.draged.sourceOffsetY) / this.scale
+            // left: 500,
+            // top: 100
           });
           let scale = this.getScale(img);
-          // tofix:照片放到画布未立即显示
           img.scale(scale); // 将图像缩小至同等比例
-          console.log("dragObject.src", this.dragObject.src);
           this.canvas.add(img);
           this.canvas.setActiveObject(img);
-          console.log("this.canvas :>> ", this.canvas);
-        } else if (this.dragObject.localName === "a") {
+        } else if (this.dragObject.localName === "li") {
           let text = this.dragObject.innerText;
           let textbox = new fabric.Textbox(text, {
-            left: offsetX,
-            top: offsetY
+            left: offsetX / this.scale,
+            top: offsetY / this.scale
           });
           this.canvas.add(textbox);
           this.canvas.setActiveObject(textbox);
@@ -880,6 +917,7 @@ export default {
       document.getElementById("canvas").click();
       if (this.iscroping === 1) {
         let p = e.absolutePointer;
+        console.log("p :>> ", p);
         let oCoods = this.selectedOCoods;
         oCoods.upX = p.x;
         oCoods.upY = p.y;
@@ -952,24 +990,6 @@ export default {
       100
     ];
 
-    this.decorationList = [
-      {
-        did: 0,
-        theme: "dog",
-        name: "dd",
-        width: 50,
-        height: 50,
-        src: require("@/assets/dd.jpg")
-      },
-      {
-        did: 1,
-        theme: "cat",
-        name: "cc",
-        width: 94,
-        height: 90,
-        src: require("@/assets/cc.jpg")
-      }
-    ];
     this.textOptions = [
       {
         size: "14px",
@@ -1035,26 +1055,20 @@ export default {
   methods: {
     // 重置canvas大小
     resetSize() {
-      console.log("重置大小");
-      let w = this.canvas.width * 0.8;
-      let h = this.canvas.height * 0.8;
-      let w1 = this.canvas.width / 0.8;
-      let h1 = this.canvas.height / 0.8;
-      // this.canvas.setZoom(0.8);
-      console.log("this.canvas.width :>> ", this.canvas.width);
-      this.canvas.setDimensions(
-        { width: w, height: h }
+      let context = this.canvas.getContext().canvas;
+      console.log("context :>> ", context);
+      console.log(
+        "this.canvas.backingStorePixelRatio :>> ",
+        context.backingStorePixelRatio
       );
-      this.canvas.renderAll();
-      this.$nextTick(() => {
-        console.log("this.canvas.width :>> ", this.canvas.width);
-      });
-      // this.$nextTick(() => {
-      //   this.canvas.setDimensions(
-      //     { width: w, height: h }
-      //   );
-      //   this.canvas.renderAll();
-      // });
+      console.log(
+        "this.canvas.webkitBackingStorePixelRatio :>> ",
+        context.webkitBackingStorePixelRatio
+      );
+      console.log(
+        "this.canvas.backingStorePixelRatio :>> ",
+        context.backingStorePixelRatio
+      );
     },
     // 初始化界面
     async initDIY() {
@@ -1080,13 +1094,11 @@ export default {
           this.currentPage = 0;
         } else {
           // 使画布整体按一定比例缩放
-          let scale =
+          this.scale =
             res.data.width !== 0 ? this.canvas.width / res.data.width : 1;
-          console.log("res.data.width :>> ", scale);
-          console.log("this.canvas.width :>> ", this.canvas.width);
           // this.canvas.setZoom(scale);
-          let w = this.canvas.width / scale;
-          let h = this.canvas.height / scale;
+          let w = this.canvas.width / this.scale;
+          let h = this.canvas.height / this.scale;
           this.canvas.setDimensions(
             { width: w, height: h },
             { backstoreOnly: true }
@@ -1119,7 +1131,6 @@ export default {
     },
     // 拖动其他地方的图像到canvas
     dragstart(e) {
-      console.log("aaaaa");
       this.draged.sourceOffsetX = e.offsetX;
       this.draged.sourceOffsetY = e.offsetY;
       let obj = e.target;
@@ -1128,17 +1139,42 @@ export default {
     /**
      * common
      */
+    toFolder(id, type) {
+      // 请求当前目录下的资源
+      if (this.folderid == id) {
+        return;
+      } else {
+        this.folderid = id;
+        switch (type) {
+          case "decoration":
+            decorationRequest.getDecorations({ folderid: id }).then(res => {
+              this.decorationList = res.data;
+            });
+            break;
+          case "material":
+            material.getMaterials(id).then(res => {
+              this.materialList = res.data;
+            });
+            break;
+          case "text":
+            textRequest.getTexts({ folderid: id }).then(res => {
+              this.textList = res.data;
+              console.log("this.textList :>> ", this.textList);
+            });
+            break;
+        }
+      }
+    },
+
     /**
      * 素材
      */
     // 展示素材文件夹的相关操作图标
     showMoreTool(e) {
       let t = e.target.parentElement.getElementsByClassName("box-more")[0];
-      console.log("t.style.display :>> ", t.style.display);
       if (!t.style.display || t.style.display == "none") {
         t.style.display = "inline-block";
       } else {
-        console.log("aaa");
         t.style.display = "none";
       }
     },
@@ -1148,15 +1184,12 @@ export default {
     },
     // 获取用户素材目录
     getMaterialFolders() {
-      console.log("typeof this.uid :>> ", typeof this.uid);
       material.getFolders(this.uid).then(res => {
-        console.log("res :>> ", res.data);
         this.materialFolderList = res.data;
       });
     },
     // 添加素材目录
     addMaterialFolder() {
-      console.log("this.mlid :>> ", this.mlid);
       this.$prompt("请输入目录名", "创建目录", {
         confirmButtonText: "确定",
         cancelButtonText: "取消",
@@ -1201,17 +1234,6 @@ export default {
           this.materialList = [];
         });
       });
-    },
-    // 展示指定素材目录中的素材
-    toMFolder(mlid) {
-      if (this.mlid == mlid) {
-        return;
-      } else {
-        this.mlid = mlid;
-        material.getMaterials(mlid).then(res => {
-          this.materialList = res.data;
-        });
-      }
     },
     // 添加素材
     addMaterial() {
@@ -1344,20 +1366,14 @@ export default {
         this.decorationFolderList = res.data;
       });
     },
-    toDFolder(folderid) {
-      if (this.folderid == folderid) {
-        return;
-      } else {
-        this.folderid = folderid;
-        decorationRequest.getDecorations({ folderid }).then(res => {
-          this.decorationList = res.data;
-        });
-      }
-    },
     /**
      * 文字
      */
-    getTextFolders() {},
+    getTextFolders() {
+      textRequest.getFolders().then(res => {
+        this.textFolderList = res.data;
+      });
+    },
     /**
      * 相册页展示
      *
@@ -1745,12 +1761,6 @@ export default {
     },
     // 切换页面
     togglePage(ctx) {
-      console.log(
-        "this.currentPage :>> ",
-        this.currentPage,
-        ctx.index,
-        this.myAlbum.data[ctx.index]
-      );
       if (this.currentPage === ctx.index) return;
       console.log("换页");
       // 重置状态，由于在创建画布的时候初始化了一个状态，所以所以回到这个状态
@@ -1768,6 +1778,13 @@ export default {
           this.canvas.forEachObject(o => {
             this.setToLayer(o);
           });
+          //   console.log(
+          //     "this.canvas.width================= :>> ",
+          //     this.canvas.width
+          //   );
+          //   this.canvas.width = this.canvasInfo.width * 2;
+          //   this.canvas.height = this.canvasInfo.height * 2;
+          //   console.log("this.canvas.width :>> ", this.canvas.width);
           this.canvas.renderAll();
         });
       });
@@ -1820,7 +1837,7 @@ export default {
             console.log("setOnCanvas");
             this.canvas.renderAll();
             // this.setToLayer(img);
-          } else if (target.localName === "a") {
+          } else if (target.localName === "li") {
             let text = new fabric.Textbox(target.innerText);
             text.left = (this.canvas.width - text.width) * 0.5;
             text.top = (this.canvas.height - text.height) * 0.5;
@@ -2158,8 +2175,6 @@ export default {
       height: 100%;
       min-width: 220px;
       text-align: left;
-      .m-folders {
-      }
       .m-checkbox {
         & >>> .el-checkbox {
           cursor: pointer;
@@ -2210,6 +2225,25 @@ export default {
           .el-checkbox__input {
             display: none;
           }
+        }
+      }
+    }
+    .t-content {
+      -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+      width: 100%;
+      height: 100%;
+      min-width: 220px;
+      text-align: left;
+      ul {
+        padding: 0;
+        li {
+          color: #666;
+          word-wrap: break-word;
+          border: 2px solid #fff;
+          background: #fafafa;
+          margin: 10px;
+          padding: 10px;
+          list-style: none;
         }
       }
     }
@@ -2312,9 +2346,6 @@ export default {
           vertical-align: middle;
         }
       }
-      #canvas {
-        // background-color: #fff;
-      }
     }
   }
 
@@ -2384,9 +2415,15 @@ export default {
   bottom: 5px;
 }
 .empty-tips {
+  text-align: center;
   margin-top: 35px;
   font-size: 14px;
   color: coral;
+  img {
+    height: calc(7rem - 60px);
+    display: block;
+    margin: 10px auto;
+  }
 }
 
 // 上传组件
@@ -2527,14 +2564,16 @@ export default {
     .nav {
       height: 1.7rem;
     }
+    .empty-tips {
+      margin-top: 0;
+      img {
+        margin: 0 auto;
+      }
+    }
     .materials {
       width: 100%;
       height: 7rem;
       .m-content {
-        .m-folders {
-          .folder {
-          }
-        }
         .m-checkbox {
           width: 100%;
           overflow-x: auto;
@@ -2606,6 +2645,13 @@ export default {
         .el-checkbox {
           width: 76px;
           height: 70px;
+        }
+      }
+      .t-content {
+        ul {
+          height: calc(7rem - 34px);
+          overflow: auto;
+          margin-top: 0;
         }
       }
     }
