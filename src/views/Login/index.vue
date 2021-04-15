@@ -2,17 +2,17 @@
 <template>
   <div>
     <login
-      @login="login"
       :platform="platform"
       :tabList="tabList"
-      :rules="rules"
       ref="login"
+      @login="login"
+      @sendvalidcode="sendValidCode"
     >
       <template v-slot:theme>
         <span class="login-title">登录</span>
       </template>
       <template v-slot:qrcode_tips>
-          扫一扫二维码登陆更方便~
+        扫一扫二维码登陆更方便~
       </template>
     </login>
   </div>
@@ -90,15 +90,16 @@ export default {
     //   document.getElementById("qrcode"),
     //   "http://www.baidu.com"
     // );
-     new QRCode("qrcode", {
-      text:'http://www.baidu.com',
+    new QRCode("qrcode", {
+      text: "http://www.baidu.com",
       width: 200,
-      height: 200,
+      height: 200
     });
     // qrcode.makeCode("www.baidu.com");
     console.log("this.$refs.login :>> ", this.$refs.login);
   },
   methods: {
+    // 登录
     login(form, ref) {
       //   if (params.account == "eachan" && params.password == "123456")
       //     this.$router.push("/");
@@ -119,6 +120,10 @@ export default {
           this.$refs["login"].$refs[ref][0].validateField("account");
           this.errInfo = null;
         });
+    },
+    // 发送验证码
+    sendValidCode() {
+      console.log("发送验证码");
     }
   }
 };

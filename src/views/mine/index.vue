@@ -118,7 +118,7 @@ export default {
 
   computed: {
     uid() {
-      return this.$store.state.uid;
+      return this.$store.state.user.uid;
     },
     service() {
       return this.$store.state.platform;
@@ -135,7 +135,7 @@ export default {
   },
   created() {
     console.log("Review :>> ", Review);
-    // this.uid = this.$store.state.uid; //同步用户id
+    // this.uid = this.$store.state.user.uid; //同步用户id
     this.init();
   },
 

@@ -30,12 +30,7 @@
             :name="tab.tab"
             :key="tab.tab"
           >
-            <el-form
-              class="form-equal350"
-              :model="lgParams"
-              :rules="rules"
-              :ref="tab.tab"
-            >
+            <el-form :model="lgParams" :rules="rules" :ref="tab.tab">
               <el-form-item
                 prop="dientity"
                 v-if="tab.components.indexOf('identity') !== -1"
@@ -67,9 +62,11 @@
               <el-form-item
                 prop="mobile"
                 v-if="tab.components.indexOf('mobile') !== -1"
+                :rules="[{ validator: validateMobile, trigger: 'blur' }]"
               >
                 <el-input
                   v-model="lgParams.mobile"
+                  type="tel"
                   :placeholder="formOptions.mobile.placeholder"
                   prefix-icon="el-icon-mobile-phone"
                 >
@@ -91,13 +88,21 @@
                 prop="validCode"
               >
                 <el-input
-                  class="valid-code"
                   v-model="lgParams.validCode"
                   :placeholder="formOptions.validCode.placeholder"
                   prefix-icon="el-icon-s-claim"
                 >
+                  <a
+                    :class="{ 'suffix-text': true, active: timeout === 0 }"
+                    :href="void 0"
+                    slot="suffix"
+                    @click="sentValidCode(tab.tab)"
+                    >{{
+                      timeout === 0 ? "获取验证码" : timeout + "s 后可重发"
+                    }}</a
+                  >
                 </el-input>
-                <el-button type="primary">发送验证码</el-button>
+                <!-- <el-button type="primary">发送验证码</el-button> -->
               </el-form-item>
               <div>
                 <div v-loading="loading">
@@ -164,22 +169,24 @@
     </div>
     <!--注册弹框-->
     <el-dialog
+      custom-class="register"
       title="注册"
       :visible.sync="registerVisible"
       :before-close="beforeCloseRT"
     >
       <div>
-        <slot name="register"><h1>这是注册面板</h1></slot>
+        <slot name="register">注册功能暂未开通</slot>
       </div>
     </el-dialog>
     <!--找回密码弹框-->
     <el-dialog
+      custom-class="reset-password"
       title="重置密码"
       :visible.sync="resetPswVisible"
       :before-close="beforeCloseRS"
     >
       <div>
-        <slot name="resetPsw"><h1>这是找回密码面板</h1></slot>
+        <slot name="resetPsw">找回密码功能暂未开通</slot>
       </div>
     </el-dialog>
   </div>
@@ -192,8 +199,10 @@
  * @slot qrcode 放置二维码的容器
  * @slot underCode 在二维码下边的内容
  * @slot qrcode_tips 二维码上方的提示
+ * @event clicktab 切换登录方式的时候触发
  * @event login 点击登录触发，带表单参数
  * @event storeme 点击记住我触发
+ * @event sendvalidcode 点击发送验证码触发
  **/
 export default {
   name: "mulLogin",
@@ -239,6 +248,9 @@ export default {
               message: "请输入正确格式的账号",
               trigger: "blur"
             }
+          ],
+          mobile: [
+            { required: true, message: "手机号不能为空", trigger: "blur" }
           ],
           password: {
             required: true,
@@ -319,11 +331,15 @@ export default {
         validCode: "" // 表单验证码
       },
       // 是否记住本次登录信息
-      ifRememberMe: false,
+      ifRememberMe: true,
       // 对话框是否可见
       registerVisible: false,
-      resetPswVisible: false
+      resetPswVisible: false,
+      timeout: 0 // 发送验证码计时器
     };
+  },
+  created() {
+    this.getFormInfo();
   },
   watch: {
     platform: {
@@ -340,6 +356,18 @@ export default {
       console.log(this.$refs[this.activeTab][0]);
       this.$refs[this.activeTab][0].resetFields();
       this.$emit("clicktab", tab, event);
+      if (typeof Storage !== "undefined") {
+        this.getFormInfo();
+      }
+    },
+    // 获取localStorage中的表单信息
+    getFormInfo() {
+      // 获取当前tab下的表单项存在localstorage的值，将它填入表单中
+      const curTab = this.tabList.find(tab => tab.tab == this.activeTab);
+      const components = curTab.components;
+      components.forEach(comp => {
+        this.lgParams[comp] = localStorage.getItem(comp);
+      });
     },
     // 点击登录
     handleLogin() {
@@ -351,12 +379,31 @@ export default {
             return tab.tab === this.activeTab;
           }).components;
           for (let i in activeComponent) {
+            // 过滤表单项
             // 这里由于tab中component名字和表单内的属性名相同,所以直接匹配
             form[activeComponent[i]] = this.lgParams[activeComponent[i]];
           }
           this.$emit("login", form, ref);
-          if (this.features.indexOf("rememberMe")) {
-            this.$emit("storeme", this.ifRememberMe, form);
+          console.log(
+            "---------------- :>> ",
+            this.features.indexOf("rememberMe"),
+            this.ifRememberMe
+          );
+          if (this.features.indexOf("rememberMe") !== -1) {
+            // 存储表单项
+            if (typeof Storage !== "undefined") {
+              if (this.ifRememberMe) {
+                console.log("存储到localstorage");
+                for (let i in form) {
+                  localStorage.setItem(i, form[i]);
+                }
+              } else {
+                for (let i in form) {
+                  localStorage.removeItem(i);
+                }
+              }
+            }
+            // this.$emit("storeme", this.ifRememberMe, form);
           }
         } else {
           console.log("error summit");
@@ -370,6 +417,24 @@ export default {
       // 如果切换到二维码登录，则触发一个二维码登录事件,反之触发一个账号密码登录事件
       if (this.isQrcode) this.$emit("qrcode-login");
       else this.$emit("account-login");
+    },
+    // 发送验证码
+    sentValidCode(ref) {
+      console.log("ref :>> ", this.$refs[ref]);
+      if (this.timeout != 0) return;
+      else {
+        const valid = this.$refs[ref][0].validateField("mobile", err => {
+          if (!err) {
+            this.$emit("sendvalidcode");
+            this.timeout = 59;
+            let timer = setInterval(() => {
+              this.timeout -= 1;
+              if (this.timeout == 0) clearInterval(timer);
+            }, 1000);
+          }
+        });
+        // // 触发验证码发送事件
+      }
     },
     // 注册
     handleRegister() {
@@ -390,6 +455,24 @@ export default {
     },
     beforeCloseRS() {
       this.resetPswVisible = false;
+    },
+    // 验证手机号
+    validateMobile(rule, value, callback) {
+      if (!value) {
+        console.log("no value");
+        callback(new Error("请先填写手机号"));
+      } else if (!this.validatePhone(value)) {
+        console.log("aaa");
+        callback(new Error("请填写正确格式的手机号"));
+      } else {
+        callback();
+      }
+    },
+    // 验证手机号格式
+    validatePhone(str) {
+      str = str + "";
+      const reg = /^1[3|4|5|7|8][0-9]\d{8}$/;
+      return reg.test(str);
     }
   },
   mounted() {
@@ -422,9 +505,22 @@ export default {
     width: 100vw;
     height: 100vh;
   }
-  .valid-code {
-    width: 180px;
-    margin-right: 10px;
+  .suffix-text {
+    display: inline-block;
+    width: 100px;
+    height: 40px;
+    line-height: 40px;
+    text-align: center;
+    cursor: default;
+    color: #c5c5c5;
+  }
+  .active {
+    color: #3d84ff;
+    cursor: pointer;
+    &:active,
+    &:hover {
+      text-decoration: underline;
+    }
   }
   .loginmode {
     position: absolute;
@@ -454,14 +550,17 @@ export default {
       #qrcode {
         position: absolute;
         left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
+        top: 60%;
+        transform: translate(-50%, -60%);
         text-align: center;
         // width: 100%;
         max-height: 250px;
       }
       .under-code {
         text-align: center;
+      }
+      @media screen and (max-width: 768px) {
+        border: 1px solid #eee;
       }
     }
     .about-login {
@@ -482,6 +581,24 @@ export default {
   .footer {
     text-align: center;
     margin: 30px 0 10px;
+  }
+}
+>>> .register {
+  height: 400px;
+  margin: auto;
+  @media screen and (max-width: 768px) {
+    margin-top: 0;
+    width: 90vw;
+    height: 60vh;
+  }
+}
+>>> .reset-password {
+  height: 400px;
+  margin: auto;
+  @media screen and (max-width: 768px) {
+    margin-top: 0;
+    width: 90vw;
+    height: 60vh;
   }
 }
 .fit-btn {

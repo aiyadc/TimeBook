@@ -40,8 +40,10 @@
           <el-dropdown @command="handleCommand">
             <img class="avatar" src="@/assets/cc.jpg" />
             <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item command="mine">我的信息</el-dropdown-item>
-              <el-dropdown-item command="homepage">个人中心</el-dropdown-item>
+              <el-dropdown-item command="mine">个人中心</el-dropdown-item>
+              <el-dropdown-item command="toggleIdentity"
+                >切换身份</el-dropdown-item
+              >
               <el-dropdown-item command="logout">登出</el-dropdown-item>
             </el-dropdown-menu>
           </el-dropdown>
@@ -202,20 +204,24 @@ export default {
       return this.$store.state.platform;
     },
     uid() {
-      return this.$store.state.uid;
+      return this.$store.state.user.uid;
     },
     isvip() {
-      return this.$store.state.isvip;
+      return this.$store.state.user.isvip;
     }
   },
   created() {
     this.init();
-    console.log("this.$store.state.uid :>> ", this.$store.state.uid);
+    console.log("this.$store.state.user.uid :>> ", this.$store.state.user.uid);
     console.log("dom.debounce :>> ", this.getNextPage());
   },
   mounted() {
     this.debounce = dom.debounce(this.getNextPage, 50);
-    console.log("this.$store.state.uid :>> ", this.$store.state.uid, this.uid);
+    console.log(
+      "this.$store.state.user.uid :>> ",
+      this.$store.state.user.uid,
+      this.uid
+    );
     console.log("this.service :>> ", this.service);
   },
 
@@ -398,14 +404,16 @@ export default {
         case "mine":
           this.$router.push("mine");
           break;
-        case "homepage":
-          this.$router.push("mine");
+        case "toggleIdentity":
+          //   this.$router.push("mine");
           break;
         case "logout":
           this.$store.dispatch("LOGOUT");
           break;
       }
     },
+    // 切换身份
+    toggleIdentity() {},
     // 获取主题名字
     getThemeName(tid) {
       let theme = this.themeOptions.find(theme => theme.tid == tid) || {};

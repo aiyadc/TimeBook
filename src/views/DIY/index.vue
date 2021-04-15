@@ -626,7 +626,6 @@ export default {
   },
   data() {
     return {
-      uid: 0, // 当前用户id
       aid: 0, // 当前相册本id
       service: "", // 当前操作平台
       tab: "decoration", // 当前tab栏
@@ -755,6 +754,9 @@ export default {
       let service = this.$store.state.platform;
       this.service = service;
       return service;
+    },
+    uid() {
+      return this.$store.state.user.uid;
     }
   },
   watch: {
@@ -765,7 +767,6 @@ export default {
   created() {
     this.aid = this.$route.params.aid;
     console.log("this.aid :>> ", this.aid);
-    this.uid = this.$store.state.uid;
     this.uploadURL = process.env.BASE_API + "/decoration/upload";
     let u = navigator.userAgent;
     window.addEventListener(

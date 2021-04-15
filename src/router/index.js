@@ -80,32 +80,24 @@ const router = new Router({
 
 router.beforeEach((to, from, next) => {
   const publicURL = ["/login"];
-  console.log("store.state.uid :>> ", store.state.uid);
+  console.log("store.state.user.uid :>> ", store.state.user.uid);
   if (publicURL.includes(to.path)) {
     next();
   } else {
-    if (store.state.uid != 0) {
+    if (store.state.user.uid != 0) {
       next();
     } else {
-      const token = Cookies.get("access_token");
-      console.log("token :>> ", token);
-      if (token && token.length) {
-        userRequest
-          .getUserInfo(token)
-          .then(res => {
-            store.commit("SET_UID", res.data.uid);
-            store.commit("SET_ISVIP", res.data.isvip);
-            console.log("store.state.uid :>> ", store.state.uid);
-            next();
-          })
-          .catch(err => {
-            console.log("err :>> ", err);
-            next("/login");
-            Cookies.remove("access_token");
-          });
-      } else {
-        next("/login");
-      }
+      console.log("需要重置uid");
+      console.log("promise:", store.dispatch("getUserInfo"));
+      store
+        .dispatch("getUserInfo")
+        .then(() => {
+          console.log("reset store.state.user.uid :>> ", store.state.user.uid);
+          next();
+        })
+        .catch(() => {
+          next("/login");
+        });
     }
   }
 });
