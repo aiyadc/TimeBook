@@ -22,8 +22,8 @@
         </el-dropdown>
       </div>
     </div>
-    <div class="head">
-      <img class="banner" :src="userInfo.bg_url" alt="" />
+    <div class="head banner">
+      <!-- <img class="banner" :src="userInfo.bg_url" alt="" /> -->
       <div class="info">
         <el-image class="avatar" :src="userInfo.avatar_url"></el-image>
         <div class="words">
@@ -108,6 +108,7 @@ export default {
       reviewList: [], // 预览相册页列表
       reviewLoading: false,
       search: "",
+      banner: null,
       pagination: {
         currentPage: 1,
         pageSize: 20,
@@ -133,12 +134,31 @@ export default {
       });
     }
   },
+  watch: {
+    "userInfo.bg_url": {
+      handler(val) {
+        console.log("val :>> ", val);
+        if (this.banner) {
+          this.banner.style.backgroundImage = `url(${val})`;
+        }
+      },
+      immediate: true
+    }
+  },
   created() {
     console.log("Review :>> ", Review);
     // this.uid = this.$store.state.user.uid; //同步用户id
     this.init();
   },
-
+  mounted() {
+    this.banner = document.getElementsByClassName("head")[0];
+    // console.dir(this.banner);
+    // console.log(
+    //   "banner.style.backgroundImage :>> ",
+    //   this.banner.style.backgroundImage
+    // );
+    // this.banner.style.backgroundImage = `url(${this.userInfo.bg_url})`;
+  },
   methods: {
     handleTabClick(tab) {
       if (tab.name == "favor") {
@@ -296,10 +316,19 @@ export default {
     width: 100%;
     height: 7rem;
     position: relative;
-    .banner {
-      width: 100%;
-      height: 100%;
-    }
+    // background-image: url("../../assets/moon.jpg");
+    border-radius: 4px 4px 0 0;
+    background-position: 50%;
+    background-size: cover;
+    background-repeat: no-repeat;
+    // .banner {
+    //   width: 100%;
+    //   height: 100%;
+    //   border-radius: 4px 4px 0 0;
+    //   background-position: 50%;
+    //   background-size: cover;
+    //   background-repeat: no-repeat;
+    // }
     .info {
       position: absolute;
       left: 20px;
