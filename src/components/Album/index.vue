@@ -61,7 +61,7 @@ export default {
       type: Boolean,
       default: false
     },
-    hasDelete:{
+    hasDelete: {
       type: Boolean,
       default: false
     },
@@ -87,8 +87,8 @@ export default {
     toDesign() {
       this.$emit("todesign");
     },
-    toDelete(){
-      this.$emit('delete')
+    toDelete() {
+      this.$emit("delete");
     }
   }
 };
@@ -96,6 +96,7 @@ export default {
 
 <style scoped lang="scss">
 .album {
+  display: inline-block;
   width: 6rem;
   height: calc(6rem + 44px);
   border: 1px solid #bab7b7;
@@ -141,7 +142,7 @@ export default {
           margin: auto;
           width: 24px;
         }
-        span{
+        span {
           font-size: 12px;
         }
         &:active,
@@ -216,15 +217,15 @@ export default {
     }
   }
 }
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 768px) {
   .album {
-    width: 42vw;
-    height: calc(60vw + 44px);
+    width: 7rem;
+    height: calc(7rem + 44px);
     .cover {
-      width: 42vw;
-      height: 60vw;
+      width: 7rem;
+      height: 7rem;
       img {
-        width: 100%;
+        width: 4.9rem;
         height: 100%;
       }
       .review {

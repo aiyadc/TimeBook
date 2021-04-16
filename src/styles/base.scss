@@ -1,12 +1,12 @@
 // PC端可见或H5端可见,700px为界
 .pc {
-    @media screen and (max-width: 700px) {
+    @media screen and (max-width: 768px) {
         display: none;
     }
 }
 
 .h5 {
-    @media screen and (min-width: 700px) {
+    @media screen and (min-width: 768px) {
         display: none;
     }
 }

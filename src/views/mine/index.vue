@@ -1,77 +1,80 @@
 <!-- 我的 -->
 <template>
   <div class="mine">
-    <div class="nav ">
-      <el-input
-        class="search"
-        v-model="search"
-        placeholder="输入相册名搜索"
-        prefix-icon="el-icon-search"
-      ></el-input>
-      <div>
-        <el-button class="to-template" type="text" @click="$router.push('/')">
-          模板页</el-button
-        >
-        <el-dropdown @command="handleCommand">
-          <img class="avatar" src="@/assets/cc.jpg" />
-          <el-dropdown-menu slot="dropdown">
-            <el-dropdown-item command="mine">我的信息</el-dropdown-item>
-            <el-dropdown-item command="homepage">个人中心</el-dropdown-item>
-            <el-dropdown-item command="logout">登出</el-dropdown-item>
-          </el-dropdown-menu>
-        </el-dropdown>
-      </div>
-    </div>
-    <div class="head banner">
-      <!-- <img class="banner" :src="userInfo.bg_url" alt="" /> -->
-      <div class="info">
-        <el-image class="avatar" :src="userInfo.avatar_url"></el-image>
-        <div class="words">
-          <span class="nickname">{{ userInfo.nickname }}</span> <br />
-          <span class="signature">{{ userInfo.signature }}</span>
+    <div class="container">
+      <div class="nav ">
+        <el-input
+          class="search"
+          v-model="search"
+          placeholder="输入相册名搜索"
+          prefix-icon="el-icon-search"
+        ></el-input>
+        <div class="right">
+          <el-button class="to-template" type="text" @click="$router.push('/')">
+            模板页</el-button
+          >
+          <el-dropdown @command="handleCommand">
+            <img class="avatar" src="@/assets/cc.jpg" />
+            <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item command="mine">我的信息</el-dropdown-item>
+              <el-dropdown-item command="homepage">个人中心</el-dropdown-item>
+              <el-dropdown-item command="logout">登出</el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
         </div>
       </div>
-    </div>
-    <div class="content" v-loading="reviewLoading">
-      <el-tabs v-model="tab" @tab-click="handleTabClick">
-        <el-tab-pane label="我的设计" name="design">
-          <div class="album-list">
-            <album
-              v-for="(album, i) in albumListFilter"
-              :src="album.cover_url"
-              :name="album.name"
-              :theme="getThemeName(album.tid)"
-              :count="album.count"
-              :has-delete="true"
-              :isfavor="favorAids && favorAids.includes(album.aid)"
-              :ish5="service === 'h5'"
-              :key="i"
-              @review="toReview(album.aid)"
-              @todesign="toDesign(album.aid)"
-              @heartclick="handleHeartClick($event, album.aid)"
-              @delete="deleteAlbum(album.aid)"
-            ></album>
+      <div class="head banner">
+        <!-- <img class="banner" :src="userInfo.bg_url" alt="" /> -->
+        <div class="info">
+          <el-image class="avatar" :src="userInfo.avatar_url"></el-image>
+          <div class="words">
+            <span class="nickname">{{ userInfo.nickname }}</span> <br />
+            <span class="signature">{{ userInfo.signature }}</span>
           </div>
-        </el-tab-pane>
-        <el-tab-pane label="喜欢" name="favor">
-          <div class="album-list">
-            <album
-              v-for="(album, i) in favorList"
-              :src="album.cover_url"
-              :name="album.name"
-              :theme="getThemeName(album.tid)"
-              :count="album.count"
-              :isfavor="favorAids && favorAids.includes(album.aid)"
-              :ish5="service === 'h5'"
-              :key="i"
-              @review="toReview(album.aid)"
-              @todesign="toDesign(album.aid)"
-              @heartclick="handleHeartClick($event, album.aid)"
-            ></album>
-          </div>
-        </el-tab-pane>
-      </el-tabs>
+        </div>
+      </div>
+      <div class="content" v-loading="reviewLoading">
+        <el-tabs v-model="tab" @tab-click="handleTabClick">
+          <el-tab-pane label="我的设计" name="design">
+            <div class="album-list">
+              <album
+                v-for="(album, i) in albumListFilter"
+                :src="album.cover_url"
+                :name="album.name"
+                :theme="getThemeName(album.tid)"
+                :count="album.count"
+                :has-delete="true"
+                :isfavor="favorAids && favorAids.includes(album.aid)"
+                :ish5="service === 'h5'"
+                :key="i"
+                @review="toReview(album.aid)"
+                @todesign="toDesign(album.aid)"
+                @heartclick="handleHeartClick($event, album.aid)"
+                @delete="deleteAlbum(album.aid)"
+              ></album>
+            </div>
+          </el-tab-pane>
+          <el-tab-pane label="喜欢" name="favor">
+            <div class="album-list">
+              <album
+                v-for="(album, i) in favorList"
+                :src="album.cover_url"
+                :name="album.name"
+                :theme="getThemeName(album.tid)"
+                :count="album.count"
+                :isfavor="favorAids && favorAids.includes(album.aid)"
+                :ish5="service === 'h5'"
+                :key="i"
+                @review="toReview(album.aid)"
+                @todesign="toDesign(album.aid)"
+                @heartclick="handleHeartClick($event, album.aid)"
+              ></album>
+            </div>
+          </el-tab-pane>
+        </el-tabs>
+      </div>
     </div>
+
     <!-- 预览弹窗 -->
     <review
       :data-list="reviewList"
@@ -291,9 +294,15 @@ export default {
   width: 100vw;
   height: 100vh;
   padding: 20px 4.2rem;
+  .container {
+    padding: 20px;
+    height: 100%;
+    background-image: linear-gradient(45deg, #ececec, #f9f9f9);
+  }
   .nav {
     display: flex;
     justify-content: space-between;
+    margin-bottom: 10px;
     & >>> .search {
       flex: 1;
       border: none;
@@ -301,20 +310,24 @@ export default {
         border: none;
       }
     }
+    .right {
+      width: 90px;
+      text-align: center;
+    }
     .to-template {
       color: #dd8cbb;
     }
     .avatar {
       vertical-align: middle;
       margin-left: 10px;
-      width: 0.8rem;
-      height: 0.8rem;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
     }
   }
   .head {
     width: 100%;
-    height: 7rem;
+    height: 10rem;
     position: relative;
     // background-image: url("../../assets/moon.jpg");
     border-radius: 4px 4px 0 0;
@@ -347,11 +360,12 @@ export default {
         display: inline-block;
         margin-left: 10px;
         text-align: left;
+        color: #fff;
         .nickname {
-          font-size: 14px;
+          font-size: 0.7rem;
         }
         .signature {
-          font-size: 10px;
+          font-size: 0.4rem;
         }
       }
     }
@@ -359,16 +373,14 @@ export default {
   .content {
     .album-list {
       padding: 10px;
-      display: flex;
-      justify-content: start;
-      flex-wrap: wrap;
+      text-align: left;
     }
   }
   & >>> .el-tabs__header {
     margin: 0 10px 15px;
   }
 }
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 768px) {
   .mine {
     padding: 0;
     .nav {
@@ -378,11 +390,13 @@ export default {
         height: 30px;
       }
     }
+    .head {
+      height: 8rem;
+    }
     .content {
       .album-list {
         padding: 0;
-        display: flex;
-        justify-content: space-around;
+        text-align: left;
       }
     }
   }

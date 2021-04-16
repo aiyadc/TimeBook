@@ -1,6 +1,6 @@
 <!--  -->
 <template>
-  <div>
+  <div class="login">
     <login
       :platform="platform"
       :tabList="tabList"
@@ -9,7 +9,8 @@
       @sendvalidcode="sendValidCode"
     >
       <template v-slot:theme>
-        <span class="login-title">登录</span>
+        <img class="diy-img" src="./icons/diy.png" alt="" />
+        <span class="login-title">LOGIN</span>
       </template>
       <template v-slot:qrcode_tips>
         扫一扫二维码登陆更方便~
@@ -107,12 +108,13 @@ export default {
       user
         .login(form)
         .then(res => {
-          console.log("res", res);
           this.$store.commit("SET_UID", res.data.userInfo.uid);
-          console.log("res.data.token :>> ", res.data.token);
           Cookie.setToken(res.data.token);
-          console.log("Cooke.setToken :>> ", Cookie.setToken);
-          this.$router.push("/");
+          if (res.data.userInfo.identity === "admin") {
+            this.$router.push("/identity-select");
+          } else {
+            this.$router.push("/");
+          }
         })
         .catch(err => {
           console.log(err);
@@ -129,7 +131,26 @@ export default {
 };
 </script>
 <style lang="scss" scoped>
+.login {
+  width: 100vw;
+  height: 100vh;
+  background-image: linear-gradient(
+    to top,
+    #fdcbf1 0%,
+    #fdcbf1 1%,
+    #e6dee9 100%
+  );
+}
 .login-title {
   font-size: 27px;
+}
+.diy-img {
+  display: inline-block;
+  width: 64px;
+  vertical-align: middle;
+}
+.login-title {
+  font-size: 32px;
+  vertical-align: text-top;
 }
 </style>

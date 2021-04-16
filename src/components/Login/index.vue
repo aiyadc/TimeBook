@@ -1,5 +1,12 @@
 <template>
   <div id="mulLogin">
+    <iframe
+      id="iframe"
+      src="https://www.17sucai.com/preview/1424582/2019-12-30/qp/index.html"
+      frameborder="0"
+      width="100%"
+      height="100%"
+    ></iframe>
     <div id="lgBox" :style="boxStyle">
       <div class="loginmode" v-if="features.indexOf('qrcode') !== -1">
         <a
@@ -490,7 +497,6 @@ export default {
   z-index: 999;
   width: 100%;
   height: 100%;
-  background-color: #ffffff;
 }
 #lgBox {
   position: absolute;

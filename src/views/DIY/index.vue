@@ -2091,7 +2091,7 @@ export default {
   padding: 0 10px;
   .nav-right {
     span:nth-child(n) {
-      @media screen and (max-width: 700px) {
+      @media screen and (max-width: 768px) {
         display: none;
       }
     }
@@ -2102,7 +2102,7 @@ export default {
   height: calc(100vh - 1.7rem);
   overflow: hidden;
   display: flex;
-  @media screen and (max-width: 700px) {
+  @media screen and (max-width: 768px) {
     flex-direction: column-reverse;
   }
   // 左边导航栏
@@ -2137,7 +2137,7 @@ export default {
             // overflow-x: auto;
           }
         }
-        @media screen and (max-width: 700px) {
+        @media screen and (max-width: 768px) {
           & >>> .el-tabs__header {
             margin: 0;
             .el-tabs__nav-wrap {
@@ -2269,7 +2269,7 @@ export default {
       transform: translate(-50%, -50%);
       width: fit-content;
       height: fit-content;
-      @media screen and (max-width: 700px) {
+      @media screen and (max-width: 768px) {
         width: 100%;
         height: 100%;
       }
@@ -2554,7 +2554,7 @@ export default {
 .h5 {
   display: none;
 }
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 768px) {
   .diy {
     .h5 {
       display: inline-block;

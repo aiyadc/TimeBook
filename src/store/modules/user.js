@@ -29,9 +29,8 @@ export default {
           userRequest
             .getUserInfo(token)
             .then(res => {
-              console.log("res.data :>> ", res.data);
               commit("SET_UID", res.data.uid);
-              console.log("reset uid :>> ", state.uid);
+              localStorage.setItem("uid", res.data.uid);
               commit("SET_ISVIP", res.data.isvip);
               commit("SET_IDENTITY", res.data.identity);
               resolve(res);

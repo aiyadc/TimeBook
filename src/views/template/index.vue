@@ -212,17 +212,10 @@ export default {
   },
   created() {
     this.init();
-    console.log("this.$store.state.user.uid :>> ", this.$store.state.user.uid);
-    console.log("dom.debounce :>> ", this.getNextPage());
   },
   mounted() {
     this.debounce = dom.debounce(this.getNextPage, 50);
-    console.log(
-      "this.$store.state.user.uid :>> ",
-      this.$store.state.user.uid,
-      this.uid
-    );
-    console.log("this.service :>> ", this.service);
+    console.log("this.identity :>> ", this.identity);
   },
 
   methods: {
@@ -405,15 +398,19 @@ export default {
           this.$router.push("mine");
           break;
         case "toggleIdentity":
-          //   this.$router.push("mine");
+          if (this.identity === "user") {
+            this.$store.commit("SET_IDENTITY", "admin");
+            this.$router.push("/diy-manage");
+          } else {
+            this.$store.commit("SET_IDENTITY", "user");
+            this.$router.push("/");
+          }
           break;
         case "logout":
           this.$store.dispatch("LOGOUT");
           break;
       }
     },
-    // 切换身份
-    toggleIdentity() {},
     // 获取主题名字
     getThemeName(tid) {
       let theme = this.themeOptions.find(theme => theme.tid == tid) || {};
@@ -575,7 +572,7 @@ export default {
   font-size: 12px;
   color: #7d8c87;
 }
-@media screen and (max-width: 700px) {
+@media screen and (max-width: 768px) {
   .head {
     background-color: #fff;
     text-align: left;

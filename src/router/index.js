@@ -1,6 +1,4 @@
 import Vue from "vue";
-import userRequest from "@/api/user.js";
-import Cookies from "js-cookie";
 import Router from "vue-router";
 import store from "../store";
 Vue.use(Router);
@@ -11,6 +9,10 @@ const router = new Router({
       path: "/",
       name: "Home",
       component: () => import("@/views/template/index.vue")
+    },
+    {
+      path: "/identity-select",
+      component: () => import("@/views/identityToggle.vue")
     },
     {
       path: "/diy",
@@ -80,19 +82,15 @@ const router = new Router({
 
 router.beforeEach((to, from, next) => {
   const publicURL = ["/login"];
-  console.log("store.state.user.uid :>> ", store.state.user.uid);
   if (publicURL.includes(to.path)) {
     next();
   } else {
     if (store.state.user.uid != 0) {
       next();
     } else {
-      console.log("需要重置uid");
-      console.log("promise:", store.dispatch("getUserInfo"));
       store
         .dispatch("getUserInfo")
         .then(() => {
-          console.log("reset store.state.user.uid :>> ", store.state.user.uid);
           next();
         })
         .catch(() => {
