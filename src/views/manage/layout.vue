@@ -51,15 +51,7 @@
             />
             <span class="title">{{ getCurrentTab() }}</span>
           </div>
-          <div>
-            <el-dropdown @command="handleCommand">
-              <img class="avatar" src="@/assets/cc.jpg" />
-              <el-dropdown-menu slot="dropdown">
-                <el-dropdown-item command="homepage">个人中心</el-dropdown-item>
-                <el-dropdown-item command="logout">登出</el-dropdown-item>
-              </el-dropdown-menu>
-            </el-dropdown>
-          </div>
+          <Avatar></Avatar>
         </div>
         <!-- 右侧内容部分，对接各子页面 -->
         <div class="content">
@@ -71,8 +63,11 @@
 </template>
 
 <script>
+import Avatar from "@/components/Avatar.vue";
 export default {
-  components: {},
+  components: {
+    Avatar
+  },
 
   data() {
     return {
@@ -188,7 +183,10 @@ export default {
       console.log("command :>> ", command);
       switch (command) {
         case "homepage":
-          this.$router.push("mine");
+          this.$router.push("/mine");
+          break;
+        case "toggleIdentity":
+          this.$router.push("/template");
           break;
         case "logout":
           this.$store.dispatch("LOGOUT");
@@ -231,13 +229,6 @@ export default {
         width: 24px;
         margin-right: 10px;
         vertical-align: middle;
-      }
-      .avatar {
-        vertical-align: middle;
-        margin-left: 10px;
-        width: 0.8rem;
-        height: 0.8rem;
-        border-radius: 50%;
       }
     }
     .content {

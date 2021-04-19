@@ -10,26 +10,57 @@
           prefix-icon="el-icon-search"
         ></el-input>
         <div class="right">
-          <el-button class="to-template" type="text" @click="$router.push('/')">
+          <el-button
+            class="to-template"
+            type="text"
+            @click="$router.push('/template')"
+          >
             模板页</el-button
           >
-          <el-dropdown @command="handleCommand">
-            <img class="avatar" src="@/assets/cc.jpg" />
-            <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item command="mine">我的信息</el-dropdown-item>
-              <el-dropdown-item command="homepage">个人中心</el-dropdown-item>
-              <el-dropdown-item command="logout">登出</el-dropdown-item>
-            </el-dropdown-menu>
-          </el-dropdown>
+          <avatar></avatar>
         </div>
       </div>
-      <div class="head banner">
-        <!-- <img class="banner" :src="userInfo.bg_url" alt="" /> -->
+      <div class="head">
         <div class="info">
-          <el-image class="avatar" :src="userInfo.avatar_url"></el-image>
-          <div class="words">
-            <span class="nickname">{{ userInfo.nickname }}</span> <br />
-            <span class="signature">{{ userInfo.signature }}</span>
+          <div class="header">
+            <div class="left">
+              <span class="nickname">{{ userInfo.nickname }}</span
+              ><br />
+              <span class="signature">个性签名：{{ userInfo.signature }}</span>
+            </div>
+            <div class="right">
+              <el-button type="default" size="small">编辑</el-button>
+            </div>
+          </div>
+          <hr />
+          <div class="content">
+            <div class="left">
+              <div class="design">
+                <span class="count">{{ albumList.length }}</span
+                ><br />
+                <span class="label">设计</span>
+              </div>
+              <div class="favor">
+                <span class="count">{{ favorList.length }}</span
+                ><br />
+                <span class="label">收藏</span>
+              </div>
+              <div class="base-info">
+                <p>
+                  <span>邮箱：</span><span>{{ userInfo.mail }}</span>
+                </p>
+                <p>
+                  <span>手机号：</span><span>{{ userInfo.mobile }}</span>
+                </p>
+                <p>
+                  <span>我的地址：</span><span>{{ userInfo.address }}</span>
+                </p>
+              </div>
+            </div>
+            <div class="right">
+              <el-image class="avatar" :src="userInfo.avatar_url"></el-image><br>
+              <span>头像</span>
+            </div>
           </div>
         </div>
       </div>
@@ -92,10 +123,13 @@ import themeRequest from "@/api/theme.js";
 import userRequest from "@/api/user.js";
 import Album from "@/components/Album/index.vue";
 import Review from "@/components/Review/index.vue";
+import Avatar from "@/components/Avatar";
+import reverse from "@/utils/reverse.js";
 export default {
   components: {
     Album,
-    Review
+    Review,
+    Avatar
   },
 
   data() {
@@ -127,6 +161,9 @@ export default {
     service() {
       return this.$store.state.platform;
     },
+    identity() {
+      return this.$store.state.user.identity;
+    },
     albumListFilter() {
       return this.albumList.filter(album => {
         let theme = this.themeList.find(theme => theme.tid == album.tid);
@@ -138,15 +175,15 @@ export default {
     }
   },
   watch: {
-    "userInfo.bg_url": {
-      handler(val) {
-        console.log("val :>> ", val);
-        if (this.banner) {
-          this.banner.style.backgroundImage = `url(${val})`;
-        }
-      },
-      immediate: true
-    }
+    // "userInfo.bg_url": {
+    //   handler(val) {
+    //     console.log("val :>> ", val);
+    //     if (this.banner) {
+    //       this.banner.style.backgroundImage = `url(${val})`;
+    //     }
+    //   },
+    //   immediate: true
+    // }
   },
   created() {
     console.log("Review :>> ", Review);
@@ -155,12 +192,6 @@ export default {
   },
   mounted() {
     this.banner = document.getElementsByClassName("head")[0];
-    // console.dir(this.banner);
-    // console.log(
-    //   "banner.style.backgroundImage :>> ",
-    //   this.banner.style.backgroundImage
-    // );
-    // this.banner.style.backgroundImage = `url(${this.userInfo.bg_url})`;
   },
   methods: {
     handleTabClick(tab) {
@@ -228,25 +259,11 @@ export default {
         this.favorAids = this.favorAids || [];
       });
     },
-    // 处理头像下拉项点击事件
-    handleCommand(command) {
-      console.log("command :>> ", command);
-      switch (command) {
-        case "mine":
-          this.$router.push("mine");
-          break;
-        case "homepage":
-          this.$router.push("mine");
-          break;
-        case "logout":
-          this.$store.dispatch("LOGOUT");
-      }
-    },
     // 进入设计
     toDesign(aid) {
       this.$router.push({
         name: "diy",
-        params: { aid }
+        params: { aid: reverse.encrypt(aid) }
       });
     },
     // 收藏或取消收藏
@@ -293,79 +310,98 @@ export default {
 .mine {
   width: 100vw;
   height: 100vh;
-  padding: 20px 4.2rem;
   .container {
     padding: 20px;
     height: 100%;
-    background-image: linear-gradient(45deg, #ececec, #f9f9f9);
+    // background-image: linear-gradient(45deg, #ececec, #f9f9f9);
   }
   .nav {
     display: flex;
     justify-content: space-between;
     margin-bottom: 10px;
+  
     & >>> .search {
       flex: 1;
       border: none;
+      .el-input__prefix {
+        display: inline-block;
+        height: 40px;
+      }
       input {
         border: none;
       }
     }
     .right {
-      width: 90px;
+      width: calc(1rem + 70px);
       text-align: center;
     }
     .to-template {
       color: #dd8cbb;
     }
-    .avatar {
-      vertical-align: middle;
-      margin-left: 10px;
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-    }
   }
   .head {
     width: 100%;
-    height: 10rem;
     position: relative;
     // background-image: url("../../assets/moon.jpg");
     border-radius: 4px 4px 0 0;
     background-position: 50%;
     background-size: cover;
     background-repeat: no-repeat;
-    // .banner {
-    //   width: 100%;
-    //   height: 100%;
-    //   border-radius: 4px 4px 0 0;
-    //   background-position: 50%;
-    //   background-size: cover;
-    //   background-repeat: no-repeat;
-    // }
+
     .info {
-      position: absolute;
-      left: 20px;
-      bottom: 20px;
-      display: flex;
-      align-items: center;
+      display: inline-block;
+      width: 100%;
+      padding:  10px;
       text-align: left;
-      .avatar {
-        width: 4rem;
-        height: 4rem;
-        border-radius: 50%;
-        vertical-align: middle;
-        display: inline-block;
-      }
-      .words {
-        display: inline-block;
-        margin-left: 10px;
-        text-align: left;
-        color: #fff;
-        .nickname {
-          font-size: 0.7rem;
+      border: 1px solid #e9bdbd;
+      .header {
+        display: flex;
+        padding: 0 10px;
+        justify-content: space-between;
+        align-items: center;
+        .left {
+          .nickname {
+            font-size: 0.7rem;
+            font-weight: 600;
+            line-height: calc(1rem + 8px);
+            margin-right: 10px;
+            vertical-align: baseline;
+          }
+          .signature {
+            font-size: 0.4rem;
+            vertical-align: baseline;
+          }
         }
-        .signature {
-          font-size: 0.4rem;
+      }
+      .content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        .left {
+          text-align: left;
+          .design,
+          .favor {
+            display: inline-block;
+            width: 2rem;
+            height: 2rem;
+            text-align: center;
+            line-height: 1rem;
+            border-right: 1px solid #8c7b7b;
+            font-size: 0.6rem;
+          }
+          .base-info {
+            margin-top: 20px;
+            font-size: 0.5rem;
+          }
+        }
+        .right {
+          margin-right: 20px;
+          text-align: center;
+          .avatar {
+            width: 6rem;
+            height: 6rem;
+            vertical-align: top;
+          }
         }
       }
     }
@@ -383,16 +419,6 @@ export default {
 @media screen and (max-width: 768px) {
   .mine {
     padding: 0;
-    .nav {
-      .avatar {
-        margin-left: 0;
-        width: 30px;
-        height: 30px;
-      }
-    }
-    .head {
-      height: 8rem;
-    }
     .content {
       .album-list {
         padding: 0;

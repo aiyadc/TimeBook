@@ -3,24 +3,32 @@
   <div class="diy">
     <!-- 顶部工具栏 -->
     <div class="nav">
-      <div class="nav-left"><p>DIY</p></div>
+      <div class="nav-left">
+        <el-button
+          class="back-icon"
+          type="default"
+          icon="el-icon-d-arrow-left"
+          size="small"
+          @click="$router.go(-1)"
+        >返回</el-button>
+      </div>
       <div class="nav-right">
         <el-button type="text" size="small" circle>
           <i class="el-icon-share"></i><span>分享</span>
         </el-button>
-        <el-button
-          type="text"
-          size="small"
-          circle
-          @click="reviewAlbum"
-          v-loading="saveAlbumLoading"
-        >
+        <el-button type="text" size="small" circle @click="reviewAlbum">
           <i class="el-icon-view"></i><span>预览</span></el-button
         >
         <el-button type="text" size="small" @click="toSort" circle>
           <i class="el-icon-sort"></i><span>排序</span></el-button
         >
-        <el-button type="text" size="small" @click="saveMyAlbum" circle>
+        <el-button
+          type="text"
+          size="small"
+          @click="saveMyAlbum"
+          circle
+          v-loading="saveAlbumLoading"
+        >
           <i class="el-icon-finished"></i><span>保存</span></el-button
         >
         <el-button type="text" size="small" circle @click="resetSize">
@@ -104,7 +112,7 @@
                       crossOrigin="Anonymous"
                       :src="d.src"
                       :preview-src-list="[d.src]"
-                      fit="content"
+                      fit="contain"
                       @dragstart="dragstart"
                       @touchend="setOnCanvas($event)"
                     />
@@ -176,9 +184,10 @@
                     :tabindex="i"
                   >
                     <el-image
+                      class="pic-container"
                       :src="m.src"
-                      :preview-src-list="[m.src]"
                       :draggable="service == 'pc' ? true : false"
+                      fit="contain"
                       crossOrigin="Anonymous"
                       @dragstart="dragstart"
                       @touchstart="calcTimeStart"
@@ -187,7 +196,10 @@
                     />
                   </el-checkbox>
                 </el-checkbox-group>
-                <div class="empty-tips" v-else>未选择目录或此目录没有照片~</div>
+                <div class="empty-tips" v-else>
+                  <img src="./icons/empty.svg" />
+                  未选择目录或此目录没有照片~
+                </div>
               </div>
             </el-tab-pane>
             <!-- 文案选择 -->
@@ -619,6 +631,7 @@ import decorationRequest from "@/api/decoration.js";
 import albumRequest from "@/api/album.js";
 import Folder from "./components/folder.vue";
 import Review from "@/components/Review/index.vue";
+import reverse from "@/utils/reverse.js";
 export default {
   components: {
     Folder,
@@ -682,11 +695,12 @@ export default {
       textColorFlag: "textColor", // textColor or textBGColor
       textColor: "rgba(1, 1, 1, 1)",
       fontFamily: "",
-      _config: {
-        undoStatus: false,
-        redoStatus: false,
-        currentStateIndex: 0,
-        canvasState: []
+      modification: {
+        isUndoing: 0,
+        isRedoing: 0,
+        currentStateIndex: -1,
+        canvasState: [],
+        modifiedTime: 0
       },
       // search
       search: {
@@ -745,7 +759,9 @@ export default {
       dCollapse: ["1"],
       tCollapse: ["1"],
       // Loading
-      saveAlbumLoading: false
+      saveAlbumLoading: false,
+      // router path
+      routerPath: { to: "", from: "" }
     };
   },
 
@@ -765,7 +781,7 @@ export default {
     }
   },
   created() {
-    this.aid = this.$route.params.aid;
+    this.aid = reverse.decrypt(this.$route.params.aid);
     console.log("this.aid :>> ", this.aid);
     this.uploadURL = process.env.BASE_API + "/decoration/upload";
     let u = navigator.userAgent;
@@ -791,16 +807,10 @@ export default {
     });
     // Fastclick.attach(document.body);
   },
-  beforeDestroy() {
-    inobounce.disable();
+  destroyed() {
+    window.onbeforeunload = null;
   },
   mounted() {
-    this._config = {
-      canvasState: [],
-      currentStateIndex: -1,
-      isUndoing: 0,
-      isRedoing: 0
-    };
     let draw = document.getElementsByClassName("draw")[0];
     let toolContainer = document.getElementsByClassName("tool")[0];
     let height = draw.clientHeight;
@@ -840,8 +850,6 @@ export default {
       this.initDIY();
     }
     this.canvas.on("drop", e => {
-      console.log("drop:", e);
-      console.log("object :>> ", this.dragObject.localName);
       let offsetX = e.e.offsetX;
       let offsetY = e.e.offsetY;
       if (this.dragObject && offsetX > 0 && offsetY > 0) {
@@ -872,7 +880,6 @@ export default {
           this.layer.push(item);
         }
         this.canvas.renderAll();
-        console.log("this.canvas :>> ", this.canvas);
       }
     });
     this.canvas.on("object:modified", e => {
@@ -1052,6 +1059,55 @@ export default {
           break;
       }
     });
+    // 页面离开提示
+    window.onbeforeunload = e => {
+      console.log("-------即将离开提示", this.modification.modifiedTime);
+      if (this.modification.modifiedTime !== 0) {
+        e = e || window.event;
+
+        // 兼容IE8和Firefox 4之前的版本
+        if (e) {
+          e.returnValue = "关闭提示";
+        }
+      }
+      // Chrome, Safari, Firefox 4+, Opera 12+ , IE 9+
+      return "关闭提示";
+    };
+    console.log(
+      "this.modification.modifiedTime :>> ",
+      this.modification.modifiedTime
+    );
+  },
+  beforeRouteLeave(to, from, next) {
+    if (this.modification.modifiedTime !== 0) {
+      const saveTip = confirm("您的作品尚未保存，是否要保存呢");
+      if (saveTip) {
+        this.saveMyAlbum();
+        next();
+      } else {
+        next();
+      }
+    } else {
+      next();
+    }
+    this.unSaveTipDia = true;
+
+    //   this.$confirm("是否保存您对画布的更改？", "提示", {
+    //     confirmButtonText: "保存",
+    //     cancelButtonText: "并不",
+    //     type: "warning",
+    //     closeOnClickModal: false,
+    //     closeOnPressEscape:false,
+    //     cusstomClass:'inline-block'
+    //   })
+    //     .then(() => {
+    //       this.saveMyAlbum();
+    //       next();
+    //     })
+    //     .catch(() => {
+    //       next();
+    //     });
+    // }
   },
   methods: {
     // 重置canvas大小
@@ -1238,6 +1294,10 @@ export default {
     },
     // 添加素材
     addMaterial() {
+      if (this.folderid == 0) {
+        this.$message.warning("请先选择要上传的目录或新建目录");
+        return;
+      }
       this.uploadDia = true;
     },
     // 将点击的图片设为选中：单选模式
@@ -1335,7 +1395,7 @@ export default {
               obj.width = 94;
               obj.height = 90;
               obj.src = (src + "").replace(/^data:image\/\w+;base64,/, "");
-              obj.mlid = this.mlid;
+              obj.mlid = this.folderid;
               imgData.push(obj);
               canvas.clear();
               if (index == this.fileList.length - 1) {
@@ -1348,8 +1408,8 @@ export default {
         }).then(imgData => {
           this.uploadDia = false;
           material.uploadMore({ data: imgData }).then(res => {
-            console.log("this.mlid :>> ", this.mlid);
-            material.getMaterials(this.mlid).then(res => {
+            console.log("this.folderid :>> ", this.folderid);
+            material.getMaterials(this.folderid).then(res => {
               this.materialList = res.data;
             });
           });
@@ -1476,6 +1536,7 @@ export default {
         .then(res => {
           this.$message.success("保存成功");
           this.saveAlbumLoading = false;
+          this.modification.modifiedTime = 0;
         })
         .catch(() => {
           this.saveAlbumLoading = false;
@@ -1515,27 +1576,30 @@ export default {
     // updateCanvasState
     updateCanvasState() {
       console.log("更新视图");
-      if (!this._config.isUndoing && !this._config.isRedoing) {
+      if (!this.modification.isUndoing && !this.modification.isRedoing) {
         var jsonData = this.canvas.toJSON();
         var canvasAsJson = JSON.stringify(jsonData);
         if (
-          this._config.currentStateIndex <
-          this._config.canvasState.length - 1
+          this.modification.currentStateIndex <
+          this.modification.canvasState.length - 1
         ) {
           // 在撤销过程中，如果有进行更改，那么撤销所在的那一步之后的将会被清空
-          var InsertedIndedx = this._config.currentStateIndex + 1;
-          this._config.canvasState[InsertedIndedx] = canvasAsJson;
-          this._config.canvasState = this._config.canvasState.splice(
+          var InsertedIndedx = this.modification.currentStateIndex + 1;
+          this.modification.canvasState[InsertedIndedx] = canvasAsJson;
+          this.modification.canvasState = this.modification.canvasState.splice(
             0,
             InsertedIndedx + 1
           );
         } else {
           //如果没在撤销给过程中则直接push进去即可
-          this._config.canvasState.push(canvasAsJson);
+          this.modification.canvasState.push(canvasAsJson);
         }
         // 无论什么情况，只要做了改变，那么当前指针就会跑到最前面
-        this._config.currentStateIndex = this._config.canvasState.length - 1;
+        this.modification.currentStateIndex =
+          this.modification.canvasState.length - 1;
       }
+      // 更新变动次数
+      this.modification.modifiedTime += 1;
       // 更新图层视图
       this.layer = [];
       this.canvas.forEachObject(o => {
@@ -1553,14 +1617,16 @@ export default {
     getObjects(canvas) {},
     // 撤销
     undo() {
-      let cf = this._config;
-      if (cf.currentStateIndex < 1) return void 0;
+      let mf = this.modification;
+      if (mf.currentStateIndex < 1) return void 0;
       else {
-        cf.isUndoing = 1;
-        cf.currentStateIndex -= 1;
-        this.canvas.loadFromJSON(cf.canvasState[cf.currentStateIndex], () => {
+        // 更新变更次数
+        mf.modifiedTime -= 1;
+        mf.isUndoing = 1;
+        mf.currentStateIndex -= 1;
+        this.canvas.loadFromJSON(mf.canvasState[mf.currentStateIndex], () => {
           this.canvas.renderAll();
-          cf.isUndoing = 0;
+          mf.isUndoing = 0;
           // 更新相册视图，方法是把前一个视图删除掉，然后用限制的视图作为替换，使用splice可以让vue监听到变化，进行响应式交互
           let page = this.myAlbum.data[this.currentPage];
           console.log("page :>> ", page);
@@ -1573,13 +1639,14 @@ export default {
     },
     // 恢复
     async redo() {
-      let cf = this._config;
-      if (cf.currentStateIndex < cf.canvasState.length - 1) {
-        cf.isRedoing = 1;
-        cf.currentStateIndex += 1;
-        this.canvas.loadFromJSON(cf.canvasState[cf.currentStateIndex], () => {
+      let mf = this.modification;
+      if (mf.currentStateIndex < mf.canvasState.length - 1) {
+        mf.modifiedTime += 1;
+        mf.isRedoing = 1;
+        mf.currentStateIndex += 1;
+        this.canvas.loadFromJSON(mf.canvasState[mf.currentStateIndex], () => {
           this.canvas.renderAll();
-          cf.isRedoing = 0;
+          mf.isRedoing = 0;
           // this.updateCanvasState()
         });
       }
@@ -1765,9 +1832,12 @@ export default {
       if (this.currentPage === ctx.index) return;
       console.log("换页");
       // 重置状态，由于在创建画布的时候初始化了一个状态，所以所以回到这个状态
-      this._config.canvasState = this._config.canvasState.slice(0, 1);
-      if (this._config.canvasState.length > 1) {
-        this._config.canvasState = this._config.canvasState.slice(0, 1);
+      this.modification.canvasState = this.modification.canvasState.slice(0, 1);
+      if (this.modification.canvasState.length > 1) {
+        this.modification.canvasState = this.modification.canvasState.slice(
+          0,
+          1
+        );
       }
       this.myAlbum.data[this.currentPage].canvas = this.canvas.toJSON();
       let canvasJSON = ctx.canvas;
@@ -2089,6 +2159,11 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 0 10px;
+  .nav-left{
+    .back-icon{
+      background-color: inherit;
+    }
+  }
   .nav-right {
     span:nth-child(n) {
       @media screen and (max-width: 768px) {
@@ -2108,6 +2183,7 @@ export default {
   // 左边导航栏
   .materials {
     width: 10rem;
+    max-width: 345px;
     height: 100%;
     background-color: #fff;
     position: relative;
@@ -2166,7 +2242,7 @@ export default {
       }
       .material-search,
       .decoration-search {
-        width: 180px;
+        width: 100%;
       }
     }
     .m-content,
@@ -2179,8 +2255,8 @@ export default {
       .m-checkbox {
         & >>> .el-checkbox {
           cursor: pointer;
-          width: 100px;
-          height: 110px;
+          width: 76px;
+          height: 70px;
           text-align: center;
           display: inline-block;
           box-sizing: border-box;
@@ -2189,18 +2265,22 @@ export default {
           position: relative;
           .el-checkbox__label {
             padding-left: 0;
+            width: 100%;
+            height: 100%;
           }
           .el-checkbox__input {
             position: absolute;
             bottom: 20px;
             right: 5px;
-            img {
-              // pointer-events: none;
-            }
+          }
+          .pic-container {
+            width: 100%;
+            height: 100%;
           }
           img {
             vertical-align: middle;
           }
+
           .pic-name {
             vertical-align: super;
             width: 60px;
@@ -2212,10 +2292,14 @@ export default {
         }
       }
       .decoration {
-        height: 90px;
-        width: 94px;
+        height: 70px;
+        width: 76px;
         display: inline-block;
         margin: 5px 10px 0 2px;
+        .el-image {
+          width: 100%;
+          height: 100%;
+        }
         cursor: pointer;
         &:focus {
           outline: turquoise 2px solid;

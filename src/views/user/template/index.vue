@@ -1,6 +1,6 @@
 <!-- Home -->
 <template>
-  <div class="home">
+  <div class="home" v-loading="getTempLoading">
     <div class="head">
       <div class="header">
         <img class="logo" src="@/assets/logo.png" v-if="service == 'pc'" />
@@ -37,32 +37,24 @@
 
           <i class="el-icon-plus create" @click="handleAddClick" v-else> </i>
           <!-- 头像 -->
-          <el-dropdown @command="handleCommand">
-            <img class="avatar" src="@/assets/cc.jpg" />
-            <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item command="mine">个人中心</el-dropdown-item>
-              <el-dropdown-item command="toggleIdentity"
-                >切换身份</el-dropdown-item
-              >
-              <el-dropdown-item command="logout">登出</el-dropdown-item>
-            </el-dropdown-menu>
-          </el-dropdown>
+          <avatar></avatar>
         </div>
       </div>
       <ul class="theme-list">
         <span v-if="service == 'pc'">分类：</span>
+        <li tabindex="-1" @click="handleThemeClick(0, 0)">全部</li>
         <li
-          v-for="(theme, i) in themeList"
+          v-for="(theme, i) in themeOptions"
           :key="i"
           :tabindex="i"
-          @click="handleThemeClick(theme.tid, i)"
+          @click="handleThemeClick(theme.tid, i + 1)"
         >
           {{ theme.name }}
         </li>
       </ul>
     </div>
-    <div class="album-list" @scroll="handleScroll" v-loading="getTempLoading">
-      <p class="loading-show" v-if="getTempLoading">加载中...</p>
+    <div class="album-list" @scroll="handleScroll">
+      <p class="loading-show h5" v-if="getTempLoading">加载中...</p>
       <album
         class="album"
         v-for="(album, i) in albumList"
@@ -160,10 +152,12 @@ import albumRequest from "@/api/album.js";
 import favorRequest from "@/api/favor.js";
 import Album from "@/components/Album/index.vue";
 import Review from "@/components/Review/index.vue";
+import Avatar from "@/components/Avatar";
 export default {
   components: {
     Album,
-    Review
+    Review,
+    Avatar
   },
   data() {
     return {
@@ -191,6 +185,7 @@ export default {
       // Loading
       createLoading: false,
       getTempLoading: false,
+      pageloading: false,
       pagination: {
         currentPage: 1,
         pageSize: 20,
@@ -215,7 +210,11 @@ export default {
   },
   mounted() {
     this.debounce = dom.debounce(this.getNextPage, 50);
-    console.log("this.identity :>> ", this.identity);
+    this.$nextTick(() => {
+      const themeList = document.getElementsByClassName("theme-list")[0];
+      const li0 = themeList.getElementsByTagName("li")[0];
+      li0.classList.add("selected");
+    });
   },
 
   methods: {
@@ -235,17 +234,6 @@ export default {
     getThemeList() {
       themeRequest.fetchThemes().then(res => {
         this.themeOptions = res.data;
-        console.log("themeOptions :>> ", this.themeOptions);
-        this.themeList = Array.from(res.data);
-        // this.themeList.forEach();
-        // let count = res.data.reduce((pre, cur) => {
-        //   return pre + cur.count;
-        // }, 0);
-        this.themeList.unshift({
-          tid: 0,
-          name: "全部"
-          //   count: count
-        });
       });
     },
     // PC端：根据页数获取模板相册列表
@@ -280,11 +268,9 @@ export default {
           this.albumList = this.albumList.concat(res.data);
           this.getTempLoading = false;
           this.pagination.tpid = this.albumList[this.albumList.length - 1].tpid;
-          console.log("this.tpid :>> ", this.tpid);
           this.$nextTick(() => {
             let albumEleList = document.getElementsByClassName("album");
             this.lastAlbum = albumEleList[albumEleList.length - 1] || null;
-            console.log("this.lastAlbum :>> ", this.lastAlbum);
           });
         })
         .catch(() => {
@@ -294,7 +280,9 @@ export default {
     // 获取收藏列表
     getFavorList() {
       favorRequest.getFavorList(this.uid).then(res => {
-        this.favorList = res.data;
+        this.favorList = res.data.map(album => {
+          return album.aid;
+        });
       });
     },
     // 搜索
@@ -317,8 +305,6 @@ export default {
             return;
           }
           this.createLoading = true;
-          console.log("this.albumForm :>> ", this.albumForm);
-          console.log("this.uid :>> ", this.uid);
           albumRequest
             .createAlbum(this.albumForm, this.uid)
             .then(res => {
@@ -352,13 +338,19 @@ export default {
     },
     // 获取相册预览列表
     toReview(aid) {
-      albumRequest.getReviewInfo(aid).then(res => {
-        this.reviewList = res.data.map(item => {
-          return item.src;
+      this.getTempLoading = true;
+      albumRequest
+        .getReviewInfo(aid)
+        .then(res => {
+          this.reviewList = res.data.map(item => {
+            return item.src;
+          });
+          this.getTempLoading = false;
+          this.reviewDia = true;
+        })
+        .catch(() => {
+          this.getTempLoading = false;
         });
-        console.log("this.reviewList :>> ", this.reviewList);
-        this.reviewDia = true;
-      });
     },
     // 关闭预览弹框
     closeReview() {
@@ -375,7 +367,6 @@ export default {
       this.createLoading = true;
       let data = Object.assign({}, this.albumForm);
       delete data.count;
-      console.log("data :>> ", data);
       albumRequest
         .createAlbum(data, this.uid, this.templateID)
         .then(res => {
@@ -389,28 +380,6 @@ export default {
           this.createLoading = false;
         });
     },
-    // 处理头像下拉框事件
-    // todo
-    handleCommand(command) {
-      console.log("command :>> ", command);
-      switch (command) {
-        case "mine":
-          this.$router.push("mine");
-          break;
-        case "toggleIdentity":
-          if (this.identity === "user") {
-            this.$store.commit("SET_IDENTITY", "admin");
-            this.$router.push("/diy-manage");
-          } else {
-            this.$store.commit("SET_IDENTITY", "user");
-            this.$router.push("/");
-          }
-          break;
-        case "logout":
-          this.$store.dispatch("LOGOUT");
-          break;
-      }
-    },
     // 获取主题名字
     getThemeName(tid) {
       let theme = this.themeOptions.find(theme => theme.tid == tid) || {};
@@ -418,6 +387,12 @@ export default {
     },
     // 处理点击主题事件
     async handleThemeClick(tid, index) {
+      const themeList = document.getElementsByClassName("theme-list")[0];
+      let liList = (themeList && themeList.getElementsByTagName("li")) || [];
+      for (let i = 0; i < liList.length; i++) {
+        liList[i].classList.remove("selected");
+        if (i == index) liList[i].classList.add("selected");
+      }
       if (this.tid == tid) return;
       this.tid = tid;
       this.albumList = [];
@@ -426,24 +401,15 @@ export default {
       } else {
         await this.getTemplateListPC(tid);
       }
-      // let themeList = document.getElementsByClassName("theme-list")[0];
-      let liList = document.getElementsByTagName("li");
-      for (let i = 0; i < liList.length; i++) {
-        liList[i].classList.remove("selected");
-        if (i == index) liList[i].classList.add("selected");
-      }
     },
     // 页面改变时触发
     changePage(val) {
-      console.log(val);
       this.currentPage = val;
       this.getTemplateListPC(this.tid, val);
     },
     // 检测最后一本相册的位置，如果到达了边界就拉取下一页的内容
     getNextPage(bottom) {
-      console.log("bottom :>> ", bottom);
       if (bottom > -20 && bottom < 10) {
-        console.log("bottom > -100 了");
         this.pagination.currentPage += 1;
         let params = {};
         params.tid = this.tid;
@@ -460,17 +426,14 @@ export default {
         this.lastAlbum.getBoundingClientRect().bottom -
         albumList.clientHeight -
         100;
-      //   console.log("bottom :>> ", bottom);
       const res = this.debounce(bottom)
         .then(res => {
-          console.log("res.data :>> ", res.data);
           this.albumList = this.albumList.concat(res.data);
           this.pagination.tpid = res.data.tpid;
           this.getTempLoading = false;
           this.$nextTick(() => {
             let albumEleList = document.getElementsByClassName("album");
             this.lastAlbum = albumEleList[albumEleList.length - 1] || null;
-            console.log("this.lastAlbum :>> ", this.lastAlbum);
           });
         })
         .catch(() => {
@@ -481,6 +444,9 @@ export default {
 };
 </script>
 <style lang="scss" scoped>
+.home {
+  height: 100vh;
+}
 .head {
   background-color: #f9c8df;
   text-align: left;
@@ -519,13 +485,6 @@ export default {
         background-color: #8adc97bf;
         vertical-align: middle;
       }
-      .avatar {
-        vertical-align: middle;
-        margin-left: 10px;
-        width: 1rem;
-        height: 1rem;
-        border-radius: 50%;
-      }
     }
   }
   .theme-list {
@@ -560,9 +519,8 @@ export default {
 }
 .album-list {
   padding: 10px;
-  display: flex;
-  justify-content: start;
-  flex-wrap: wrap;
+  text-align: left;
+
   overflow-y: auto;
   .loading-show {
     width: 100vw;
@@ -585,11 +543,11 @@ export default {
           padding: 8px;
           border-radius: 50%;
         }
-        .avatar {
-          margin-left: 0;
-          width: 30px;
-          height: 30px;
-        }
+        // .avatar {
+        //   margin-left: 0;
+        //   width: 30px;
+        //   height: 30px;
+        // }
       }
     }
     .theme-list {
@@ -600,8 +558,6 @@ export default {
     width: 100vw;
     height: calc(100vh - 128px);
     padding: 0;
-    display: flex;
-    justify-content: space-around;
   }
   .home >>> .dia-review {
     width: 100vw;

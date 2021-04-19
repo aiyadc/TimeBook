@@ -1,12 +1,5 @@
 <template>
   <div id="mulLogin">
-    <iframe
-      id="iframe"
-      src="https://www.17sucai.com/preview/1424582/2019-12-30/qp/index.html"
-      frameborder="0"
-      width="100%"
-      height="100%"
-    ></iframe>
     <div id="lgBox" :style="boxStyle">
       <div class="loginmode" v-if="features.indexOf('qrcode') !== -1">
         <a
@@ -112,7 +105,10 @@
                 <!-- <el-button type="primary">发送验证码</el-button> -->
               </el-form-item>
               <div>
-                <div v-loading="loading">
+                <div
+                  v-loading="loading"
+                  element-loading-background="rgba(0, 0, 0, 0.2"
+                >
                   <el-button @click="handleLogin" class="fit-btn" type="danger"
                     >登录</el-button
                   >

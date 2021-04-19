@@ -5,10 +5,10 @@
       <span>相册DIY系统</span>
       <hr />
       <span>您可有如下身份访问本系统，请选择</span><br />
-      <el-button class="long-btn" type="primary" @click="setIdentity('admin')"
+      <el-button class="long-btn" type="primary" @click="toHome('admin')"
         >管理员</el-button
       >
-      <el-button class="long-btn" type="primary" @click="setIdentity('user')"
+      <el-button class="long-btn" type="primary" @click="toHome('user')"
         >用户</el-button
       >
     </div>
@@ -29,16 +29,17 @@ export default {
     }
   },
 
-  mounted() {},
+  mounted() {
+    console.log('this.identity :>> ', this.identity);
+  },
 
   methods: {
     // 切换身份
-    setIdentity(identity) {
-      this.$store.commit("SET_IDENTITY", identity);
+    toHome(identity) {
       if (identity === "admin") {
-        this.$router.replace("/diy-manage");
+        this.$router.replace("/diy-manage/home");
       } else {
-        this.$router.replace("/");
+        this.$router.replace("/template");
       }
     }
   }

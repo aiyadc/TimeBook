@@ -8,7 +8,7 @@
       </div>
       <img class="svg-more" src="../icons/more.svg" @click="showMoreTool" />
     </div>
-    <span class="folder-name">{{ name }}</span>
+    <span class="folder-name ellipsis">{{ name }}</span>
   </div>
 </template>
 

@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-      Home
+      HomeHH
   </div>
 </template>
 
@@ -27,7 +27,7 @@ export default {
 
  },
  mounted(){
-
+   console.log('identity',this.$store.state.user.identity);
  },
  methods:{
 

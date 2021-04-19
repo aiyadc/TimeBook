@@ -5,6 +5,7 @@
       :platform="platform"
       :tabList="tabList"
       ref="login"
+      :loading="loading"
       @login="login"
       @sendvalidcode="sendValidCode"
     >
@@ -32,7 +33,8 @@ export default {
       tabList: [],
       errInfo: null,
       checkLogin: null,
-      rules: {}
+      rules: {},
+      loading: false
     };
   },
 
@@ -104,23 +106,28 @@ export default {
     login(form, ref) {
       //   if (params.account == "eachan" && params.password == "123456")
       //     this.$router.push("/");
-      console.log("form:", form);
+      // console.log("form:", form);
+      this.loading = true;
       user
         .login(form)
         .then(res => {
           this.$store.commit("SET_UID", res.data.userInfo.uid);
+          this.$store.commit("SET_IDENTITY", res.data.userInfo.identity);
+          this.$store.commit("SET_ISVIP", res.data.userInfo.isvip);
           Cookie.setToken(res.data.token);
           if (res.data.userInfo.identity === "admin") {
             this.$router.push("/identity-select");
           } else {
-            this.$router.push("/");
+            this.$router.push("/template");
           }
+          this.loading = false;
         })
         .catch(err => {
           console.log(err);
           this.errInfo = err.data.message;
           this.$refs["login"].$refs[ref][0].validateField("account");
           this.errInfo = null;
+          this.loading = false;
         });
     },
     // 发送验证码
