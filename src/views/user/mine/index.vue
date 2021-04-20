@@ -144,6 +144,7 @@ export default {
       favorAids: [], // 收藏的相册的aid列表
       themeList: [], // 主题列表
       reviewDia: false,
+      // editDia: false,
       reviewList: [], // 预览相册页列表
       reviewLoading: false,
       search: "",
@@ -383,24 +384,24 @@ export default {
           .design,
           .favor {
             display: inline-block;
-            width: 2rem;
-            height: 2rem;
+            width: 2.5rem;
+            height: 1.8rem;
             text-align: center;
             line-height: 1rem;
             border-right: 1px solid #8c7b7b;
-            font-size: 0.6rem;
+            font-size: 0.5rem;
           }
           .base-info {
             margin-top: 20px;
-            font-size: 0.5rem;
+            font-size: 0.4rem;
           }
         }
         .right {
           margin-right: 20px;
           text-align: center;
           .avatar {
-            width: 6rem;
-            height: 6rem;
+            width: 5rem;
+            height: 5rem;
             vertical-align: top;
           }
         }

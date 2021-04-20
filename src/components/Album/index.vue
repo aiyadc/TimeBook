@@ -7,7 +7,7 @@
         <div class="handler">
           <div @click="toDesign">
             <img src="./icons/draw.svg" />
-            <span>设计</span>
+            <span class="to-design">设计</span>
           </div>
           <div @click="toDelete" v-if="hasDelete">
             <img src="./icons/delete.svg" alt="" />
@@ -122,6 +122,10 @@ export default {
       // z-index: 99;
       display: none;
       background-color: rgba(96, 92, 92, 0.6);
+      .to-design {
+        font-size: 14px;
+        color: #e4efde;
+      }
     }
     img {
       width: 4.2rem;

@@ -26,11 +26,10 @@
         <el-button
           type="text"
           size="small"
+          :icon="saveAlbumLoading ? 'el-icon-loading' : 'el-icon-bottom'"
           @click="saveMyAlbum"
-          circle
-          v-loading="saveAlbumLoading"
         >
-          <i class="el-icon-finished"></i><span>保存</span></el-button
+          {{ service == "pc" ? "保存" : "" }}</el-button
         >
         <el-button type="text" size="small" circle @click="resetSize">
           <i class="el-icon-position"></i><span>提交</span></el-button
@@ -271,13 +270,14 @@
                     @click="updateLayer(el)"
                     v-show="!el.show"
                   />
-                  <img
-                    class="mr10-x"
+                  <el-image
+                    class="mr10-x layer-img"
                     :src="el.src"
+                    fit="contain"
                     width="60px"
                     height="30px"
                     :key="i"
-                  />
+                  ></el-image>
                   <i
                     class="el-icon-top tool-icon"
                     @click="setLayerforward(el)"
@@ -870,7 +870,15 @@ export default {
           let text = this.dragObject.innerText;
           let textbox = new fabric.Textbox(text, {
             left: offsetX / this.scale,
-            top: offsetY / this.scale
+            top: offsetY / this.scale,
+            fontSize: 18,
+            lockScalingX: true,
+            lockScalingY: true,
+            lockSkewingX: true,
+            lockSkewingY: true,
+            touchCornerSize: 10,
+            MIN_TEXT_WIDTH: 20,
+            strokeWidth: 20
           });
           this.canvas.add(textbox);
           this.canvas.setActiveObject(textbox);
@@ -955,7 +963,14 @@ export default {
         let textbox = new fabric.Textbox("请输入内容", {
           left: p.x,
           top: p.y,
-          fontSize: 24
+          fontSize: 18,
+          lockScalingX: true,
+          lockScalingY: true,
+          lockSkewingX: true,
+          lockSkewingY: true,
+          touchCornerSize: 10,
+          MIN_TEXT_WIDTH: 20,
+          strokeWidth: 20
         });
         console.log("textbox.fontSize :>> ", textbox.fontSize);
         this.canvas.add(textbox);
@@ -1898,6 +1913,7 @@ export default {
           this.moveFlag = 0;
         } else {
           let target = e.target;
+          console.log("进来了");
           if (target.localName === "img") {
             let img = new fabric.Image(target);
             let scale = this.getScale(img);
@@ -1910,7 +1926,16 @@ export default {
             this.canvas.renderAll();
             // this.setToLayer(img);
           } else if (target.localName === "li") {
-            let text = new fabric.Textbox(target.innerText);
+            let text = new fabric.Textbox(target.innerText, {
+              fontSize: 18,
+              lockScalingX: true,
+              lockScalingY: true,
+              lockSkewingX: true,
+              lockSkewingY: true,
+              touchCornerSize: 10,
+              MIN_TEXT_WIDTH: 20,
+              strokeWidth: 20
+            });
             text.left = (this.canvas.width - text.width) * 0.5;
             text.top = (this.canvas.height - text.height) * 0.5;
             this.canvas.add(text);
@@ -2487,6 +2512,10 @@ export default {
   justify-content: space-around;
   border-bottom: solid 1px #eeeeee;
   padding: 5px;
+  .layer-img {
+    width: 60px;
+    height: 30px;
+  }
 }
 .label {
   font-weight: 700;
