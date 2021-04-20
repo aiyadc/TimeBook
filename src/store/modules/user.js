@@ -1,10 +1,12 @@
 import Cookies from "@/utils/cookie.js";
+import router from "@/router";
 import userRequest from "@/api/user.js";
 export default {
   state: {
     uid: 0,
     isvip: 0,
-    identity: "user"
+    identity: "user",
+    avatar_url: ""
   },
   getters: {},
   mutations: {
@@ -16,6 +18,9 @@ export default {
     },
     SET_IDENTITY(state, val) {
       state.identity = val;
+    },
+    SET_AVATAR_URL(state, val) {
+      state.avatar_url = val;
     },
     CLEAR_UID(state) {
       state.uid = null;
@@ -33,6 +38,7 @@ export default {
               localStorage.setItem("uid", res.data.uid);
               commit("SET_ISVIP", res.data.isvip);
               commit("SET_IDENTITY", res.data.identity);
+              commit("SET_AVATAR_URL", res.data.avatar_url);
               resolve(res);
             })
             .catch(err => {

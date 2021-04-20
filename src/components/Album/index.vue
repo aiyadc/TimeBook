@@ -219,15 +219,7 @@ export default {
 }
 @media screen and (max-width: 768px) {
   .album {
-    width: 7rem;
-    height: calc(7rem + 44px);
     .cover {
-      width: 7rem;
-      height: 7rem;
-      img {
-        width: 4.9rem;
-        height: 100%;
-      }
       .review {
         display: block;
       }

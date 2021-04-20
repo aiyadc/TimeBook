@@ -141,12 +141,25 @@ export default {
 .login {
   width: 100vw;
   height: 100vh;
-  background-image: linear-gradient(
+  /* background-image: linear-gradient(
     to top,
     #fdcbf1 0%,
     #fdcbf1 1%,
     #e6dee9 100%
-  );
+  ); */
+  /* transform: rotate(45deg); */
+  background-image: url("../../assets/test1.png");
+  /* background-size: 100px 100px; */
+  animation: sheen 60s linear 0s infinite normal none running;
+}
+@keyframes sheen {
+  0% {
+    background-position: 0px 0px;
+  }
+  100% {
+    background-position-x: 1661px;
+    background-position-y: -1661px;
+  }
 }
 .login-title {
   font-size: 27px;

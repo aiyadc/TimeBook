@@ -17,7 +17,7 @@
           >
             模板页</el-button
           >
-          <avatar></avatar>
+          <avatar :src="avatar_url"></avatar>
         </div>
       </div>
       <div class="head">
@@ -58,7 +58,8 @@
               </div>
             </div>
             <div class="right">
-              <el-image class="avatar" :src="userInfo.avatar_url"></el-image><br>
+              <el-image class="avatar" :src="userInfo.avatar_url"></el-image
+              ><br />
               <span>头像</span>
             </div>
           </div>
@@ -121,6 +122,7 @@ import albumRequest from "@/api/album.js";
 import favorRequest from "@/api/favor.js";
 import themeRequest from "@/api/theme.js";
 import userRequest from "@/api/user.js";
+import { mapState } from "vuex";
 import Album from "@/components/Album/index.vue";
 import Review from "@/components/Review/index.vue";
 import Avatar from "@/components/Avatar";
@@ -155,14 +157,13 @@ export default {
   },
 
   computed: {
-    uid() {
-      return this.$store.state.user.uid;
-    },
+    ...mapState({
+      uid: state => state.user.uid,
+      identity: state => state.user.identity,
+      avatar_url: state => state.user.avatar_url
+    }),
     service() {
       return this.$store.state.platform;
-    },
-    identity() {
-      return this.$store.state.user.identity;
     },
     albumListFilter() {
       return this.albumList.filter(album => {
@@ -319,7 +320,7 @@ export default {
     display: flex;
     justify-content: space-between;
     margin-bottom: 10px;
-  
+
     & >>> .search {
       flex: 1;
       border: none;
@@ -351,7 +352,7 @@ export default {
     .info {
       display: inline-block;
       width: 100%;
-      padding:  10px;
+      padding: 10px;
       text-align: left;
       border: 1px solid #e9bdbd;
       .header {

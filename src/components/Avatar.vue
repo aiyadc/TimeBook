@@ -1,6 +1,6 @@
 <template>
   <el-dropdown @command="handleCommand">
-    <img class="avatar" src="@/assets/cc.jpg" />
+    <img class="avatar" :src="src" />
     <el-dropdown-menu slot="dropdown">
       <el-dropdown-item command="mine">个人中心</el-dropdown-item>
       <el-dropdown-item command="toggleIdentity" v-if="identity === 'admin'"
@@ -14,7 +14,9 @@
 <script>
 export default {
   components: {},
-  props: {},
+  props: {
+    src: String
+  },
   data() {
     return {};
   },
@@ -58,8 +60,10 @@ export default {
 .avatar {
   vertical-align: middle;
   margin-left: 10px;
-  width: 1rem;
-  height: 1rem;
+  width: 0.8rem;
+  height: 0.8rem;
+  min-width: 30px;
+  min-height: 30px;
   border-radius: 50%;
 }
 @media screen and (max-width: 768px) {

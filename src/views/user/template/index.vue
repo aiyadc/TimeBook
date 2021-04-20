@@ -37,7 +37,7 @@
 
           <i class="el-icon-plus create" @click="handleAddClick" v-else> </i>
           <!-- 头像 -->
-          <avatar></avatar>
+          <avatar :src="avatar_url"></avatar>
         </div>
       </div>
       <ul class="theme-list">
@@ -150,6 +150,7 @@ import dom from "@/utils/dom.js";
 import themeRequest from "@/api/theme.js";
 import albumRequest from "@/api/album.js";
 import favorRequest from "@/api/favor.js";
+import { mapState } from "vuex";
 import Album from "@/components/Album/index.vue";
 import Review from "@/components/Review/index.vue";
 import Avatar from "@/components/Avatar";
@@ -198,12 +199,11 @@ export default {
     service() {
       return this.$store.state.platform;
     },
-    uid() {
-      return this.$store.state.user.uid;
-    },
-    isvip() {
-      return this.$store.state.user.isvip;
-    }
+    ...mapState({
+      uid: state => state.user.uid,
+      isvip: state => state.user.isvip,
+      avatar_url: state => state.user.avatar_url
+    })
   },
   created() {
     this.init();
@@ -519,7 +519,10 @@ export default {
 }
 .album-list {
   padding: 10px;
-  text-align: left;
+  display: flex;
+  flex-wrap: wrap;
+  /* justify-content: space-between; */
+  justify-content: space-around;
 
   overflow-y: auto;
   .loading-show {
@@ -543,11 +546,6 @@ export default {
           padding: 8px;
           border-radius: 50%;
         }
-        // .avatar {
-        //   margin-left: 0;
-        //   width: 30px;
-        //   height: 30px;
-        // }
       }
     }
     .theme-list {

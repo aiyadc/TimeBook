@@ -51,6 +51,8 @@
         :pagination="pagination"
         v-loading="fetchTemplateLoading"
         @selection-change="handleSelectionChange"
+        @changepage="handlePageChange"
+        @changesize="handlePageSizeChange"
       >
         <el-table-column label="主题" align="center" slot="tid">
           <template slot-scope="{ row }">
@@ -69,7 +71,7 @@
           <template slot-scope="{ row }">
             <el-switch
               v-model="row.status"
-              @change="disgardTemplate(row.tpid, row.status)"
+              @change="handleTemplateShow(row.aid, row.status)"
             ></el-switch>
           </template>
         </el-table-column>
@@ -92,13 +94,18 @@
               </el-dropdown-menu>
             </el-dropdown>
 
-            <el-button type="primary" plain icon="el-icon-zoom-in" size="small"
+            <el-button
+              type="primary"
+              plain
+              icon="el-icon-zoom-in"
+              size="small"
+              @click="toReview(row.aid)"
               >预览</el-button
             >
             <el-button
               type="danger"
               plain
-              icon="el-icon-edit"
+              icon="el-icon-delete"
               size="small"
               @click="deleteTemplates(row.aid)"
               >删除</el-button
@@ -190,11 +197,16 @@
         <el-button type="default">取消</el-button>
       </div>
     </el-dialog>
-    <!-- <review :visible="reviewDia" ></review> -->
+    <review
+      :visible="reviewDia"
+      :data-list="reviewList"
+      @close="closeReview"
+    ></review>
   </div>
 </template>
 
 <script>
+import reverse from "@/utils/reverse.js";
 import tableHeaders from "./tableConfig/template.js";
 import ETable from "@/components/ETable.vue";
 import Review from "@/components/Review/index.vue";
@@ -210,6 +222,7 @@ export default {
     return {
       templateList: [],
       tableHeaders: [],
+      reviewList: [],
       searchForm: {
         tid: 0,
         name: ""
@@ -286,6 +299,7 @@ export default {
         .getTemplateList(params)
         .then(res => {
           this.templateList = res.data;
+          this.pagination.totalCount = res.pagination.totalCount;
           this.templateList.forEach(template => {
             template.status = !!template.status;
           });
@@ -305,6 +319,22 @@ export default {
           this.toDesign(row);
           break;
       }
+    },
+    // 获取相册预览列表
+    toReview(aid) {
+      this.getTempLoading = true;
+      albumRequest
+        .getReviewInfo(aid)
+        .then(res => {
+          this.reviewList = res.data.map(item => {
+            return item.src;
+          });
+          this.getTempLoading = false;
+          this.reviewDia = true;
+        })
+        .catch(() => {
+          this.getTempLoading = false;
+        });
     },
     // 处理编辑事件
     handleEdit(row) {
@@ -340,9 +370,10 @@ export default {
     },
     // 编辑模板相册
     toDesign(row) {
+      console.log("row.aid :>> ", row.aid);
       this.$router.push({
         name: "diy",
-        params: { aid: row.aid }
+        params: { aid: reverse.encrypt(row.aid) }
       });
     },
     // 更新模板
@@ -366,10 +397,10 @@ export default {
         });
     },
     // 上下架模板
-    disgardTemplate(tpid, newStatus) {
+    handleTemplateShow(aid, newStatus) {
       let status = newStatus ? 1 : 0;
       let data = { status };
-      albumRequest.updateTemplate(tpid, data).then(() => {
+      albumRequest.updateTemplate(aid, data).then(() => {
         if (newStatus) {
           this.$message.success("已将该模板上架");
         } else {
@@ -416,6 +447,25 @@ export default {
             this.selected = [];
           });
       });
+    },
+
+    // 关闭预览弹框
+    closeReview() {
+      this.reviewDia = false;
+    },
+    // 处理当前页改变事件
+    async handlePageChange(page) {
+      this.pagination.currentPage = page;
+      this.fetchLoading = true;
+      await this.fetchTemplateList();
+      this.fetchLoading = false;
+    },
+    // 处理页面尺寸发生改变事件
+    async handlePageSizeChange(size) {
+      this.pagination.size = size;
+      this.fetchLoading = true;
+      await this.fetchTemplateList();
+      this.fetchLoading = false;
     }
   }
 };

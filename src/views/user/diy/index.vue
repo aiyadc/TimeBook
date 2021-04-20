@@ -10,7 +10,8 @@
           icon="el-icon-d-arrow-left"
           size="small"
           @click="$router.go(-1)"
-        >返回</el-button>
+          >返回</el-button
+        >
       </div>
       <div class="nav-right">
         <el-button type="text" size="small" circle>
@@ -524,6 +525,7 @@
         ref="upload"
         :auto-upload="false"
         :on-change="updateUploadList"
+        :key="Math.random()"
       >
         <i class="el-icon-upload"></i>
         <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
@@ -782,7 +784,6 @@ export default {
   },
   created() {
     this.aid = reverse.decrypt(this.$route.params.aid);
-    console.log("this.aid :>> ", this.aid);
     this.uploadURL = process.env.BASE_API + "/decoration/upload";
     let u = navigator.userAgent;
     window.addEventListener(
@@ -2159,8 +2160,8 @@ export default {
   justify-content: space-between;
   align-items: center;
   padding: 0 10px;
-  .nav-left{
-    .back-icon{
+  .nav-left {
+    .back-icon {
       background-color: inherit;
     }
   }

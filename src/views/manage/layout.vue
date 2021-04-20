@@ -51,7 +51,7 @@
             />
             <span class="title">{{ getCurrentTab() }}</span>
           </div>
-          <Avatar></Avatar>
+          <avatar :src="avatar_url"></avatar>
         </div>
         <!-- 右侧内容部分，对接各子页面 -->
         <div class="content">
@@ -78,7 +78,11 @@ export default {
     };
   },
 
-  computed: {},
+  computed: {
+    avatar_url() {
+      return this.$store.state.user.avatar_url;
+    }
+  },
   created() {
     this.tabList = [
       {
@@ -141,8 +145,17 @@ export default {
         label: "字体"
       }
     ];
+    let pathOptions = this.$route.path.split("/");
+    let path = pathOptions.join("/");
+    this.curTab = path;
+    this.indexPath = [path];
+    if (pathOptions.length > 3) {
+      let path1 = pathOptions.slice(0, pathOptions.length - 1).join("/");
+      this.indexPath = [path1, path];
+    }
+    console.log("this.indexPath :>> ", this.indexPath);
   },
-
+  mounted() {},
   methods: {
     // 处理子菜单打开事件
     handleSelect(index, indexPath) {
