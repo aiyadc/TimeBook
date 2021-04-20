@@ -359,7 +359,7 @@ export default {
           }).then(() => {
             this.$router.push({
               name: "diy",
-              params: { aid }
+              params: { aid: reverse.encrypt(aid) }
             });
           });
         })
