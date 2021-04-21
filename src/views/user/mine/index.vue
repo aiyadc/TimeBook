@@ -32,7 +32,7 @@
               <el-button type="default" size="small">编辑</el-button>
             </div>
           </div>
-          <hr />
+          <hr style="opacity: .4;" />
           <div class="content">
             <div class="left">
               <div class="design">

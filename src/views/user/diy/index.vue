@@ -189,6 +189,7 @@
                       :draggable="service == 'pc' ? true : false"
                       fit="contain"
                       crossOrigin="Anonymous"
+                      @click="setSelected(m)"
                       @dragstart="dragstart"
                       @touchstart="calcTimeStart"
                       @touchmove="setMaterialFlag"
@@ -812,6 +813,7 @@ export default {
     window.onbeforeunload = null;
   },
   mounted() {
+    console.log("this.uid :>> ", this.uid);
     let draw = document.getElementsByClassName("draw")[0];
     let toolContainer = document.getElementsByClassName("tool")[0];
     let height = draw.clientHeight;
@@ -1423,7 +1425,7 @@ export default {
           });
         }).then(imgData => {
           this.uploadDia = false;
-          material.uploadMore({ data: imgData }).then(res => {
+          material.uploadMore(this.uid, { data: imgData }).then(res => {
             console.log("this.folderid :>> ", this.folderid);
             material.getMaterials(this.folderid).then(res => {
               this.materialList = res.data;

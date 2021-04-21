@@ -338,6 +338,7 @@ export default {
         cancelButtonText: "取消",
         type: "warning"
       }).then(() => {
+        console.log("this.selected :>> ", this.selected);
         decorationRequest.deleteDecorations(this.selected).then(() => {
           this.$message.success("删除成功");
           this.fetchDecorations();

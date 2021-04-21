@@ -77,7 +77,11 @@ export default {
       isCollapse: false
     };
   },
-
+  watch: {
+    $route(val) {
+      this.rerender();
+    }
+  },
   computed: {
     avatar_url() {
       return this.$store.state.user.avatar_url;
@@ -145,15 +149,7 @@ export default {
         label: "字体"
       }
     ];
-    let pathOptions = this.$route.path.split("/");
-    let path = pathOptions.join("/");
-    this.curTab = path;
-    this.indexPath = [path];
-    if (pathOptions.length > 3) {
-      let path1 = pathOptions.slice(0, pathOptions.length - 1).join("/");
-      this.indexPath = [path1, path];
-    }
-    console.log("this.indexPath :>> ", this.indexPath);
+    this.rerender();
   },
   mounted() {},
   methods: {
@@ -203,6 +199,16 @@ export default {
           break;
         case "logout":
           this.$store.dispatch("LOGOUT");
+      }
+    },
+    rerender() {
+      let pathOptions = this.$route.path.split("/");
+      let path = pathOptions.join("/");
+      this.curTab = path;
+      this.indexPath = [path];
+      if (pathOptions.length > 3) {
+        let path1 = pathOptions.slice(0, pathOptions.length - 1).join("/");
+        this.indexPath = [path1, path];
       }
     }
   }
