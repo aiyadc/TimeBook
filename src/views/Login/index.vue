@@ -89,10 +89,6 @@ export default {
     };
   },
   mounted() {
-    // new QRCode(
-    //   document.getElementById("qrcode"),
-    //   "http://www.baidu.com"
-    // );
     new QRCode("qrcode", {
       text: "http://www.baidu.com",
       width: 200,
@@ -104,9 +100,6 @@ export default {
   methods: {
     // 登录
     login(form, ref) {
-      //   if (params.account == "eachan" && params.password == "123456")
-      //     this.$router.push("/");
-      // console.log("form:", form);
       this.loading = true;
       user
         .login(form)
@@ -141,13 +134,6 @@ export default {
 .login {
   width: 100vw;
   height: 100vh;
-  /* background-image: linear-gradient(
-    to top,
-    #fdcbf1 0%,
-    #fdcbf1 1%,
-    #e6dee9 100%
-  ); */
-  /* transform: rotate(45deg); */
   background-image: url("./icons/prototype.png");
   /* background-size: 100px 100px; */
   animation: sheen 60s linear 0s infinite normal none running;
