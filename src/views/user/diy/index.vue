@@ -521,7 +521,7 @@
         class="upload"
         drag
         list-type="picture-card"
-        action="uploadURL"
+        action="#"
         multiple
         ref="upload"
         :auto-upload="false"
@@ -731,7 +731,6 @@ export default {
       decorationFolderList: [],
       // 上传
       uploadDia: false,
-      uploadURL: "",
       fileList: [],
       // flag
       moveFlag: 0, // 拖动标志
@@ -785,7 +784,7 @@ export default {
   },
   created() {
     this.aid = reverse.decrypt(this.$route.params.aid);
-    this.uploadURL = process.env.BASE_API + "/decoration/upload";
+    // this.uploadURL = process.env.BASE_API + "/decoration/upload";
     let u = navigator.userAgent;
     window.addEventListener(
       "touchmove",
@@ -813,7 +812,6 @@ export default {
     window.onbeforeunload = null;
   },
   mounted() {
-    console.log("this.uid :>> ", this.uid);
     let draw = document.getElementsByClassName("draw")[0];
     let toolContainer = document.getElementsByClassName("tool")[0];
     let height = draw.clientHeight;
@@ -1109,23 +1107,6 @@ export default {
       next();
     }
     this.unSaveTipDia = true;
-
-    //   this.$confirm("是否保存您对画布的更改？", "提示", {
-    //     confirmButtonText: "保存",
-    //     cancelButtonText: "并不",
-    //     type: "warning",
-    //     closeOnClickModal: false,
-    //     closeOnPressEscape:false,
-    //     cusstomClass:'inline-block'
-    //   })
-    //     .then(() => {
-    //       this.saveMyAlbum();
-    //       next();
-    //     })
-    //     .catch(() => {
-    //       next();
-    //     });
-    // }
   },
   methods: {
     // 重置canvas大小
@@ -1867,13 +1848,6 @@ export default {
           this.canvas.forEachObject(o => {
             this.setToLayer(o);
           });
-          //   console.log(
-          //     "this.canvas.width================= :>> ",
-          //     this.canvas.width
-          //   );
-          //   this.canvas.width = this.canvasInfo.width * 2;
-          //   this.canvas.height = this.canvasInfo.height * 2;
-          //   console.log("this.canvas.width :>> ", this.canvas.width);
           this.canvas.renderAll();
         });
       });
