@@ -2,13 +2,10 @@
 import axios from "axios";
 import ElementUI from "element-ui";
 import Cookies from "js-cookie";
-// console.log("process.env.BASE_API", process.env.BASE_API);
 const request = axios.create({
   timeout: 10000,
   baseURL: process.env.BASE_API,
-  // baseURL: "http://127.0.0.1:7001",
   maxContentLength: 30000
-  // withCredentials: true, // 跨域可携带cookie
 });
 
 // request interceptor
@@ -30,15 +27,7 @@ request.interceptors.response.use(
     return res;
   },
   error => {
-    // Do something with request error
-    // console.log("error response", error.response); // for debug
-    // console.log('error.response :>> ', error.response);
     ElementUI.Message.error(error.response.data.message);
-    // if (error.status == 401) {
-    //     setTimeout(() => {
-    //         Router.push("/login");
-    //     }, 2000);
-    // }
     return Promise.reject(error.response);
   }
 );

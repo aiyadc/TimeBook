@@ -634,7 +634,7 @@ import decorationRequest from "@/api/decoration.js";
 import albumRequest from "@/api/album.js";
 import Folder from "./components/folder.vue";
 import Review from "@/components/Review/index.vue";
-import reverse from "@/utils/reverse.js";
+import convert from "@/utils/convert.js";
 export default {
   components: {
     Folder,
@@ -783,7 +783,8 @@ export default {
     }
   },
   created() {
-    this.aid = reverse.decrypt(this.$route.params.aid);
+    this.aid = convert.decrypt(this.$route.params.aid);
+    console.log("this.aid :>> ", this.aid);
     // this.uploadURL = process.env.BASE_API + "/decoration/upload";
     let u = navigator.userAgent;
     window.addEventListener(
@@ -2180,7 +2181,7 @@ export default {
   overflow: hidden;
   display: flex;
   @media screen and (max-width: 768px) {
-    flex-direction: column-reverse;
+    flex-direction: column-convert;
   }
   // 左边导航栏
   .materials {

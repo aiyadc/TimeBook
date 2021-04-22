@@ -148,7 +148,7 @@ export default {
     #e6dee9 100%
   ); */
   /* transform: rotate(45deg); */
-  background-image: url("../../assets/test1.png");
+  background-image: url("./icons/prototype.png");
   /* background-size: 100px 100px; */
   animation: sheen 60s linear 0s infinite normal none running;
 }

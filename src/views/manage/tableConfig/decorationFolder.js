@@ -1,4 +1,4 @@
-import reverse from "@/utils/reverse.js";
+import convert from "@/utils/convert.js";
 export default [
   {
     label: "id",
@@ -17,14 +17,14 @@ export default [
     keyName: "create_at",
     width: "",
     type: "text",
-    formatter: row => reverse.parseDatetime(row.create_at)
+    formatter: row => convert.parseDatetime(row.create_at)
   },
   {
     label: "更新时间",
     keyName: "update_at",
     width: "",
     type: "text",
-    formatter: row => reverse.parseDatetime(row.update_at)
+    formatter: row => convert.parseDatetime(row.update_at)
   },
   {
     label: "VIP专属",

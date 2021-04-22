@@ -20,7 +20,7 @@
 <script>
 import * as echarts from "echarts";
 import systemRequest from "@/api/system.js";
-import reverse from "@/utils/reverse.js";
+import convert from "@/utils/convert.js";
 export default {
   components: {},
   props: {},
@@ -74,7 +74,7 @@ export default {
     // 获取日访问量
     async getDayView(date = new Date()) {
       const res = await systemRequest.getDayView(date);
-      this.dayList = res.data.map(d => reverse.parseDatetime(d.date));
+      this.dayList = res.data.map(d => convert.parseDatetime(d.date));
       this.dayViewList = res.data.map(d => d.active);
       this.render();
     },

@@ -97,15 +97,15 @@
       v-loading="createLoading"
       center
     >
-      <el-form :model="albumForm" label-width="80px" ref="createForm">
+      <el-form :model="createForm" label-width="80px" ref="createForm">
         <el-form-item label="名称：" prop="name" required>
           <el-input
-            v-model="albumForm.name"
+            v-model="createForm.name"
             placeholder="为你的相册取一个好听的名称吧~"
           ></el-input>
         </el-form-item>
         <el-form-item label="主题：" prop="tid" required>
-          <el-select v-model="albumForm.tid" placeholder="与相册相关的主题">
+          <el-select v-model="createForm.tid" placeholder="与相册相关的主题">
             <el-option
               v-for="(t, i) in themeOptions"
               :key="i"
@@ -122,14 +122,14 @@
           :rules="[{ type: 'number', message: '页数必须为10~100的数字' }]"
         >
           <el-input
-            v-model.number="albumForm.count"
+            v-model.number="createForm.count"
             placeholder="请输入相册的页数"
             :disabled="isvip == 0"
           ></el-input>
           <span class="tips" v-if="isvip === 0"> *非vip用户默认10页</span>
         </el-form-item>
         <el-form-item label="备注：">
-          <el-input v-model="albumForm.remark" placeholder="备注"></el-input>
+          <el-input v-model="createForm.remark" placeholder="备注"></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer">
@@ -138,7 +138,7 @@
           @click="createMode == 'empty' ? createAlbum() : createByTemplate()"
           >确定</el-button
         >
-        <el-button type="default">取消</el-button>
+        <el-button type="default" @click="createDia = false">取消</el-button>
       </div>
     </el-dialog>
     <!-- <el-button type="primary" plain @click="goDIY">设计</el-button> -->
@@ -172,7 +172,7 @@ export default {
       reviewList: [], // 预览列表
       createMode: "empty", // 创建方式，‘template’/‘empty’
       templateID: 0, // 借鉴的模板ID
-      albumForm: {
+      createForm: {
         name: "",
         tid: "",
         count: 10,
@@ -300,13 +300,13 @@ export default {
     createAlbum() {
       this.$refs.createForm.validate(valid => {
         if (valid) {
-          if (this.albumForm.count < 10 || this.albumForm.count > 100) {
+          if (this.createForm.count < 10 || this.createForm.count > 100) {
             this.$message.error("页数的范围为10~100噢");
             return;
           }
           this.createLoading = true;
           albumRequest
-            .createAlbum(this.albumForm, this.uid)
+            .createAlbum(this.createForm, this.uid)
             .then(res => {
               this.createLoading = false;
               this.$router.push({
@@ -358,14 +358,17 @@ export default {
     },
     // 以模板样式进入设计页面
     toDesign(aid) {
+      this.createForm.count = this.albumList.find(
+        album => album.aid == aid
+      ).count;
       this.createMode = "template";
       this.createDia = true;
       this.templateID = aid;
     },
-    //以模板方式创建相册
+    // 以模板方式创建相册
     createByTemplate() {
       this.createLoading = true;
-      let data = Object.assign({}, this.albumForm);
+      let data = Object.assign({}, this.createForm);
       delete data.count;
       albumRequest
         .createAlbum(data, this.uid, this.templateID)
@@ -373,7 +376,7 @@ export default {
           this.createLoading = false;
           this.$router.push({
             name: "diy",
-            params: { aid: res.data.aid }
+            params: { aid: convert.encrypt(res.data.aid) }
           });
         })
         .catch(() => {

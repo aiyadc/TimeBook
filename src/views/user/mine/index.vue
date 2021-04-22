@@ -58,7 +58,14 @@
               </div>
             </div>
             <div class="right">
-              <el-image class="avatar" :src="userInfo.avatar_url"></el-image
+              <el-image
+                class="avatar"
+                :src="
+                  userInfo.avatar_url
+                    ? userInfo.avatar_url
+                    : require('@/assets/cc.jpg')
+                "
+              ></el-image
               ><br />
               <span>头像</span>
             </div>
@@ -98,7 +105,7 @@
                 :ish5="service === 'h5'"
                 :key="i"
                 @review="toReview(album.aid)"
-                @todesign="toDesign(album.aid)"
+                @todesign="createAlbum(album.aid)"
                 @heartclick="handleHeartClick($event, album.aid)"
               ></album>
             </div>
@@ -114,6 +121,53 @@
       :ish5="service == 'h5'"
       @close="closeReview"
     ></review>
+    <!-- 创建相册 -->
+    <el-dialog
+      custom-class="dia-create"
+      title="创建"
+      :visible.sync="createDia"
+      v-loading="createLoading"
+      center
+    >
+      <el-form :model="createForm" label-width="80px" ref="createForm">
+        <el-form-item label="名称：" prop="name" required>
+          <el-input
+            v-model="createForm.name"
+            placeholder="为你的相册取一个好听的名称吧~"
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="主题：" prop="tid" required>
+          <el-select v-model="createForm.tid" placeholder="与相册相关的主题">
+            <el-option
+              v-for="(t, i) in themeList"
+              :key="i"
+              :label="t.name"
+              :value="t.tid"
+            ></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item
+          label="页数："
+          prop="count"
+          required
+          :rules="[{ type: 'number', message: '页数必须为10~100的数字' }]"
+        >
+          <el-input
+            v-model.number="createForm.count"
+            placeholder="请输入相册的页数"
+            :disabled="isvip == 0"
+          ></el-input>
+          <span class="tips" v-if="isvip === 0"> *非vip用户默认10页</span>
+        </el-form-item>
+        <el-form-item label="备注：">
+          <el-input v-model="createForm.remark" placeholder="备注"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer">
+        <el-button type="primary" @click="createByTemplate()">确定</el-button>
+        <el-button type="default" @click="createDia = false">取消</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -126,7 +180,7 @@ import { mapState } from "vuex";
 import Album from "@/components/Album/index.vue";
 import Review from "@/components/Review/index.vue";
 import Avatar from "@/components/Avatar";
-import reverse from "@/utils/reverse.js";
+import convert from "@/utils/convert.js";
 export default {
   components: {
     Album,
@@ -139,14 +193,22 @@ export default {
       userInfo: {},
       tab: "design",
       isfavor: true,
+      templateID: 0, // 借鉴的模板ID
+      createForm: {
+        name: "",
+        tid: "",
+        count: 10,
+        remark: ""
+      },
       albumList: [], // 相册列表
       favorList: [], // 收藏列表
       favorAids: [], // 收藏的相册的aid列表
       themeList: [], // 主题列表
       reviewDia: false,
-      // editDia: false,
+      createDia: false,
       reviewList: [], // 预览相册页列表
       reviewLoading: false,
+      createLoading: false,
       search: "",
       banner: null,
       pagination: {
@@ -161,7 +223,8 @@ export default {
     ...mapState({
       uid: state => state.user.uid,
       identity: state => state.user.identity,
-      avatar_url: state => state.user.avatar_url
+      avatar_url: state => state.user.avatar_url,
+      isvip: state => state.user.isvip
     }),
     service() {
       return this.$store.state.platform;
@@ -176,20 +239,7 @@ export default {
       });
     }
   },
-  watch: {
-    // "userInfo.bg_url": {
-    //   handler(val) {
-    //     console.log("val :>> ", val);
-    //     if (this.banner) {
-    //       this.banner.style.backgroundImage = `url(${val})`;
-    //     }
-    //   },
-    //   immediate: true
-    // }
-  },
   created() {
-    console.log("Review :>> ", Review);
-    // this.uid = this.$store.state.user.uid; //同步用户id
     this.init();
   },
   mounted() {
@@ -261,11 +311,37 @@ export default {
         this.favorAids = this.favorAids || [];
       });
     },
+    // 创建相册
+    createAlbum(aid) {
+      this.createDia = true;
+      this.templateID = aid;
+      this.createForm.count = this.favorList.find(
+        album => album.aid == aid
+      ).count;
+    },
+    // 以模板方式创建相册
+    createByTemplate() {
+      this.createLoading = true;
+      let data = Object.assign({}, this.createForm);
+      delete data.count;
+      albumRequest
+        .createAlbum(data, this.uid, this.templateID)
+        .then(res => {
+          this.createLoading = false;
+          this.$router.push({
+            name: "diy",
+            params: { aid: convert.encrypt(res.data.aid) }
+          });
+        })
+        .catch(() => {
+          this.createLoading = false;
+        });
+    },
     // 进入设计
     toDesign(aid) {
       this.$router.push({
         name: "diy",
-        params: { aid: reverse.encrypt(aid) }
+        params: { aid: convert.encrypt(aid) }
       });
     },
     // 收藏或取消收藏

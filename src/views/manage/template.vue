@@ -194,7 +194,7 @@
       </el-form>
       <div slot="footer">
         <el-button type="primary" @click="createTemplate()">确定</el-button>
-        <el-button type="default">取消</el-button>
+        <el-button type="default" @click="createDia = false">取消</el-button>
       </div>
     </el-dialog>
     <review
@@ -206,7 +206,7 @@
 </template>
 
 <script>
-import reverse from "@/utils/reverse.js";
+import convert from "@/utils/convert.js";
 import tableHeaders from "./tableConfig/template.js";
 import ETable from "@/components/ETable.vue";
 import Review from "@/components/Review/index.vue";
@@ -356,12 +356,16 @@ export default {
             confirmButtonText: "现在就去",
             cancelButtonText: "稍后",
             type: "success"
-          }).then(() => {
-            this.$router.push({
-              name: "diy",
-              params: { aid: reverse.encrypt(aid) }
+          })
+            .then(() => {
+              this.$router.push({
+                name: "diy",
+                params: { aid: convert.encrypt(aid) }
+              });
+            })
+            .catch(() => {
+              this.fetchTemplateList();
             });
-          });
         })
         .catch(() => {
           this.createLoading = false;
@@ -373,7 +377,7 @@ export default {
       console.log("row.aid :>> ", row.aid);
       this.$router.push({
         name: "diy",
-        params: { aid: reverse.encrypt(row.aid) }
+        params: { aid: convert.encrypt(row.aid) }
       });
     },
     // 更新模板

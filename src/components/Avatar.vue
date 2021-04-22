@@ -1,6 +1,6 @@
 <template>
   <el-dropdown @command="handleCommand">
-    <img class="avatar" :src="src" />
+    <img class="avatar" :src="src ? src : require('../assets/cc.jpg')" />
     <el-dropdown-menu slot="dropdown">
       <el-dropdown-item command="mine">个人中心</el-dropdown-item>
       <el-dropdown-item command="toggleIdentity" v-if="identity === 'admin'"
@@ -23,15 +23,9 @@ export default {
   watch: {},
   computed: {
     identity() {
-      console.log(
-        "this.$store.state.user.identity :>> ",
-        this.$store.state.user.identity
-      );
       return this.$store.state.user.identity;
     }
   },
-  created() {},
-  mounted() {},
   methods: {
     // 处理头像下拉框事件
     // todo
