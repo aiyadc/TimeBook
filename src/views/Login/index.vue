@@ -137,6 +137,9 @@ export default {
   background-image: url("./icons/prototype.png");
   /* background-size: 100px 100px; */
   animation: sheen 60s linear 0s infinite normal none running;
+  &>>>#lgBox{
+    backdrop-filter: hue-rotate(45deg);
+  }
 }
 @keyframes sheen {
   0% {

@@ -151,6 +151,7 @@ import themeRequest from "@/api/theme.js";
 import albumRequest from "@/api/album.js";
 import favorRequest from "@/api/favor.js";
 import { mapState } from "vuex";
+import convert from "@/utils/convert.js";
 import Album from "@/components/Album/index.vue";
 import Review from "@/components/Review/index.vue";
 import Avatar from "@/components/Avatar";
@@ -311,7 +312,7 @@ export default {
               this.createLoading = false;
               this.$router.push({
                 name: "diy",
-                params: { aid: res.data.aid }
+                params: { aid: convert.encrypt(res.data.aid)}
               });
             })
             .catch(() => {
