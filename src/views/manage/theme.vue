@@ -135,7 +135,7 @@ export default {
     // 处理编辑
     handleEdit(row) {
       this.type = "edit";
-      this.editForm = row;
+      this.editForm.name = row.name;
       this.editDia = true;
     },
     // 添加主题
