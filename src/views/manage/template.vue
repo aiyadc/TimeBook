@@ -122,7 +122,7 @@
       center
       v-loading="updateLoading"
     >
-      <el-form class="form-equal500" :model="editForm" inline>
+      <el-form class="form-w500" :model="editForm" inline>
         <el-form-item label="主题：" required>
           <el-select v-model="editForm.tid" placeholder="请选择主题">
             <el-option

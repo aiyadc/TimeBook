@@ -31,6 +31,5 @@ export default new Vuex.Store({
     Pop_TStack(stack) {
       stack.TStack = [];
     }
-  },
-  actions: {}
+  }
 });

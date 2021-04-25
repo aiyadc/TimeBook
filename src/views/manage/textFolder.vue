@@ -60,10 +60,11 @@
       width="700px"
     >
       <el-form
-        class="form-equal500"
+        class="form-w500"
         :model="editForm"
         label-width="120px"
         label-position="right"
+        :rules="rules"
         ref="editForm"
       >
         <el-form-item label="名称：" prop="name" required>
@@ -77,7 +78,9 @@
           @click="type == 'edit' ? updateFolder() : addFolder()"
           >确定</el-button
         >
-        <el-button type="default" size="small">取消</el-button>
+        <el-button type="default" size="small" @click="editDia = false"
+          >取消</el-button
+        >
       </div>
     </el-dialog>
   </div>
@@ -93,6 +96,14 @@ export default {
   },
   props: {},
   data() {
+    var validateFolderName = (rule, value, callback) => {
+      const pat = /[\w|(\u4e00-\u9fa5)]+/;
+      if (pat.test(value)) {
+        callback();
+      } else {
+        callback(new Error("目录名称为空或格式不正确"));
+      }
+    };
     return {
       search: "",
       folderList: [],
@@ -103,7 +114,8 @@ export default {
       },
       fetchLoading: false,
       updateLoading: false,
-      editDia: false // 编辑添加同一个框
+      editDia: false, // 编辑添加同一个框
+      rules: { name: { validator: validateFolderName, trigger: "blur" } }
     };
   },
   watch: {},

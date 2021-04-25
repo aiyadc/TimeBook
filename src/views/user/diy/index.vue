@@ -1250,8 +1250,8 @@ export default {
       this.$prompt("请输入目录名", "创建目录", {
         confirmButtonText: "确定",
         cancelButtonText: "取消",
-        inputPattern: /.+/,
-        inputErrorMessage: "目录名称不能为空"
+        inputPattern: /[\w|(\u4e00-\u9fa5)]+/,
+        inputErrorMessage: "目录名称为空或格式不正确"
       }).then(async ({ value }) => {
         console.log("value :>> ", value);
         await material.addFolder({ name: value }, this.uid);
@@ -2181,7 +2181,7 @@ export default {
   overflow: hidden;
   display: flex;
   @media screen and (max-width: 768px) {
-    flex-direction: column-convert;
+    flex-direction: column-reverse;
   }
   // 左边导航栏
   .materials {

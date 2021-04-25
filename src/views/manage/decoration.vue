@@ -101,7 +101,7 @@
     </div>
     <!-- 编辑弹窗 -->
     <el-dialog title="编辑" :visible="editDia" center width="700px">
-      <el-form class="form-equal500" :model="editForm" label-position="right">
+      <el-form class="form-w500" :model="editForm" label-position="right">
         <el-form-item label="目录：" prop="folderid" required>
           <el-select v-model="editForm.folderid" placeholder="请选择放置目录">
             <el-option
@@ -154,7 +154,7 @@
     >
       <div style="position:initial !important;" v-loading="uploadLoading">
         <el-form
-          class="form-equal350"
+          class="form-w350"
           :model="uploadForm"
           inline
           ref="uploadForm"

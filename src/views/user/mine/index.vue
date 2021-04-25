@@ -105,7 +105,7 @@
                 :ish5="service === 'h5'"
                 :key="i"
                 @review="toReview(album.aid)"
-                @todesign="createAlbum(album.aid)"
+                @todesign="createAlbum(album.aid, album.tid)"
                 @heartclick="handleHeartClick($event, album.aid)"
               ></album>
             </div>
@@ -129,7 +129,7 @@
       v-loading="createLoading"
       center
     >
-      <el-form :model="createForm" label-width="80px" ref="createForm">
+      <el-form :model="createForm" label-width="70px" ref="createForm">
         <el-form-item label="名称：" prop="name" required>
           <el-input
             v-model="createForm.name"
@@ -312,7 +312,12 @@ export default {
       });
     },
     // 创建相册
-    createAlbum(aid) {
+    createAlbum(aid, tid) {
+      const album = this.albumList.find(album => album.tid == tid);
+      if (album) {
+        this.toDesign(album.aid);
+        return;
+      }
       this.createDia = true;
       this.templateID = aid;
       this.createForm.count = this.favorList.find(
@@ -486,8 +491,11 @@ export default {
   }
   .content {
     .album-list {
-      padding: 10px;
-      text-align: left;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      grid-column-gap: 20px;
+      grid-row-gap: 20px;
+      overflow-y: auto;
     }
   }
   & >>> .el-tabs__header {
@@ -499,9 +507,20 @@ export default {
     padding: 0;
     .content {
       .album-list {
-        padding: 0;
-        text-align: left;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        grid-column-gap: 0;
       }
+    }
+  }
+  >>> .dia-create {
+    margin-top: 0 !important;
+    width: calc(100vw - 40px);
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    .el-dialog__body {
+      padding: 20px;
     }
   }
 }

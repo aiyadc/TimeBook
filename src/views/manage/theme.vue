@@ -60,7 +60,7 @@
       width="700px"
     >
       <el-form
-        class="form-equal500"
+        class="form-w500"
         :model="editForm"
         label-width="120px"
         label-position="right"

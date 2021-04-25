@@ -97,29 +97,22 @@ export default {
 <style scoped lang="scss">
 .album {
   display: inline-block;
-  width: 6rem;
-  height: calc(6rem + 44px);
   border: 1px solid #bab7b7;
   text-align: left;
   background-color: #d7ebfc;
   position: relative;
   margin: 10px;
   .cover {
-    width: 6rem;
-    height: 6rem;
     box-sizing: border-box;
     text-align: center;
-    border: 1px solid #bab7b7;
     background-color: #f5f5f5;
     position: relative;
-    right: 1px;
     .mask {
       width: 100%;
       height: 100%;
       position: absolute;
       left: 0;
       top: 0;
-      // z-index: 99;
       display: none;
       background-color: rgba(96, 92, 92, 0.6);
       .to-design {
@@ -128,8 +121,8 @@ export default {
       }
     }
     img {
-      width: 4.2rem;
-      height: 100%;
+      width: calc(100% - 40px);
+      object-fit: contain;
     }
     .handler {
       position: absolute;
@@ -216,7 +209,7 @@ export default {
         color: #494343ee;
       }
       .theme {
-        width: 4rem;
+        width: calc(100% - 30px);
       }
     }
   }

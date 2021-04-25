@@ -27,6 +27,7 @@ export default {
     }
   },
   actions: {
+    // 获取用户信息
     getUserInfo({ state, commit }) {
       return new Promise((resolve, reject) => {
         const token = Cookies.getToken();
@@ -50,6 +51,7 @@ export default {
         }
       });
     },
+    // 登出
     LOGOUT({ commit }) {
       router.push("/login");
       Cookies.removeToken();

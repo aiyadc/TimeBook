@@ -102,7 +102,7 @@
       width="700px"
     >
       <el-form
-        class="form-equal500"
+        class="form-w500"
         :model="editForm"
         label-position="right"
         ref="editForm"

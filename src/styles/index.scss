@@ -1,6 +1,9 @@
 @import "./base.scss";
-@import "vendors/elementUI.scss";
 @import "./components/index.scss";
+html {
+    height: 100%;
+    box-sizing: border-box;
+}
 body {
     margin: 0;
     height: 100%;
@@ -12,33 +15,22 @@ body {
     overscroll-behavior-y: none;
 }
 
-label {
-    font-weight: 700;
-}
-
-html {
-    height: 100%;
-    box-sizing: border-box;
-}
-
 #app {
     height: 100%;
 }
 
-*,
-*:before,
-*:after {
-    box-sizing: inherit;
+// PC端可见或H5端可见,700px为界
+.pc {
+    @media screen and (max-width: 768px) {
+        display: none;
+    }
 }
 
-.no-padding {
-    padding: 0px !important;
+.h5 {
+    @media screen and (min-width: 768px) {
+        display: none;
+    }
 }
-
-.padding-content {
-    padding: 4px 0;
-}
-
 a:focus,
 a:active {
     outline: none;
@@ -54,6 +46,11 @@ a:hover {
 
 div:focus {
     outline: none;
+}
+*,
+*:before,
+*:after {
+    box-sizing: inherit;
 }
 
 // 滚动条

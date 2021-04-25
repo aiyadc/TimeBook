@@ -73,12 +73,12 @@
     </div>
     <el-pagination
       class="pagination pc"
+      :current-page.sync="pagination.currentPage"
+      :page-size="pagination.pageSize"
+      :total="pagination.total"
       prev-text="上一页"
       next-text="下一页"
-      :current-page.sync="pagination.currentPage"
-      :page-size="100"
       layout="prev, pager, next, jumper"
-      :total="pagination.total"
       @current-change="changePage"
     >
     </el-pagination>
@@ -97,12 +97,9 @@
       v-loading="createLoading"
       center
     >
-      <el-form :model="createForm" label-width="80px" ref="createForm">
+      <el-form :model="createForm" label-width="70px" ref="createForm">
         <el-form-item label="名称：" prop="name" required>
-          <el-input
-            v-model="createForm.name"
-            placeholder="为你的相册取一个好听的名称吧~"
-          ></el-input>
+          <el-input v-model="createForm.name" placeholder="相册名称"></el-input>
         </el-form-item>
         <el-form-item label="主题：" prop="tid" required>
           <el-select v-model="createForm.tid" placeholder="与相册相关的主题">
@@ -250,6 +247,8 @@ export default {
         .then(res => {
           this.albumList = res.data;
           this.getTempLoading = false;
+          this.pagination.total = res.pagination.totalCount;
+          console.log("this.pagination :>> ", this.pagination);
         })
         .catch(() => {
           this.getTempLoading = false;
@@ -312,7 +311,7 @@ export default {
               this.createLoading = false;
               this.$router.push({
                 name: "diy",
-                params: { aid: convert.encrypt(res.data.aid)}
+                params: { aid: convert.encrypt(res.data.aid) }
               });
             })
             .catch(() => {
@@ -522,12 +521,10 @@ export default {
   }
 }
 .album-list {
-  padding: 10px;
-  display: flex;
-  flex-wrap: wrap;
-  /* justify-content: space-between; */
-  justify-content: space-around;
-
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-column-gap: 20px;
+  grid-row-gap: 20px;
   overflow-y: auto;
   .loading-show {
     width: 100vw;
@@ -557,9 +554,8 @@ export default {
     }
   }
   .album-list {
-    width: 100vw;
-    height: calc(100vh - 128px);
-    padding: 0;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-column-gap: 0;
   }
   .home >>> .dia-review {
     width: 100vw;
@@ -572,6 +568,9 @@ export default {
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
+    .el-dialog__body {
+      padding: 20px;
+    }
   }
 }
 </style>

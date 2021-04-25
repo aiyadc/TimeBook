@@ -95,29 +95,29 @@ export default {
         label: "HOME"
       },
       {
-        icon: "el-icon-apple",
+        icon: "el-icon-user",
         name: "/diy-manage/user",
         label: "用户"
       },
       {
-        icon: "el-icon-apple",
+        icon: "el-icon-camera",
         name: "/diy-manage/template",
         label: "模板"
       },
       {
-        icon: "el-icon-apple",
+        icon: "el-icon-star-off",
         name: "/diy-manage/decoration",
         label: "装饰",
         children: [
           {
-            icon: "el-icon-apple",
+            icon: "el-icon-picture-outline",
             name: "/diy-manage/decoration/material",
             label: "素材"
           },
           {
-            icon: "el-icon-apple",
+            icon: "el-icon-folder",
             name: "/diy-manage/decoration/sort",
-            label: "分类"
+            label: "目录"
           }
         ]
       },
@@ -127,19 +127,19 @@ export default {
         label: "文案",
         children: [
           {
-            icon: "el-icon-apple",
+            icon: "el-icon-reading",
             name: "/diy-manage/sentence/material",
             label: "素材"
           },
           {
-            icon: "el-icon-apple",
+            icon: "el-icon-folder",
             name: "/diy-manage/sentence/sort",
-            label: "分类"
+            label: "目录"
           }
         ]
       },
       {
-        icon: "el-icon-apple",
+        icon: "el-icon-magic-stick",
         name: "/diy-manage/theme",
         label: "主题"
       },
