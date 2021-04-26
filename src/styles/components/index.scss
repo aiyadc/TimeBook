@@ -1,10 +1,6 @@
 @import "./form.scss";
 
-// 少量的其他组件的样式
-// popover
-.ppo-mw100 {
-    min-width: 100px;
-}
+// 全局reset
 // el-message-box
 .el-message-box__wrapper {
     @media screen and (max-width: 768px) {
@@ -13,3 +9,15 @@
       }
     }
   }
+// fix（element ui select下拉框在ios移动端需要点击两次才能选中的问题修复） 
+.el-scrollbar {
+    > .el-scrollbar__bar {
+        opacity: 1 !important;
+    }
+}
+
+// 少量的其他组件的样式
+// popover
+.ppo-mw100 {
+    min-width: 100px;
+}

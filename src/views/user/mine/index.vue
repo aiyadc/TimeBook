@@ -393,10 +393,10 @@ export default {
 .mine {
   width: 100vw;
   height: 100vh;
+  max-width: 1790px;
+  margin: 0 auto;
   .container {
-    padding: 20px;
     height: 100%;
-    // background-image: linear-gradient(45deg, #ececec, #f9f9f9);
   }
   .nav {
     display: flex;
@@ -436,7 +436,8 @@ export default {
       width: 100%;
       padding: 10px;
       text-align: left;
-      border: 1px solid #e9bdbd;
+      border-top: 1px solid #f3e3e3;
+      border-bottom: 1px solid #f5e5e5;
       .header {
         display: flex;
         padding: 0 10px;

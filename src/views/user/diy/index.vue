@@ -229,7 +229,10 @@
                     {{ t.text }}
                   </li>
                 </ul>
-                <div class="empty-tips" v-else>未选择目录或此目录没有照片~</div>
+                <div class="empty-tips" v-else>
+                  <img src="./icons/empty.svg" />
+                  未选择目录或此目录没有文案~
+                </div>
               </div>
             </el-tab-pane>
             <!-- 我的相册，H5中才有显示 -->
@@ -2164,6 +2167,7 @@ export default {
   padding: 0 10px;
   .nav-left {
     .back-icon {
+      border: 0;
       background-color: inherit;
     }
   }
@@ -2180,9 +2184,6 @@ export default {
   height: calc(100vh - 1.7rem);
   overflow: hidden;
   display: flex;
-  @media screen and (max-width: 768px) {
-    flex-direction: column-reverse;
-  }
   // 左边导航栏
   .materials {
     width: 10rem;
@@ -2198,7 +2199,7 @@ export default {
         height: 100%;
         width: 100%;
         position: relative;
-        /deep/ .el-tabs__header {
+        >>> .el-tabs__header {
           // 禁止长按选中文字
           -webkit-touch-callout: none;
           -webkit-user-select: none;
@@ -2210,21 +2211,10 @@ export default {
             padding: 0 10px;
           }
         }
-        /deep/ .el-tabs__content {
+        >>> .el-tabs__content {
           .el-tab-pane {
             height: 100%;
             // overflow-x: auto;
-          }
-        }
-        @media screen and (max-width: 768px) {
-          & >>> .el-tabs__header {
-            margin: 0;
-            .el-tabs__nav-wrap {
-              height: 24px;
-              .el-tabs__item {
-                line-height: 24px;
-              }
-            }
           }
         }
       }
@@ -2309,7 +2299,7 @@ export default {
         }
       }
       .no-select {
-        /deep/ .el-checkbox {
+        >>> .el-checkbox {
           .el-checkbox__input {
             display: none;
           }
@@ -2519,7 +2509,7 @@ export default {
 }
 
 // 上传组件
-/deep/ .el-dialog__wrapper {
+>>> .el-dialog__wrapper {
   .upload-dia {
     .el-dialog__body {
       position: relative;
@@ -2642,17 +2632,8 @@ export default {
     height: 100%;
   }
 }
-.h5 {
-  display: none;
-}
 @media screen and (max-width: 768px) {
   .diy {
-    .h5 {
-      display: inline-block;
-    }
-    .pc {
-      display: none;
-    }
     .nav {
       height: 1.7rem;
     }
@@ -2662,91 +2643,98 @@ export default {
         margin: 0 auto;
       }
     }
-    .materials {
-      width: 100%;
-      height: 7rem;
-      .m-content {
-        .m-checkbox {
-          width: 100%;
-          overflow-x: auto;
-          text-align: left;
-          .el-checkbox {
-            display: inline-block;
-            position: relative;
-            width: 76px;
-            height: 70px;
-            padding: 0;
-            margin: 5px 10px 0 0;
-            /deep/ .el-checkbox__label {
-              padding-left: 0;
-            }
-            /deep/ .el-checkbox__input {
-              position: absolute;
-              bottom: 0;
-              right: 5px;
-              -webkit-user-select: none;
-              user-select: none;
-              img {
-                // pointer-events: none;
+    .content {
+      flex-direction: column-reverse;
+      .materials {
+        width: 100%;
+        max-width: 100%;
+        height: 7rem;
+        .m-tab {
+          & >>> .el-tabs__header {
+            margin: 0;
+            .el-tabs__nav-wrap {
+              height: 24px;
+              .el-tabs__item {
+                line-height: 24px;
               }
             }
           }
         }
-      }
-      .d-content {
-        white-space: nowrap;
-        overflow-x: auto;
-        .decoration {
-          width: 76px;
-          height: 74px;
+        .m-content {
+          .m-checkbox {
+            width: 100%;
+            overflow-x: auto;
+            text-align: left;
+            .el-checkbox {
+              display: inline-block;
+              position: relative;
+              width: 76px;
+              height: 70px;
+              padding: 0;
+              margin: 5px 10px 0 0;
+              >>> .el-checkbox__label {
+                padding-left: 0;
+              }
+              >>> .el-checkbox__input {
+                position: absolute;
+                bottom: 0;
+                right: 5px;
+                -webkit-user-select: none;
+                user-select: none;
+                img {
+                  // pointer-events: none;
+                }
+              }
+            }
+          }
+        }
+        .d-content {
+          white-space: nowrap;
+          overflow-x: auto;
+          .decoration {
+            width: 76px;
+            height: 74px;
+            display: inline-block;
+          }
+        }
+        .t-content {
+          ul {
+            height: calc(7rem - 34px);
+            overflow: auto;
+            margin-top: 0;
+          }
+        }
+        .nav-tool {
+          height: 24px;
+          position: absolute;
+          right: 5px;
+          z-index: 66;
+          img,
+          i {
+            display: inline-block;
+            vertical-align: top;
+            margin: 0;
+          }
+          .text-btn {
+            padding: 0;
+          }
+        }
+        .head-tool {
+          position: fixed;
+          left: 5px;
+          width: 20px;
           display: inline-block;
-        }
-      }
-      .nav-tool {
-        height: 24px;
-        position: absolute;
-        right: 5px;
-        z-index: 66;
-        img,
-        i {
-          display: inline-block;
-          vertical-align: top;
-          margin: 0;
-        }
-        .text-btn {
-          padding: 0;
-        }
-      }
-      .head-tool {
-        position: fixed;
-        left: 5px;
-        width: 20px;
-        display: inline-block;
-        height: 100%;
-        overflow: auto;
-        .m-tool {
-          .tool-icon {
-            margin: 5px 0;
+          height: 100%;
+          overflow: auto;
+          .m-tool {
+            .tool-icon {
+              margin: 5px 0;
+            }
           }
         }
       }
-      .m-content {
-        overflow-x: auto;
-        white-space: nowrap;
-        text-align: left;
-        .el-checkbox {
-          width: 76px;
-          height: 70px;
-        }
-      }
-      .t-content {
-        ul {
-          height: calc(7rem - 34px);
-          overflow: auto;
-          margin-top: 0;
-        }
-      }
     }
+
     & >>> .dia-sort {
       width: 90vw;
     }

@@ -471,6 +471,7 @@ export default {
       transform: translateY(-50%);
       .search {
         display: inline-block;
+        position: relative;
         .content {
           width: 7rem;
           min-width: 200px;
@@ -478,9 +479,11 @@ export default {
         }
 
         .search-icon {
-          position: relative;
-          right: 40px;
-          vertical-align: middle;
+          position: absolute;
+          right: 10px;
+          top: 50%;
+          transform: translateY(-50%);
+          z-index: 10;
           cursor: pointer;
         }
       }
@@ -526,6 +529,9 @@ export default {
   grid-column-gap: 20px;
   grid-row-gap: 20px;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  max-width: 1790px;
+  margin: 0 auto;
   .loading-show {
     width: 100vw;
   }
