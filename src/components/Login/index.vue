@@ -269,7 +269,7 @@ export default {
       }
     },
     // 错误信息
-    errInfo: { type: String, default: null },
+    errInfo: String,
     // 面板和表单内容
     tabList: {
       type: Array,
@@ -355,10 +355,10 @@ export default {
   },
   methods: {
     // 切换面板
-    handleTabClick(tab, event) {
+    handleTabClick(tab) {
       console.log(this.$refs[this.activeTab][0]);
       this.$refs[this.activeTab][0].resetFields();
-      this.$emit("clicktab", tab, event);
+      this.$emit("clicktab", tab);
       if (typeof Storage !== "undefined") {
         this.getFormInfo();
       }
@@ -462,11 +462,11 @@ export default {
     // 验证手机号
     validateMobile(rule, value, callback) {
       if (!value) {
-        console.log("no value");
         callback(new Error("请先填写手机号"));
       } else if (!this.validatePhone(value)) {
-        console.log("aaa");
         callback(new Error("请填写正确格式的手机号"));
+      } else if (this.errInfo) {
+        callback(new Error(this.errInfo));
       } else {
         callback();
       }

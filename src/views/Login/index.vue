@@ -2,11 +2,14 @@
 <template>
   <div class="login">
     <login
+      ref="login"
       :platform="platform"
       :tabList="tabList"
-      ref="login"
+      :rules="rules"
+      :errInfo="errInfo"
       :loading="loading"
       @login="login"
+      @clicktab="handleTabClick"
       @sendvalidcode="sendValidCode"
     >
       <template v-slot:theme>
@@ -28,12 +31,44 @@ import Cookie from "@/utils/cookie.js";
 export default {
   components: { Login },
   data() {
+    var checkAccount = (rule, value, callback) => {
+      if (this.errInfo) {
+        callback(new Error(this.errInfo));
+      }
+      callback();
+    };
+    var checkMobile = (rule, value, callback) => {
+      if (this.errInfo) {
+        console.log("this.errInfo", this.errInfo);
+        callback(new Error(this.errInfo));
+      }
+      callback();
+    };
     return {
       service: "pc",
+      tab: "", // 当前使用的登录组件
       tabList: [],
       errInfo: null,
       checkLogin: null,
-      rules: {},
+      rules: {
+        account: [
+          {
+            required: true,
+            message: "账号不能为空噢",
+            trigger: "blur"
+          },
+          { validator: checkAccount, trigger: "blur" }
+        ],
+        password: {
+          required: true,
+          message: "密码不能为空",
+          trigger: "blur"
+        },
+        mobile: {
+          validator: checkMobile,
+          trigger: "blur"
+        }
+      },
       loading: false
     };
   },
@@ -65,28 +100,6 @@ export default {
         components: ["mobile", "validCode"]
       }
     ];
-    const checkLogin = (rule, value, callback) => {
-      if (this.errInfo) {
-        console.log(this.errInfo);
-        callback(this.errInfo);
-      }
-      callback();
-    };
-    this.rules = {
-      account: [
-        {
-          required: true,
-          message: "账号不能为空噢",
-          trigger: "blur"
-        },
-        { validator: checkLogin, trigger: "blur" }
-      ],
-      password: {
-        required: true,
-        message: "密码不能为空",
-        trigger: "blur"
-      }
-    };
   },
   mounted() {
     new QRCode("qrcode", {
@@ -116,12 +129,21 @@ export default {
           this.loading = false;
         })
         .catch(err => {
-          console.log(err);
           this.errInfo = err.data.message;
-          this.$refs["login"].$refs[ref][0].validateField("account");
-          this.errInfo = null;
+          let checkField = this.tab == "phone_login" ? "mobile" : "account";
           this.loading = false;
+          this.$nextTick(() => {
+            this.$refs["login"].$refs[ref][0].validate();
+          });
+          setTimeout(() => {
+            this.errInfo = null;
+          });
         });
+    },
+    // 切换登录方式时触发
+    handleTabClick(tab) {
+      console.log("tab", tab);
+      this.tab = tab.name;
     },
     // 发送验证码
     sendValidCode() {
@@ -137,7 +159,7 @@ export default {
   background-image: url("./icons/prototype.png");
   /* background-size: 100px 100px; */
   animation: sheen 60s linear 0s infinite normal none running;
-  &>>>#lgBox{
+  & >>> #lgBox {
     backdrop-filter: hue-rotate(45deg);
   }
 }

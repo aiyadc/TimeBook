@@ -27,7 +27,10 @@ request.interceptors.response.use(
     return res;
   },
   error => {
-    ElementUI.Message.error(error.response.data.message);
+    const errorWhiteList = ["/login"];
+    if (!errorWhiteList.includes(location.hash.slice(1))) {
+      ElementUI.Message.error(error.response.data.message);
+    }
     return Promise.reject(error.response);
   }
 );
