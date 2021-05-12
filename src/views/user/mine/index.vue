@@ -246,13 +246,6 @@ export default {
     this.banner = document.getElementsByClassName("head")[0];
   },
   methods: {
-    handleTabClick(tab) {
-      if (tab.name == "favor") {
-        this.getFavorList();
-      } else if (tab.name == "design") {
-        this.getMyAlbums();
-      }
-    },
     init() {
       // 拉取我的信息
       this.getUserInfo();
@@ -286,10 +279,7 @@ export default {
         this.reviewLoading = false;
       });
     },
-    // 关闭预览弹框
-    closeReview() {
-      this.reviewDia = false;
-    },
+
     // 获取主题列表:
     getThemeList() {
       themeRequest.fetchThemes().then(res => {
@@ -341,6 +331,18 @@ export default {
         .catch(() => {
           this.createLoading = false;
         });
+    },
+    // 处理板块切换
+    handleTabClick(tab) {
+      if (tab.name == "favor") {
+        this.getFavorList();
+      } else if (tab.name == "design") {
+        this.getMyAlbums();
+      }
+    },
+    // 关闭预览弹框
+    closeReview() {
+      this.reviewDia = false;
     },
     // 进入设计
     toDesign(aid) {

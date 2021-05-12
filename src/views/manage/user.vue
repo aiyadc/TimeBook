@@ -87,6 +87,44 @@
         </el-table-column>
       </e-table>
     </div>
+    <el-dialog title="添加用户" :visible.sync="userAddDia" width="700px" center>
+      <el-form
+        :model="userAddForm"
+        class="form-w500"
+        label-width="120px"
+        label-position="right"
+        ref="userAddForm"
+      >
+        <el-form-item label="账号：" required>
+          <el-input
+            v-model="userAddForm.account"
+            placeholder="请输入账号，由6-16位英文+数字组成"
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="昵称：" required>
+          <el-input
+            v-model="userAddForm.nickname"
+            placeholder="请输入账号，由6-16位英文+数字组成"
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="手机号：" required>
+          <el-input
+            v-model="userAddForm.mobile"
+            placeholder="请输入手机号"
+          ></el-input>
+        </el-form-item>
+        <el-form-item label="身份：" required>
+          <el-select v-model="userAddForm.identity" placeholder="">
+            <el-option label="用户" value="user"></el-option>
+            <el-option label="管理员" value="admin"></el-option>
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <div slot="footer">
+        <el-button type="primary" @click="addUser">确定添加</el-button>
+        <el-button type="default" @click="cancelAdd">取消</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -107,15 +145,21 @@ export default {
         account: "",
         nickname: "",
         mobile: "",
-        mail: "",
         address: ""
+      },
+      userAddForm: {
+        account: "",
+        mobile: "",
+        nickname: "",
+        identity: "user"
       },
       pagination: {
         currentPage: 1,
         size: 10,
         totalCount: 10
       },
-      fetchUserLoading: false
+      fetchUserLoading: false,
+      userAddDia: false
     };
   },
 
@@ -155,6 +199,23 @@ export default {
           this.fetchUserLoading = false;
         });
     },
+    addUser() {
+      this.$refs.userAddForm.validate(valid => {
+        if (valid) {
+          userRequest.addUser(this.userAddForm).then(res => {
+            this.$message.success("添加成功");
+            this.fetchUserList();
+            this.$refs.userAddForm.resetFields();
+          });
+        } else {
+          return;
+        }
+      });
+    },
+    cancelAdd() {
+      this.userAddDia = false;
+      this.$refs.userAddForm.resetFields();
+    },
     handleEdit() {
       // todo
     },
@@ -167,6 +228,7 @@ export default {
       }).then(() => {
         userRequest.deleteUser(uid).then(() => {
           this.$message.success("删除成功");
+          this.fetchUserList();
         });
       });
     },
@@ -182,7 +244,9 @@ export default {
       });
     },
     // 添加用户
-    createUser() {},
+    createUser() {
+      this.userAddDia = true;
+    },
     // 处理页数改变
     changeCurrentPage(val) {
       this.pagination.currentPage = val;

@@ -136,7 +136,9 @@
           @click="type == 'edit' ? updateText() : addText()"
           >确定</el-button
         >
-        <el-button type="default" size="small">取消</el-button>
+        <el-button type="default" size="small" @click="editDia = false"
+          >取消</el-button
+        >
       </div>
     </el-dialog>
   </div>
@@ -301,6 +303,7 @@ export default {
         text: "",
         style: ""
       };
+      this.editDia = false;
     },
     // 处理当前页改变事件
     async handlePageChange(page) {

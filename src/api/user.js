@@ -1,6 +1,7 @@
 import request from "@/utils/request";
 const user = {
   // 注册账号
+
   // 登录
   login(form) {
     return request({
@@ -33,6 +34,14 @@ const user = {
       url: `/user-list`,
       method: "get",
       params
+    });
+  },
+  // 添加账号
+  addUser(data) {
+    return request({
+      url: "/user",
+      method: "post",
+      data
     });
   },
   // 修改用户信息
