@@ -28,11 +28,11 @@ const router = new Router({
       meta: {
         title: "相册DIY"
       },
-      component: () => import("@/views/user/dIY/index")
+      component: () => import("@/views/user/diy/index")
     },
     {
       path: "/login",
-      component: () => import("@/views/login")
+      component: () => import("@/views/Login/index.vue")
     },
     {
       path: "/mine",
